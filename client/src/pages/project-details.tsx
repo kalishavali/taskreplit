@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ModernKanbanBoard } from "@/components/modern-kanban/modern-kanban-board";
 import TaskListView from "@/components/task-list-view";
+import TimelineView from "@/components/timeline-view";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -453,7 +454,6 @@ export default function ProjectDetails() {
                         <th className="text-left py-3 px-4 font-medium">Priority</th>
                         <th className="text-left py-3 px-4 font-medium">Assignee</th>
                         <th className="text-left py-3 px-4 font-medium">Due Date</th>
-                        <th className="text-left py-3 px-4 font-medium">Progress</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -469,17 +469,6 @@ export default function ProjectDetails() {
                           <td className="py-3 px-4">{task.assignee || "Unassigned"}</td>
                           <td className="py-3 px-4">
                             {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No due date"}
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-16 bg-gray-200 rounded-full h-2">
-                                <div 
-                                  className="bg-blue-600 h-2 rounded-full" 
-                                  style={{ width: `${task.progress || 0}%` }}
-                                ></div>
-                              </div>
-                              <span className="text-sm text-gray-600">{task.progress || 0}%</span>
-                            </div>
                           </td>
                         </tr>
                       ))}
@@ -504,11 +493,10 @@ export default function ProjectDetails() {
 
           <TabsContent value="timeline">
             <div className="bg-white rounded-lg border p-6">
-              <div className="text-center py-8 text-gray-500">
-                <Activity className="h-12 w-12 mx-auto mb-4 opacity-40" />
-                <p className="text-lg font-medium mb-2">Timeline View</p>
-                <p>Timeline view coming soon with Gantt chart functionality</p>
-              </div>
+              <TimelineView 
+                tasks={tasks} 
+                projects={[project]} 
+              />
             </div>
           </TabsContent>
         </Tabs>

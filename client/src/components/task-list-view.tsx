@@ -106,8 +106,6 @@ export default function TaskListView({ tasks, projects = [], isLoading }: TaskLi
                 <TableHead>Priority</TableHead>
                 <TableHead>Assignee</TableHead>
                 <TableHead>Due Date</TableHead>
-                <TableHead>Progress</TableHead>
-                <TableHead className="w-8"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -205,35 +203,7 @@ export default function TaskListView({ tasks, projects = [], isLoading }: TaskLi
                     )}
                   </TableCell>
                   
-                  <TableCell>
-                    {task.status === "InProgress" && task.progress !== null && (
-                      <div className="flex items-center space-x-2">
-                        <Progress value={task.progress} className="w-16 h-2" />
-                        <span className="text-xs text-gray-600">{task.progress}%</span>
-                      </div>
-                    )}
-                  </TableCell>
-                  
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditTask(task);
-                        }}>
-                          Edit Task
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
-                          Delete Task
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+
                 </TableRow>
               );
             })}
