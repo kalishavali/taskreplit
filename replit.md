@@ -7,6 +7,7 @@ This is a full-stack project management application built with a modern tech sta
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Font preference: "Quicksand", sans-serif for all application text.
 
 ## System Architecture
 
