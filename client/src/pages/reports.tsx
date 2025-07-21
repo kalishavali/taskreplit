@@ -6,15 +6,31 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, FileText, Download, BarChart3, PieChart, TrendingUp } from "lucide-react";
-import type { Project } from "@shared/schema";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  PieChart as RechartsPieChart, 
+  Pie,
+  Cell,
+  Legend
+} from "recharts";
+import type { Project, Task, Application, TeamMember } from "@shared/schema";
 
 interface Stats {
   totalTasks: number;
   totalProjects: number;
   todoTasks: number;
   inProgressTasks: number;
-  completedTasks: number;
-  overdueTasks: number;
+  doneTasks: number;
+  blockedTasks: number;
+  totalTimeLogged: number;
+  activeTeamMembers: number;
+  unreadNotifications: number;
 }
 
 export default function Reports() {
@@ -24,9 +40,72 @@ export default function Reports() {
     queryKey: ["/api/projects"],
   });
 
+  const { data: tasks = [] } = useQuery<Task[]>({
+    queryKey: ["/api/tasks"],
+  });
+
+  const { data: applications = [] } = useQuery<Application[]>({
+    queryKey: ["/api/applications"],
+  });
+
+  const { data: teamMembers = [] } = useQuery<TeamMember[]>({
+    queryKey: ["/api/team-members"],
+  });
+
   const { data: stats } = useQuery<Stats>({
     queryKey: ["/api/stats"],
   });
+
+  // Chart data processing
+  const projectTasksData = projects.map(project => {
+    const projectTasks = tasks.filter(task => task.projectId === project.id);
+    return {
+      name: project.name,
+      Open: projectTasks.filter(t => t.status === 'Open').length,
+      InProgress: projectTasks.filter(t => t.status === 'InProgress').length,
+      Blocked: projectTasks.filter(t => t.status === 'Blocked').length,
+      Closed: projectTasks.filter(t => t.status === 'Closed').length,
+      total: projectTasks.length,
+    };
+  });
+
+  const applicationTasksData = applications.map(app => {
+    const appTasks = tasks.filter(task => task.applicationId === app.id);
+    return {
+      name: app.name,
+      Open: appTasks.filter(t => t.status === 'Open').length,
+      InProgress: appTasks.filter(t => t.status === 'InProgress').length,
+      Blocked: appTasks.filter(t => t.status === 'Blocked').length,
+      Closed: appTasks.filter(t => t.status === 'Closed').length,
+      total: appTasks.length,
+    };
+  });
+
+  const teamTasksData = teamMembers.map(member => {
+    const memberTasks = tasks.filter(task => task.assignee === member.name);
+    return {
+      name: member.name,
+      Open: memberTasks.filter(t => t.status === 'Open').length,
+      InProgress: memberTasks.filter(t => t.status === 'InProgress').length,  
+      Blocked: memberTasks.filter(t => t.status === 'Blocked').length,
+      Closed: memberTasks.filter(t => t.status === 'Closed').length,
+      total: memberTasks.length,
+    };
+  });
+
+  const statusDistributionData = [
+    { name: 'Open', value: tasks.filter(t => t.status === 'Open').length, color: '#9CA3AF' },
+    { name: 'In Progress', value: tasks.filter(t => t.status === 'InProgress').length, color: '#F59E0B' },
+    { name: 'Blocked', value: tasks.filter(t => t.status === 'Blocked').length, color: '#EF4444' },
+    { name: 'Closed', value: tasks.filter(t => t.status === 'Closed').length, color: '#10B981' },
+  ];
+
+  const chartColors = {
+    Open: '#9CA3AF',
+    InProgress: '#F59E0B', 
+    Blocked: '#EF4444',
+    Closed: '#10B981'
+  };
 
   const reportTemplates = [
     {
@@ -73,6 +152,157 @@ export default function Reports() {
       
       <main className="flex-1 overflow-auto p-6">
         {/* Quick Stats */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Total Tasks</p>
+                    <p className="text-2xl font-bold">{stats.totalTasks}</p>
+                  </div>
+                  <FileText className="h-8 w-8 text-blue-500" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Open Issues</p>
+                    <p className="text-2xl font-bold">{stats.todoTasks}</p>
+                  </div>
+                  <BarChart3 className="h-8 w-8 text-gray-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">In Progress</p>
+                    <p className="text-2xl font-bold">{stats.inProgressTasks}</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-orange-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Blocked</p>
+                    <p className="text-2xl font-bold">{stats.blockedTasks}</p>
+                  </div>
+                  <PieChart className="h-8 w-8 text-red-500" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Tasks by Project Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Open Issues by Project</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={projectTasksData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="Open" stackId="a" fill={chartColors.Open} />
+                  <Bar dataKey="InProgress" stackId="a" fill={chartColors.InProgress} />
+                  <Bar dataKey="Blocked" stackId="a" fill={chartColors.Blocked} />
+                  <Bar dataKey="Closed" stackId="a" fill={chartColors.Closed} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Status Distribution Pie Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Task Status Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <RechartsPieChart>
+                  <Pie
+                    data={statusDistributionData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label={({ name, value }) => `${name}: ${value}`}
+                  >
+                    {statusDistributionData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Additional Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Tasks by Application Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Open Issues by Application</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={applicationTasksData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="Open" stackId="a" fill={chartColors.Open} />
+                  <Bar dataKey="InProgress" stackId="a" fill={chartColors.InProgress} />
+                  <Bar dataKey="Blocked" stackId="a" fill={chartColors.Blocked} />
+                  <Bar dataKey="Closed" stackId="a" fill={chartColors.Closed} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Tasks by Team Member Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Open Issues by Team Member</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={teamTasksData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="Open" stackId="a" fill={chartColors.Open} />
+                  <Bar dataKey="InProgress" stackId="a" fill={chartColors.InProgress} />
+                  <Bar dataKey="Blocked" stackId="a" fill={chartColors.Blocked} />
+                  <Bar dataKey="Closed" stackId="a" fill={chartColors.Closed} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>

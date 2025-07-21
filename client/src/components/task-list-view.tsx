@@ -38,15 +38,17 @@ export default function TaskListView({ tasks, projects, isLoading }: TaskListVie
   };
 
   const statusColors = {
-    todo: "bg-gray-100 text-gray-800",
-    inprogress: "bg-blue-100 text-blue-800",
-    done: "bg-green-100 text-green-800",
+    Open: "bg-gray-100 text-gray-800",
+    InProgress: "bg-blue-100 text-blue-800",
+    Blocked: "bg-red-100 text-red-800",
+    Closed: "bg-green-100 text-green-800",
   };
 
   const statusLabels = {
-    todo: "To Do",
-    inprogress: "In Progress",
-    done: "Done",
+    Open: "Open",
+    InProgress: "In Progress", 
+    Blocked: "Blocked",
+    Closed: "Closed",
   };
 
   const getProject = (projectId: number | null) => {
@@ -54,7 +56,7 @@ export default function TaskListView({ tasks, projects, isLoading }: TaskListVie
   };
 
   const isOverdue = (dueDate: Date | null, status: string) => {
-    if (!dueDate || status === "done") return false;
+    if (!dueDate || status === "Closed") return false;
     return new Date(dueDate) < new Date();
   };
 
@@ -113,12 +115,16 @@ export default function TaskListView({ tasks, projects, isLoading }: TaskListVie
               const overdue = isOverdue(task.dueDate, task.status);
               
               return (
-                <TableRow key={task.id} className={cn(
-                  "hover:bg-gray-50",
-                  task.status === "done" && "opacity-75"
-                )}>
+                <TableRow 
+                  key={task.id} 
+                  className={cn(
+                    "hover:bg-gray-50 cursor-pointer",
+                    task.status === "Closed" && "opacity-75"
+                  )}
+                  onClick={() => handleEditTask(task)}
+                >
                   <TableCell>
-                    {task.status === "done" && (
+                    {task.status === "Closed" && (
                       <CheckCircle className="w-4 h-4 text-green-500" />
                     )}
                   </TableCell>
@@ -199,7 +205,7 @@ export default function TaskListView({ tasks, projects, isLoading }: TaskListVie
                   </TableCell>
                   
                   <TableCell>
-                    {task.status === "inprogress" && task.progress !== null && (
+                    {task.status === "InProgress" && task.progress !== null && (
                       <div className="flex items-center space-x-2">
                         <Progress value={task.progress} className="w-16 h-2" />
                         <span className="text-xs text-gray-600">{task.progress}%</span>
@@ -215,7 +221,10 @@ export default function TaskListView({ tasks, projects, isLoading }: TaskListVie
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEditTask(task)}>
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditTask(task);
+                        }}>
                           Edit Task
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-red-600">

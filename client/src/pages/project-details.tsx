@@ -57,7 +57,8 @@ export default function ProjectDetails() {
       
       const response = await fetch(`/api/tasks?${params}`);
       if (!response.ok) throw new Error("Failed to fetch tasks");
-      return response.json();
+      const result = await response.json();
+      return Array.isArray(result) ? result : [];
     },
     enabled: !!projectId,
   });
@@ -292,7 +293,7 @@ export default function ProjectDetails() {
           <TabsContent value="kanban" className="space-y-6">
             <ModernKanbanBoard 
               projectId={projectId!} 
-              applicationId={selectedApplication} 
+              applicationId={selectedApplication || undefined} 
             />
           </TabsContent>
 

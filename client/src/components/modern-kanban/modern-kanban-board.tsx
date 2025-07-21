@@ -31,29 +31,29 @@ interface ModernKanbanBoardProps {
 
 const statusColumns = [
   {
-    id: "todo",
-    title: "Backlog", 
+    id: "Open",
+    title: "Open", 
     color: "bg-gray-50 border-gray-200",
     headerColor: "text-gray-700",
     taskColor: "border-l-gray-400"
   },
   {
-    id: "inprogress", 
-    title: "On Progress",
+    id: "InProgress", 
+    title: "In Progress",
     color: "bg-orange-50 border-orange-200",
     headerColor: "text-orange-700",
     taskColor: "border-l-orange-400"
   },
   {
-    id: "review",
-    title: "Need Review", 
-    color: "bg-blue-50 border-blue-200",
-    headerColor: "text-blue-700",
-    taskColor: "border-l-blue-400"
+    id: "Blocked",
+    title: "Blocked", 
+    color: "bg-red-50 border-red-200",
+    headerColor: "text-red-700",
+    taskColor: "border-l-red-400"
   },
   {
-    id: "done",
-    title: "Completed",
+    id: "Closed",
+    title: "Closed",
     color: "bg-green-50 border-green-200", 
     headerColor: "text-green-700",
     taskColor: "border-l-green-400"

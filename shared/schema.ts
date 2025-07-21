@@ -33,7 +33,7 @@ export const tasks = pgTable("tasks", {
   title: text("title").notNull(),
   description: text("description"),
   content: jsonb("content"), // Rich text content
-  status: text("status").notNull().default("todo"), // todo, inprogress, done, blocked
+  status: text("status").notNull().default("Open"), // Open, InProgress, Blocked, Closed
   priority: text("priority").notNull().default("medium"), // low, medium, high, urgent
   projectId: integer("project_id").references(() => projects.id),
   applicationId: integer("application_id").references(() => applications.id),
