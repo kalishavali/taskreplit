@@ -196,6 +196,11 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
 
 // Enhanced Rich Text Renderer with better code block support
 export function RichTextRenderer({ content }: { content: string }) {
+  // Handle null/undefined content
+  if (!content || typeof content !== 'string') {
+    return <div className="text-gray-400 italic">No content</div>;
+  }
+
   const renderText = (text: string) => {
     // Handle code blocks first (multiline)
     text = text.replace(/```(\w+)?\n([\s\S]*?)\n```/g, 

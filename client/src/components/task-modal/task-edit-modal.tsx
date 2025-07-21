@@ -191,7 +191,7 @@ function CommentSection({ taskId }: { taskId: number }) {
                 </span>
               </div>
               <div className="bg-gray-50 rounded-lg p-3 text-sm">
-                <RichTextRenderer content={typeof comment.content === 'string' ? comment.content : JSON.stringify(comment.content)} />
+                <RichTextRenderer content={comment.content ? (typeof comment.content === 'string' ? comment.content : JSON.stringify(comment.content)) : 'No content'} />
               </div>
             </div>
           </div>
