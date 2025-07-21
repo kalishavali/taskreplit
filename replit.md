@@ -123,3 +123,24 @@ RESTful endpoints organized by resource:
 - Replit-specific development tooling integration
 
 The architecture prioritizes developer experience with hot reloading, type safety, and modern tooling while maintaining production performance through optimized builds and efficient database queries.
+
+## Recent Updates
+
+### Schema Changes (July 2025)
+- Removed finance/budget tracking fields from projects table
+- Removed estimated hours and time tracking from tasks table  
+- Added assignees field to projects table for team member tracking
+- Updated task creation and edit forms to exclude estimated hours
+
+### UI Enhancements (July 2025)
+- Applied beautiful theme with glassmorphism effects across entire application
+- Added gradient backgrounds, animations, and hover effects site-wide
+- Implemented floating animations and visual decorative elements
+- Fixed scrolling issues with proper CSS overflow handling
+- Enhanced dashboard with animated statistics cards and modern styling
+- Updated projects page with consistent beautiful theme application
+
+### Feature Removals (July 2025)
+- Removed time logging and budget tracking functionality per user request
+- Removed estimated hours fields from all task forms and displays
+- Simplified project statistics to focus on task completion metrics

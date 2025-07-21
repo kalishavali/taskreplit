@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Search, Filter, Columns, List, Users, Clock, Bell, TrendingUp, CheckCircle, AlertTriangle, Timer } from "lucide-react";
+import { Search, Filter, Columns, List, Users, Clock, Bell, TrendingUp, CheckCircle, AlertTriangle, Timer, FolderOpen } from "lucide-react";
 import type { Task, Project } from "@shared/schema";
 
 export default function Dashboard() {
@@ -93,24 +93,29 @@ export default function Dashboard() {
   // Handle filter changes with existing functions above
 
   return (
-    <>
-      <Header 
-        title="Dashboard" 
-        subtitle={`${projects.length} Active Projects`}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-      />
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 relative overflow-hidden custom-scrollbar">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-emerald-100 to-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '2s'}}></div>
       
-      <main className="flex-1 overflow-auto">
-        {/* View Toggle and Filters */}
-        <div className="bg-white border-b border-gray-200 px-6 py-3">
+      <div className="relative z-10">
+        <Header 
+          title="Dashboard" 
+          subtitle={`${projects.length} Active Projects`}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
+        
+        <main className="flex-1 overflow-auto custom-scrollbar">
+          {/* View Toggle and Filters */}
+          <div className="glass border-b px-6 py-4 animate-slide-right">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+            <div className="flex items-center space-x-2 glass rounded-xl p-1 shadow-lg">
               <Button
                 variant={viewMode === "kanban" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("kanban")}
-                className="px-3 py-1.5"
+                className="px-4 py-2 transition-all duration-300 data-[state=on]:bg-gradient-to-r data-[state=on]:from-blue-500 data-[state=on]:to-purple-500 hover-lift"
               >
                 <Columns className="w-4 h-4 mr-2" />
                 Kanban
@@ -119,7 +124,7 @@ export default function Dashboard() {
                 variant={viewMode === "list" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("list")}
-                className="px-3 py-1.5"
+                className="px-4 py-2 transition-all duration-300 data-[state=on]:bg-gradient-to-r data-[state=on]:from-emerald-500 data-[state=on]:to-teal-500 hover-lift"
               >
                 <List className="w-4 h-4 mr-2" />
                 List
@@ -155,85 +160,95 @@ export default function Dashboard() {
                 </SelectContent>
               </Select>
               
-              <Button variant="outline" size="sm" onClick={clearFilters}>
+              <Button variant="outline" size="sm" onClick={clearFilters} className="hover-lift transition-all duration-300 hover:shadow-lg">
                 <Filter className="w-4 h-4 mr-1" />
                 Clear Filters
               </Button>
             </div>
+            </div>
           </div>
-        </div>
 
-        {/* Content Area */}
-        {viewMode === "kanban" ? (
-          <div className="p-6">
-            <ModernKanbanBoard />
-          </div>
-        ) : (
-          <TaskListView tasks={filteredTasks} projects={projects} isLoading={tasksLoading} />
-        )}
+          {/* Content Area */}
+          {viewMode === "kanban" ? (
+            <div className="p-6">
+              <div className="glass rounded-xl p-1 shadow-lg animate-fade-scale">
+                <ModernKanbanBoard />
+              </div>
+            </div>
+          ) : (
+            <div className="p-6">
+              <div className="glass rounded-xl shadow-lg animate-fade-scale">
+                <TaskListView tasks={filteredTasks} projects={projects} isLoading={tasksLoading} />
+              </div>
+            </div>
+          )}
 
-        {/* Enhanced Stats Dashboard */}
-        <div className="p-6 space-y-6">
-          {/* Enhanced Stats Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {/* Total Tasks */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.totalTasks || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.doneTasks || 0} completed this week
-                </p>
-              </CardContent>
-            </Card>
+          {/* Enhanced Stats Dashboard */}
+          <div className="p-6 space-y-6">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent animate-slide-up">Dashboard Overview</h2>
+            
+            {/* Enhanced Stats Grid */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 animate-fade-scale">
+              {/* Total Tasks */}
+              <Card className="hover-lift border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-100 animate-slide-up">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg animate-float">
+                      <CheckCircle className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-blue-700">Total Tasks</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{stats?.totalTasks || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Time Logged */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Time Logged</CardTitle>
-                <Timer className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {Math.floor((stats?.totalTimeLogged || 0) / 60)}h {(stats?.totalTimeLogged || 0) % 60}m
+            {/* Total Projects */}
+            <Card className="hover-lift border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-teal-100 animate-slide-up" style={{animationDelay: '100ms'}}>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg animate-float" style={{animationDelay: '0.5s'}}>
+                    <FolderOpen className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-emerald-700">Total Projects</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">{stats?.totalProjects || 0}</p>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Across {stats?.totalProjects || 0} projects
-                </p>
               </CardContent>
             </Card>
 
             {/* Active Team Members */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Team Members</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.activeTeamMembers || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  Active members
-                </p>
+            <Card className="hover-lift border-0 shadow-lg bg-gradient-to-br from-purple-50 to-violet-100 animate-slide-up" style={{animationDelay: '200ms'}}>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg animate-float" style={{animationDelay: '1.5s'}}>
+                    <Users className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-purple-700">Team Members</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">{stats?.activeTeamMembers || 0}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
-            {/* Blocked Tasks */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Notifications</CardTitle>
-                <Bell className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.unreadNotifications || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  Unread notifications
-                </p>
+            {/* Notifications */}
+            <Card className="hover-lift border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-100 animate-slide-up" style={{animationDelay: '300ms'}}>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg animate-float" style={{animationDelay: '2s'}}>
+                    <Bell className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-amber-700">Notifications</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">{stats?.unreadNotifications || 0}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          </div>
+            </div>
 
           {/* Progress Overview */}
           <div className="grid gap-6 md:grid-cols-2">
@@ -349,8 +364,9 @@ export default function Dashboard() {
         </div>
         
         {/* Original Stats Dashboard */}
-        <StatsDashboard />
-      </main>
-    </>
+          <StatsDashboard />
+        </main>
+      </div>
+    </div>
   );
 }

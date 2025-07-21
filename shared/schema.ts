@@ -10,7 +10,7 @@ export const projects = pgTable("projects", {
   status: text("status").notNull().default("active"), // active, paused, completed, archived
   startDate: timestamp("start_date"),
   endDate: timestamp("end_date"),
-  budget: integer("budget"), // Project budget
+  assignees: text("assignees").array(), // Project assignees/team members
   teamMembers: text("team_members").array(), // Team member IDs/names
   tags: text("tags").array(), // Project tags
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -40,8 +40,6 @@ export const tasks = pgTable("tasks", {
   assignee: text("assignee"),
   dueDate: timestamp("due_date"),
   progress: integer("progress").default(0), // 0-100
-  estimatedHours: integer("estimated_hours"), // Time estimation
-  actualHours: integer("actual_hours"), // Time tracking
   tags: text("tags").array(), // Task tags
   dependencies: integer("dependencies").array(), // Task dependencies
   createdAt: timestamp("created_at").defaultNow().notNull(),

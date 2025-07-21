@@ -126,8 +126,6 @@ export default function ProjectDetails() {
     completedTasks: tasks.filter(t => t.status === 'done').length,
     inProgressTasks: tasks.filter(t => t.status === 'inprogress').length,
     todoTasks: tasks.filter(t => t.status === 'todo').length,
-    totalTimeLogged: tasks.reduce((sum, task) => sum + (task.actualHours || 0), 0),
-    estimatedTime: tasks.reduce((sum, task) => sum + (task.estimatedHours || 0), 0),
   };
 
   const completionPercentage = projectStats.totalTasks > 0 
@@ -322,11 +320,11 @@ export default function ProjectDetails() {
               <CardContent className="p-6">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg animate-float" style={{animationDelay: '1s'}}>
-                    <Clock className="h-6 w-6 text-white" />
+                    <Users className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-orange-700">Time Logged</p>
-                    <p className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">{projectStats.totalTimeLogged}h</p>
+                    <p className="text-sm font-medium text-orange-700">Assignees</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">{project.assignees?.length || 0}</p>
                   </div>
                 </div>
               </CardContent>

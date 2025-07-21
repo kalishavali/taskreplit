@@ -107,14 +107,19 @@ export default function Projects() {
   }
 
   return (
-    <>
-      <Header 
-        title="Projects" 
-        subtitle={`${projects.length} Active Projects`}
-        action={
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-emerald-100 to-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '2s'}}></div>
+      
+      <div className="relative z-10">
+        <Header 
+          title="Projects" 
+          subtitle={`${projects.length} Active Projects`}
+          action={
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover-lift">
                 <Plus className="w-4 h-4 mr-2" />
                 New Project
               </Button>
@@ -365,8 +370,9 @@ export default function Projects() {
               );
             })}
           </div>
-        )}
-      </main>
-    </>
+          )}
+        </main>
+      </div>
+    </div>
   );
 }

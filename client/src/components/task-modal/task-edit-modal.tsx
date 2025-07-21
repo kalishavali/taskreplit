@@ -627,21 +627,15 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
 
                   {/* Time tracking */}
                   <div>
-                    <h3 className="font-semibold mb-2">Time Tracking</h3>
+                    <h3 className="font-semibold mb-2">Task Progress</h3>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Estimated:</span>
-                        <span>{task.estimatedHours || 0}h</span>
+                        <span className="text-gray-600">Progress:</span>
+                        <span>{task.progress || 0}%</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Logged:</span>
-                        <span>{task.actualHours || 0}h</span>
-                      </div>
-                      <div className="flex justify-between font-medium">
-                        <span>Remaining:</span>
-                        <span>
-                          {Math.max(0, (task.estimatedHours || 0) - (task.actualHours || 0))}h
-                        </span>
+                        <span className="text-gray-600">Status:</span>
+                        <span className="capitalize">{task.status}</span>
                       </div>
                     </div>
                   </div>

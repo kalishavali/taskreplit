@@ -70,7 +70,7 @@ export function TaskCreateModal({
       projectId: projectId || undefined,
       applicationId: applicationId || undefined,
       assignee: "",
-      estimatedHours: 0,
+
       progress: 0,
     },
   });
@@ -80,7 +80,6 @@ export function TaskCreateModal({
       const taskData = {
         ...data,
         dueDate: dueDate?.toISOString(),
-        estimatedHours: data.estimatedHours || null,
         assignee: data.assignee || null,
       };
       return await apiRequest("/api/tasks", 'POST', taskData);
@@ -336,27 +335,7 @@ export function TaskCreateModal({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="estimatedHours"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estimated Hours</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        placeholder="0"
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
             </div>
 
             {/* Due Date */}
