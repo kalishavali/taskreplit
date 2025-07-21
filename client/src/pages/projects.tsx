@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { Link } from "wouter";
 import Header from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -208,66 +209,68 @@ export default function Projects() {
               const taskCounts = getProjectTaskCounts(project.id);
               
               return (
-                <Card key={project.id} className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{project.name}</CardTitle>
-                      <Badge 
-                        variant="secondary" 
-                        className={`${
-                          project.color === "blue" ? "bg-blue-100 text-blue-800" :
-                          project.color === "green" ? "bg-green-100 text-green-800" :
-                          project.color === "purple" ? "bg-purple-100 text-purple-800" :
-                          project.color === "red" ? "bg-red-100 text-red-800" :
-                          "bg-orange-100 text-orange-800"
-                        }`}
-                      >
-                        {project.color}
-                      </Badge>
-                    </div>
-                    {project.description && (
-                      <p className="text-sm text-muted-foreground">{project.description}</p>
-                    )}
-                  </CardHeader>
-                  
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-muted-foreground">Progress</span>
-                          <span className="font-medium">{progress}%</span>
-                        </div>
-                        <Progress value={progress} className="h-2" />
+                <Link key={project.id} href={`/projects/${project.id}`}>
+                  <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">{project.name}</CardTitle>
+                        <Badge 
+                          variant="secondary" 
+                          className={`${
+                            project.color === "blue" ? "bg-blue-100 text-blue-800" :
+                            project.color === "green" ? "bg-green-100 text-green-800" :
+                            project.color === "purple" ? "bg-purple-100 text-purple-800" :
+                            project.color === "red" ? "bg-red-100 text-red-800" :
+                            "bg-orange-100 text-orange-800"
+                          }`}
+                        >
+                          {project.color}
+                        </Badge>
                       </div>
-                      
-                      <div className="grid grid-cols-3 gap-4 text-center">
+                      {project.description && (
+                        <p className="text-sm text-muted-foreground">{project.description}</p>
+                      )}
+                    </CardHeader>
+                    
+                    <CardContent>
+                      <div className="space-y-4">
                         <div>
-                          <div className="text-2xl font-bold text-gray-600">{taskCounts.todo}</div>
-                          <div className="text-xs text-muted-foreground">To Do</div>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="text-muted-foreground">Progress</span>
+                            <span className="font-medium">{progress}%</span>
+                          </div>
+                          <Progress value={progress} className="h-2" />
                         </div>
-                        <div>
-                          <div className="text-2xl font-bold text-yellow-600">{taskCounts.inProgress}</div>
-                          <div className="text-xs text-muted-foreground">In Progress</div>
+                        
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                          <div>
+                            <div className="text-2xl font-bold text-gray-600">{taskCounts.todo}</div>
+                            <div className="text-xs text-muted-foreground">To Do</div>
+                          </div>
+                          <div>
+                            <div className="text-2xl font-bold text-yellow-600">{taskCounts.inProgress}</div>
+                            <div className="text-xs text-muted-foreground">In Progress</div>
+                          </div>
+                          <div>
+                            <div className="text-2xl font-bold text-green-600">{taskCounts.done}</div>
+                            <div className="text-xs text-muted-foreground">Done</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="text-2xl font-bold text-green-600">{taskCounts.done}</div>
-                          <div className="text-xs text-muted-foreground">Done</div>
+                        
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <div className="flex items-center">
+                            <Calendar className="w-4 h-4 mr-1" />
+                            {new Date(project.createdAt).toLocaleDateString()}
+                          </div>
+                          <div className="flex items-center">
+                            <Users className="w-4 h-4 mr-1" />
+                            {taskCounts.total} tasks
+                          </div>
                         </div>
                       </div>
-                      
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {new Date(project.createdAt).toLocaleDateString()}
-                        </div>
-                        <div className="flex items-center">
-                          <Users className="w-4 h-4 mr-1" />
-                          {taskCounts.total} tasks
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </Link>
               );
             })}
           </div>

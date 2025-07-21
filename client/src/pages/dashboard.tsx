@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/layout/header";
-import KanbanBoard from "@/components/kanban/kanban-board";
+import { ModernKanbanBoard } from "@/components/modern-kanban/modern-kanban-board";
 import TaskListView from "@/components/task-list-view";
 import StatsDashboard from "@/components/stats-dashboard";
 import { NotificationCenter } from "@/components/notifications/notification-center";
@@ -137,7 +137,9 @@ export default function Dashboard() {
 
         {/* Content Area */}
         {viewMode === "kanban" ? (
-          <KanbanBoard tasks={filteredTasks} projects={projects} isLoading={tasksLoading} />
+          <div className="p-6">
+            <ModernKanbanBoard />
+          </div>
         ) : (
           <TaskListView tasks={filteredTasks} projects={projects} isLoading={tasksLoading} />
         )}

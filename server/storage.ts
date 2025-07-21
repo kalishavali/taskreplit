@@ -1,19 +1,22 @@
 import { 
   projects, 
+  applications,
   tasks, 
   comments, 
   activities,
   notifications,
   timeEntries,
   teamMembers,
-  type Project, 
+  type Project,
+  type Application,
   type Task, 
   type Comment, 
   type Activity,
   type Notification,
   type TimeEntry,
   type TeamMember,
-  type InsertProject, 
+  type InsertProject,
+  type InsertApplication,
   type InsertTask, 
   type InsertComment, 
   type InsertActivity,
@@ -21,7 +24,8 @@ import {
   type InsertTimeEntry,
   type InsertTeamMember,
   type UpdateTask,
-  type UpdateProject
+  type UpdateProject,
+  type UpdateApplication
 } from "@shared/schema";
 
 export interface IStorage {
@@ -31,6 +35,13 @@ export interface IStorage {
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: number, project: UpdateProject): Promise<Project | undefined>;
   deleteProject(id: number): Promise<boolean>;
+
+  // Applications
+  getApplications(projectId?: number): Promise<Application[]>;
+  getApplication(id: number): Promise<Application | undefined>;
+  createApplication(application: InsertApplication): Promise<Application>;
+  updateApplication(id: number, application: UpdateApplication): Promise<Application | undefined>;
+  deleteApplication(id: number): Promise<boolean>;
 
   // Tasks
   getTasks(projectId?: number): Promise<Task[]>;
@@ -89,6 +100,7 @@ export interface IStorage {
 
 export class MemStorage implements IStorage {
   private projects: Map<number, Project>;
+  private applications: Map<number, Application>;
   private tasks: Map<number, Task>;
   private comments: Map<number, Comment>;
   private activities: Map<number, Activity>;
@@ -96,6 +108,7 @@ export class MemStorage implements IStorage {
   private timeEntries: Map<number, TimeEntry>;
   private teamMembers: Map<number, TeamMember>;
   private currentProjectId: number;
+  private currentApplicationId: number;
   private currentTaskId: number;
   private currentCommentId: number;
   private currentActivityId: number;
@@ -105,6 +118,7 @@ export class MemStorage implements IStorage {
 
   constructor() {
     this.projects = new Map();
+    this.applications = new Map();
     this.tasks = new Map();
     this.comments = new Map();
     this.activities = new Map();
@@ -112,6 +126,7 @@ export class MemStorage implements IStorage {
     this.timeEntries = new Map();
     this.teamMembers = new Map();
     this.currentProjectId = 1;
+    this.currentApplicationId = 1;
     this.currentTaskId = 1;
     this.currentCommentId = 1;
     this.currentActivityId = 1;
@@ -209,6 +224,52 @@ export class MemStorage implements IStorage {
     this.projects.set(project1.id, project1);
     this.projects.set(project2.id, project2);
     this.projects.set(project3.id, project3);
+
+    // Create sample applications
+    const applications = [
+      {
+        id: this.currentApplicationId++,
+        name: "Website Frontend",
+        description: "Main website frontend application",
+        projectId: project1.id,
+        color: "#3b82f6",
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: this.currentApplicationId++,
+        name: "Admin Dashboard",
+        description: "Administrative dashboard for content management",
+        projectId: project1.id,
+        color: "#10b981",
+        status: "active", 
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: this.currentApplicationId++,
+        name: "iOS App",
+        description: "Native iOS mobile application",
+        projectId: project2.id,
+        color: "#f59e0b",
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: this.currentApplicationId++,
+        name: "Android App",
+        description: "Native Android mobile application",
+        projectId: project2.id,
+        color: "#ef4444",
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+    ];
+
+    applications.forEach(app => this.applications.set(app.id, app));
 
     // Create sample tasks with enhanced data
     const tasks = [
@@ -431,6 +492,50 @@ export class MemStorage implements IStorage {
 
   async deleteProject(id: number): Promise<boolean> {
     return this.projects.delete(id);
+  }
+
+  // Applications
+  async getApplications(projectId?: number): Promise<Application[]> {
+    let applications = Array.from(this.applications.values());
+    if (projectId) {
+      applications = applications.filter(app => app.projectId === projectId);
+    }
+    return applications.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getApplication(id: number): Promise<Application | undefined> {
+    return this.applications.get(id);
+  }
+
+  async createApplication(insertApplication: InsertApplication): Promise<Application> {
+    const application: Application = {
+      ...insertApplication,
+      id: this.currentApplicationId++,
+      description: insertApplication.description || null,
+      color: insertApplication.color || "#10b981",
+      status: insertApplication.status || "active",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.applications.set(application.id, application);
+    return application;
+  }
+
+  async updateApplication(id: number, updateApplication: UpdateApplication): Promise<Application | undefined> {
+    const application = this.applications.get(id);
+    if (!application) return undefined;
+    
+    const updated: Application = {
+      ...application,
+      ...updateApplication,
+      updatedAt: new Date(),
+    };
+    this.applications.set(id, updated);
+    return updated;
+  }
+
+  async deleteApplication(id: number): Promise<boolean> {
+    return this.applications.delete(id);
   }
 
   // Tasks

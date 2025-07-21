@@ -17,6 +17,17 @@ export const projects = pgTable("projects", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const applications = pgTable("applications", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  projectId: integer("project_id").references(() => projects.id),
+  color: text("color").default("#10b981"),
+  status: text("status").default("active"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -25,6 +36,7 @@ export const tasks = pgTable("tasks", {
   status: text("status").notNull().default("todo"), // todo, inprogress, done, blocked
   priority: text("priority").notNull().default("medium"), // low, medium, high, urgent
   projectId: integer("project_id").references(() => projects.id),
+  applicationId: integer("application_id").references(() => applications.id),
   assignee: text("assignee"),
   dueDate: timestamp("due_date"),
   progress: integer("progress").default(0), // 0-100
@@ -95,6 +107,12 @@ export const insertProjectSchema = createInsertSchema(projects).omit({
   updatedAt: true,
 });
 
+export const insertApplicationSchema = createInsertSchema(applications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertTaskSchema = createInsertSchema(tasks).omit({
   id: true,
   createdAt: true,
@@ -129,9 +147,11 @@ export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
 // Update schemas
 export const updateTaskSchema = insertTaskSchema.partial();
 export const updateProjectSchema = insertProjectSchema.partial();
+export const updateApplicationSchema = insertApplicationSchema.partial();
 
 // Types
 export type Project = typeof projects.$inferSelect;
+export type Application = typeof applications.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type Activity = typeof activities.$inferSelect;
@@ -140,6 +160,7 @@ export type TimeEntry = typeof timeEntries.$inferSelect;
 export type TeamMember = typeof teamMembers.$inferSelect;
 
 export type InsertProject = z.infer<typeof insertProjectSchema>;
+export type InsertApplication = z.infer<typeof insertApplicationSchema>;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
@@ -149,3 +170,4 @@ export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
 
 export type UpdateTask = z.infer<typeof updateTaskSchema>;
 export type UpdateProject = z.infer<typeof updateProjectSchema>;
+export type UpdateApplication = z.infer<typeof updateApplicationSchema>;

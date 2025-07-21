@@ -4,6 +4,7 @@ import { z } from "zod";
 import { storage } from "./storage";
 import {
   insertProjectSchema,
+  insertApplicationSchema,
   insertTaskSchema,
   insertCommentSchema,
   insertNotificationSchema,
@@ -11,6 +12,7 @@ import {
   insertTeamMemberSchema,
   updateTaskSchema,
   updateProjectSchema,
+  updateApplicationSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -77,6 +79,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete project" });
+    }
+  });
+
+  // Applications routes
+  app.get("/api/applications", async (req, res) => {
+    try {
+      const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
+      const applications = await storage.getApplications(projectId);
+      res.json(applications);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch applications" });
+    }
+  });
+
+  app.get("/api/applications/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const application = await storage.getApplication(id);
+      if (!application) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+      res.json(application);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch application" });
+    }
+  });
+
+  app.post("/api/applications", async (req, res) => {
+    try {
+      const applicationData = insertApplicationSchema.parse(req.body);
+      const application = await storage.createApplication(applicationData);
+      res.status(201).json(application);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid application data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create application" });
+    }
+  });
+
+  app.patch("/api/applications/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = updateApplicationSchema.parse(req.body);
+      const application = await storage.updateApplication(id, updateData);
+      if (!application) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+      res.json(application);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid update data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update application" });
+    }
+  });
+
+  app.delete("/api/applications/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteApplication(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete application" });
     }
   });
 
