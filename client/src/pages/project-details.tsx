@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ModernKanbanBoard } from "@/components/modern-kanban/modern-kanban-board";
+import TaskListView from "@/components/task-list-view";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -18,7 +21,13 @@ import {
   Layers,
   Target,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Search,
+  Filter,
+  Grid3X3,
+  List,
+  Activity,
+  Edit3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Project, Application, Task } from "@shared/schema";
@@ -27,6 +36,12 @@ export default function ProjectDetails() {
   const params = useParams();
   const projectId = params.id ? parseInt(params.id) : null;
   const [selectedApplication, setSelectedApplication] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<"table" | "list" | "timeline">("table");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedPriority, setSelectedPriority] = useState<string>("all");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
 
   const { data: project, isLoading: projectLoading } = useQuery<Project>({
     queryKey: ["/api/projects", projectId],
@@ -48,7 +63,7 @@ export default function ProjectDetails() {
     enabled: !!projectId,
   });
 
-  const { data: tasks = [] } = useQuery<Task[]>({
+  const { data: allTasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks", projectId, selectedApplication],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -62,6 +77,27 @@ export default function ProjectDetails() {
     },
     enabled: !!projectId,
   });
+
+  // Filter tasks based on search and filters
+  const tasks = allTasks.filter(task => {
+    if (searchQuery.trim() && !task.title.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+    if (selectedStatus !== "all" && task.status !== selectedStatus) {
+      return false;
+    }
+    if (selectedPriority !== "all" && task.priority !== selectedPriority) {
+      return false;
+    }
+    return true;
+  });
+
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setSelectedStatus("all");
+    setSelectedPriority("all");
+    setSelectedApplication(null);
+  };
 
   if (projectLoading || !project) {
     return (
@@ -140,16 +176,79 @@ export default function ProjectDetails() {
         {/* Project Header */}
         <div className="mb-8">
           <div className="flex items-start justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {project.name}
-              </h1>
-              <p className="text-gray-600 text-lg mb-4">
-                {project.description}
-              </p>
+            <div className="flex-1">
+              {isEditingName ? (
+                <div className="flex items-center gap-2 mb-2">
+                  <Input 
+                    defaultValue={project.name}
+                    className="text-3xl font-bold bg-transparent border-none p-0 h-auto focus-visible:ring-0"
+                    onBlur={(e) => {
+                      setIsEditingName(false);
+                      // TODO: Update project name via API
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setIsEditingName(false);
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <Button size="sm" variant="ghost" onClick={() => setIsEditingName(false)}>
+                    Save
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={() => setIsEditingName(true)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
               
-              {/* Project metadata */}
-              <div className="flex items-center gap-6 text-sm text-gray-500">
+              {isEditingDescription ? (
+                <div className="flex items-center gap-2">
+                  <Input 
+                    defaultValue={project.description || ""}
+                    className="text-gray-600 bg-transparent border-none p-0 h-auto focus-visible:ring-0"
+                    placeholder="Add project description..."
+                    onBlur={(e) => {
+                      setIsEditingDescription(false);
+                      // TODO: Update project description via API
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setIsEditingDescription(false);
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <Button size="sm" variant="ghost" onClick={() => setIsEditingDescription(false)}>
+                    Save
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 group">
+                  <p className="text-gray-600">{project.description || "No description"}</p>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={() => setIsEditingDescription(true)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Edit3 className="w-3 h-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
+              
+            {/* Project metadata */}
+            <div className="flex items-center gap-6 text-sm text-gray-500">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   <span>
@@ -168,7 +267,6 @@ export default function ProjectDetails() {
                   <span>{project.teamMembers?.length || 0} members</span>
                 </div>
               </div>
-            </div>
 
             {/* Status and actions */}
             <div className="flex items-center gap-3">
@@ -298,27 +396,121 @@ export default function ProjectDetails() {
           </TabsContent>
 
           <TabsContent value="table">
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-gray-500">Table view coming soon...</p>
-              </CardContent>
-            </Card>
+            <div className="bg-white rounded-lg border">
+              <div className="p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="text"
+                        placeholder="Search tasks..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10 w-64"
+                      />
+                    </div>
+                    
+                    <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="All Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="todo">Open</SelectItem>
+                        <SelectItem value="in-progress">In Progress</SelectItem>
+                        <SelectItem value="blocked">Blocked</SelectItem>
+                        <SelectItem value="done">Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={selectedPriority} onValueChange={setSelectedPriority}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="All Priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Priority</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Button variant="outline" size="sm" onClick={handleClearFilters}>
+                      <Filter className="w-4 h-4 mr-2" />
+                      Clear Filters
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-4 font-medium">Task</th>
+                        <th className="text-left py-3 px-4 font-medium">Status</th>
+                        <th className="text-left py-3 px-4 font-medium">Priority</th>
+                        <th className="text-left py-3 px-4 font-medium">Assignee</th>
+                        <th className="text-left py-3 px-4 font-medium">Due Date</th>
+                        <th className="text-left py-3 px-4 font-medium">Progress</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tasks.map((task) => (
+                        <tr key={task.id} className="border-b hover:bg-gray-50 cursor-pointer">
+                          <td className="py-3 px-4 font-medium">{task.title}</td>
+                          <td className="py-3 px-4">
+                            <Badge variant="secondary" className="capitalize">{task.status}</Badge>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge variant="outline" className="capitalize">{task.priority}</Badge>
+                          </td>
+                          <td className="py-3 px-4">{task.assignee || "Unassigned"}</td>
+                          <td className="py-3 px-4">
+                            {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No due date"}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-blue-600 h-2 rounded-full" 
+                                  style={{ width: `${task.progress || 0}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-sm text-gray-600">{task.progress || 0}%</span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {tasks.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No tasks found matching your filters</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="list">
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-gray-500">List view coming soon...</p>
-              </CardContent>
-            </Card>
+            <TaskListView 
+              tasks={tasks} 
+              projectId={projectId} 
+              applicationId={selectedApplication}
+            />
           </TabsContent>
 
           <TabsContent value="timeline">
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-gray-500">Timeline view coming soon...</p>
-              </CardContent>
-            </Card>
+            <div className="bg-white rounded-lg border p-6">
+              <div className="text-center py-8 text-gray-500">
+                <Activity className="h-12 w-12 mx-auto mb-4 opacity-40" />
+                <p className="text-lg font-medium mb-2">Timeline View</p>
+                <p>Timeline view coming soon with Gantt chart functionality</p>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

@@ -34,8 +34,21 @@ import type { Task, Comment, Project, Application } from "@shared/schema";
 
 
 
-// Component to fetch and display project and application info
-function ProjectAndApplicationInfo({ projectId, applicationId }: { projectId?: number | null, applicationId?: number | null }) {
+// Component to edit project and application info
+function EditableProjectAndApplicationInfo({ 
+  projectId, 
+  applicationId, 
+  onProjectChange, 
+  onApplicationChange 
+}: { 
+  projectId?: number | null, 
+  applicationId?: number | null,
+  onProjectChange: (projectId: number | null) => void,
+  onApplicationChange: (applicationId: number | null) => void
+}) {
+  const [isEditingProject, setIsEditingProject] = useState(false);
+  const [isEditingApplication, setIsEditingApplication] = useState(false);
+
   const { data: projects = [] } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
   });
@@ -48,14 +61,77 @@ function ProjectAndApplicationInfo({ projectId, applicationId }: { projectId?: n
   const application = applications.find(a => a.id === applicationId);
 
   return (
-    <div className="space-y-2 text-sm">
-      <div className="flex justify-between">
-        <span className="text-gray-600">Project:</span>
-        <span>{project?.name || "Unassigned"}</span>
+    <div className="space-y-3 text-sm">
+      {/* Project Selection */}
+      <div className="flex justify-between items-center">
+        <span className="text-gray-600 font-medium">Project:</span>
+        {isEditingProject ? (
+          <div className="flex items-center gap-2">
+            <Select value={projectId?.toString() || ""} onValueChange={(value) => {
+              const newProjectId = value ? parseInt(value) : null;
+              onProjectChange(newProjectId);
+              setIsEditingProject(false);
+            }}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Select project" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">No project</SelectItem>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id.toString()}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button size="sm" variant="ghost" onClick={() => setIsEditingProject(false)}>
+              <X className="w-3 h-3" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="text-gray-900">{project?.name || "Unassigned"}</span>
+            <Button size="sm" variant="ghost" onClick={() => setIsEditingProject(true)}>
+              <Edit3 className="w-3 h-3" />
+            </Button>
+          </div>
+        )}
       </div>
-      <div className="flex justify-between">
-        <span className="text-gray-600">Application:</span>
-        <span>{application?.name || "Not specified"}</span>
+
+      {/* Application Selection */}
+      <div className="flex justify-between items-center">
+        <span className="text-gray-600 font-medium">Application:</span>
+        {isEditingApplication ? (
+          <div className="flex items-center gap-2">
+            <Select value={applicationId?.toString() || ""} onValueChange={(value) => {
+              const newApplicationId = value ? parseInt(value) : null;
+              onApplicationChange(newApplicationId);
+              setIsEditingApplication(false);
+            }}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Select application" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">No application</SelectItem>
+                {applications.map((application) => (
+                  <SelectItem key={application.id} value={application.id.toString()}>
+                    {application.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button size="sm" variant="ghost" onClick={() => setIsEditingApplication(false)}>
+              <X className="w-3 h-3" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="text-gray-900">{application?.name || "Not specified"}</span>
+            <Button size="sm" variant="ghost" onClick={() => setIsEditingApplication(true)}>
+              <Edit3 className="w-3 h-3" />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -217,9 +293,19 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
   const [priority, setPriority] = useState(task?.priority || "medium");
   const [assignee, setAssignee] = useState(task?.assignee || "");
   const [progress, setProgress] = useState(task?.progress || 0);
+  const [currentProjectId, setCurrentProjectId] = useState<number | null>(null);
+  const [currentApplicationId, setCurrentApplicationId] = useState<number | null>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Initialize project and application IDs when task or defaults change
+  useEffect(() => {
+    if (task) {
+      setCurrentProjectId(task.projectId || projectId || null);
+      setCurrentApplicationId(task.applicationId || applicationId || null);
+    }
+  }, [task, projectId, applicationId]);
 
   // Reset form when task changes
   useEffect(() => {
@@ -505,7 +591,18 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
                   <div>
                     <h3 className="font-semibold mb-2">Project & Application</h3>
                     <div className="space-y-2 text-sm">
-                      <ProjectAndApplicationInfo projectId={task.projectId} applicationId={task.applicationId} />
+                      <EditableProjectAndApplicationInfo 
+                        projectId={currentProjectId} 
+                        applicationId={currentApplicationId}
+                        onProjectChange={(newProjectId) => {
+                          setCurrentProjectId(newProjectId);
+                          updateTaskMutation.mutate({ projectId: newProjectId });
+                        }}
+                        onApplicationChange={(newApplicationId) => {
+                          setCurrentApplicationId(newApplicationId);
+                          updateTaskMutation.mutate({ applicationId: newApplicationId });
+                        }}
+                      />
                     </div>
                   </div>
 

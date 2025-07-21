@@ -21,6 +21,21 @@ export default function Dashboard() {
   const [selectedProject, setSelectedProject] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
+  // Filter handlers
+  const handleProjectFilter = (value: string) => {
+    setSelectedProject(value);
+  };
+
+  const handleStatusFilter = (value: string) => {
+    setSelectedStatus(value);
+  };
+
+  const clearFilters = () => {
+    setSelectedProject("all");
+    setSelectedStatus("all");
+    setSearchQuery("");
+  };
+
   const { data: tasks = [], isLoading: tasksLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
@@ -75,6 +90,8 @@ export default function Dashboard() {
         return true;
       });
 
+  // Handle filter changes with existing functions above
+
   return (
     <>
       <Header 
@@ -111,7 +128,7 @@ export default function Dashboard() {
             
             {/* Filters */}
             <div className="flex items-center space-x-3">
-              <Select value={selectedProject} onValueChange={setSelectedProject}>
+              <Select value={selectedProject} onValueChange={handleProjectFilter}>
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="All Projects" />
                 </SelectTrigger>
@@ -125,21 +142,22 @@ export default function Dashboard() {
                 </SelectContent>
               </Select>
               
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <Select value={selectedStatus} onValueChange={handleStatusFilter}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="todo">To Do</SelectItem>
-                  <SelectItem value="inprogress">In Progress</SelectItem>
-                  <SelectItem value="done">Done</SelectItem>
+                  <SelectItem value="todo">Open</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="blocked">Blocked</SelectItem>
+                  <SelectItem value="done">Closed</SelectItem>
                 </SelectContent>
               </Select>
               
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={clearFilters}>
                 <Filter className="w-4 h-4 mr-1" />
-                More Filters
+                Clear Filters
               </Button>
             </div>
           </div>

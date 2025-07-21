@@ -11,10 +11,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, FolderOpen, Calendar, Users } from "lucide-react";
+import { Plus, FolderOpen, Calendar, Users, Upload, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertProjectSchema, type Project, type Task } from "@shared/schema";
+import { insertProjectSchema, type Project, type Task, type Application } from "@shared/schema";
 import type { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -24,6 +24,8 @@ type ProjectFormData = z.infer<typeof insertProjectSchema>;
 
 export default function Projects() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedApplications, setSelectedApplications] = useState<number[]>([]);
+  const [iconFile, setIconFile] = useState<File | null>(null);
   const { toast } = useToast();
 
   const { data: projects = [], isLoading } = useQuery<Project[]>({
@@ -32,6 +34,10 @@ export default function Projects() {
 
   const { data: allTasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
+  });
+
+  const { data: applications = [] } = useQuery<Application[]>({
+    queryKey: ["/api/applications"],
   });
 
   const createProjectMutation = useMutation({
@@ -171,6 +177,91 @@ export default function Projects() {
                       </FormItem>
                     )}
                   />
+                  
+                  {/* Icon Upload */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Project Icon</label>
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                        {iconFile ? (
+                          <img 
+                            src={URL.createObjectURL(iconFile)} 
+                            alt="Project icon" 
+                            className="w-12 h-12 rounded object-cover"
+                          />
+                        ) : (
+                          <Upload className="w-6 h-6 text-gray-400" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) setIconFile(file);
+                          }}
+                          className="hidden"
+                          id="icon-upload"
+                        />
+                        <label 
+                          htmlFor="icon-upload"
+                          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload Icon
+                        </label>
+                        {iconFile && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setIconFile(null)}
+                            className="ml-2"
+                          >
+                            <X className="w-4 h-4" />
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Multiple Application Selection */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Applications</label>
+                    <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-2">
+                      {applications.map((app) => (
+                        <label key={app.id} className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedApplications.includes(app.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedApplications([...selectedApplications, app.id]);
+                              } else {
+                                setSelectedApplications(selectedApplications.filter(id => id !== app.id));
+                              }
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                          <span className="text-sm">{app.name}</span>
+                        </label>
+                      ))}
+                      {applications.length === 0 && (
+                        <p className="text-sm text-gray-500 text-center py-2">
+                          No applications available
+                        </p>
+                      )}
+                    </div>
+                    {selectedApplications.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-600">
+                          Selected: {selectedApplications.length} application{selectedApplications.length > 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                   
                   <div className="flex justify-end space-x-2 pt-4">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
