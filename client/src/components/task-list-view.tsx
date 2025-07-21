@@ -252,8 +252,8 @@ export default function TaskListView({ tasks, projects = [], isLoading }: TaskLi
               setSelectedTask(undefined);
             }
           }}
-          projectId={selectedTask.projectId}
-          applicationId={selectedTask.applicationId}
+          projectId={selectedTask.projectId || undefined}
+          applicationId={selectedTask.applicationId || undefined}
         />
       )}
     </>

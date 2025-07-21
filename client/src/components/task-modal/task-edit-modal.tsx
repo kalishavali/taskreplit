@@ -67,8 +67,8 @@ function EditableProjectAndApplicationInfo({
         <span className="text-gray-600 font-medium">Project:</span>
         {isEditingProject ? (
           <div className="flex items-center gap-2">
-            <Select value={projectId?.toString() || ""} onValueChange={(value) => {
-              const newProjectId = value ? parseInt(value) : null;
+            <Select value={projectId?.toString() || "none"} onValueChange={(value) => {
+              const newProjectId = value && value !== "none" ? parseInt(value) : null;
               onProjectChange(newProjectId);
               setIsEditingProject(false);
             }}>
@@ -76,7 +76,7 @@ function EditableProjectAndApplicationInfo({
                 <SelectValue placeholder="Select project" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No project</SelectItem>
+                <SelectItem value="none">No project</SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id.toString()}>
                     {project.name}
@@ -103,8 +103,8 @@ function EditableProjectAndApplicationInfo({
         <span className="text-gray-600 font-medium">Application:</span>
         {isEditingApplication ? (
           <div className="flex items-center gap-2">
-            <Select value={applicationId?.toString() || ""} onValueChange={(value) => {
-              const newApplicationId = value ? parseInt(value) : null;
+            <Select value={applicationId?.toString() || "none"} onValueChange={(value) => {
+              const newApplicationId = value && value !== "none" ? parseInt(value) : null;
               onApplicationChange(newApplicationId);
               setIsEditingApplication(false);
             }}>
@@ -112,7 +112,7 @@ function EditableProjectAndApplicationInfo({
                 <SelectValue placeholder="Select application" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No application</SelectItem>
+                <SelectItem value="none">No application</SelectItem>
                 {applications.map((application) => (
                   <SelectItem key={application.id} value={application.id.toString()}>
                     {application.name}
