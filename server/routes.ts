@@ -6,6 +6,9 @@ import {
   insertProjectSchema,
   insertTaskSchema,
   insertCommentSchema,
+  insertNotificationSchema,
+  insertTimeEntrySchema,
+  insertTeamMemberSchema,
   updateTaskSchema,
   updateProjectSchema,
 } from "@shared/schema";
@@ -213,25 +216,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Stats routes
+  // Enhanced Stats routes
   app.get("/api/stats", async (req, res) => {
     try {
-      const tasks = await storage.getTasks();
-      const projects = await storage.getProjects();
-      
-      const stats = {
-        totalTasks: tasks.length,
-        totalProjects: projects.length,
-        todoTasks: tasks.filter(t => t.status === "todo").length,
-        inProgressTasks: tasks.filter(t => t.status === "inprogress").length,
-        completedTasks: tasks.filter(t => t.status === "done").length,
-        overdueTasks: tasks.filter(t => 
-          t.dueDate && 
-          new Date(t.dueDate) < new Date() && 
-          t.status !== "done"
-        ).length,
-      };
-      
+      const stats = await storage.getStats();
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch statistics" });
@@ -290,6 +278,187 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(reportData);
     } catch (error) {
       res.status(500).json({ message: "Failed to generate report" });
+    }
+  });
+
+  // Notification routes
+  app.get("/api/notifications/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const notifications = await storage.getNotifications(userId);
+      res.json(notifications);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.get("/api/notifications/:userId/unread", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const notifications = await storage.getUnreadNotifications(userId);
+      res.json(notifications);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch unread notifications" });
+    }
+  });
+
+  app.post("/api/notifications", async (req, res) => {
+    try {
+      const notificationData = insertNotificationSchema.parse(req.body);
+      const notification = await storage.createNotification(notificationData);
+      res.status(201).json(notification);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid notification data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create notification" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.markNotificationAsRead(id);
+      if (!success) {
+        return res.status(404).json({ message: "Notification not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  app.patch("/api/notifications/:userId/read-all", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      await storage.markAllNotificationsAsRead(userId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark all notifications as read" });
+    }
+  });
+
+  // Time tracking routes
+  app.get("/api/time-entries", async (req, res) => {
+    try {
+      const { taskId, userId } = req.query;
+      const timeEntries = await storage.getTimeEntries(
+        taskId ? parseInt(taskId as string) : undefined,
+        userId as string
+      );
+      res.json(timeEntries);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch time entries" });
+    }
+  });
+
+  app.post("/api/time-entries", async (req, res) => {
+    try {
+      const timeEntryData = insertTimeEntrySchema.parse(req.body);
+      const timeEntry = await storage.createTimeEntry(timeEntryData);
+      res.status(201).json(timeEntry);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid time entry data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create time entry" });
+    }
+  });
+
+  app.delete("/api/time-entries/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteTimeEntry(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Time entry not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete time entry" });
+    }
+  });
+
+  // Team member routes
+  app.get("/api/team-members", async (req, res) => {
+    try {
+      const teamMembers = await storage.getTeamMembers();
+      res.json(teamMembers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch team members" });
+    }
+  });
+
+  app.get("/api/team-members/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const teamMember = await storage.getTeamMember(id);
+      if (!teamMember) {
+        return res.status(404).json({ message: "Team member not found" });
+      }
+      res.json(teamMember);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch team member" });
+    }
+  });
+
+  app.post("/api/team-members", async (req, res) => {
+    try {
+      const teamMemberData = insertTeamMemberSchema.parse(req.body);
+      const teamMember = await storage.createTeamMember(teamMemberData);
+      res.status(201).json(teamMember);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid team member data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create team member" });
+    }
+  });
+
+  app.patch("/api/team-members/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = req.body; // Partial data
+      const teamMember = await storage.updateTeamMember(id, updateData);
+      if (!teamMember) {
+        return res.status(404).json({ message: "Team member not found" });
+      }
+      res.json(teamMember);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update team member" });
+    }
+  });
+
+  app.delete("/api/team-members/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteTeamMember(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Team member not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete team member" });
+    }
+  });
+
+  // Enhanced task routes
+  app.get("/api/tasks/assignee/:assignee", async (req, res) => {
+    try {
+      const { assignee } = req.params;
+      const tasks = await storage.getTasksByAssignee(assignee);
+      res.json(tasks);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch tasks by assignee" });
+    }
+  });
+
+  app.get("/api/activities/project/:projectId", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const activities = await storage.getActivitiesByProject(projectId);
+      res.json(activities);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch project activities" });
     }
   });
 

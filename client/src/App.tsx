@@ -8,6 +8,7 @@ import Dashboard from "@/pages/dashboard";
 import Projects from "@/pages/projects";
 import Tasks from "@/pages/tasks";
 import Reports from "@/pages/reports";
+import Team from "@/pages/team";
 import Sidebar from "@/components/layout/sidebar";
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
           <Route path="/projects" component={Projects} />
           <Route path="/tasks" component={Tasks} />
           <Route path="/reports" component={Reports} />
+          <Route path="/team" component={Team} />
           <Route component={NotFound} />
         </Switch>
       </div>

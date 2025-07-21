@@ -5,6 +5,7 @@ import {
   Folder, 
   CheckSquare, 
   BarChart3,
+  Users,
 } from "lucide-react";
 
 const navigation = [
@@ -12,6 +13,7 @@ const navigation = [
   { name: "Projects", href: "/projects", icon: Folder },
   { name: "My Tasks", href: "/tasks", icon: CheckSquare },
   { name: "Reports", href: "/reports", icon: BarChart3 },
+  { name: "Team", href: "/team", icon: Users },
 ];
 
 export default function Sidebar() {
