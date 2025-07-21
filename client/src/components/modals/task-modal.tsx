@@ -89,7 +89,7 @@ export default function TaskModal({ isOpen, onClose, task, projects, initialStat
         ...data,
         dueDate: data.dueDate ? new Date(data.dueDate) : null,
       };
-      const response = await apiRequest("POST", "/api/tasks", taskData);
+      const response = await apiRequest("/api/tasks", "POST", taskData);
       return response.json();
     },
     onSuccess: () => {
@@ -116,7 +116,7 @@ export default function TaskModal({ isOpen, onClose, task, projects, initialStat
         ...data,
         dueDate: data.dueDate ? new Date(data.dueDate) : null,
       };
-      const response = await apiRequest("PATCH", `/api/tasks/${task!.id}`, taskData);
+      const response = await apiRequest(`/api/tasks/${task!.id}`, "PATCH", taskData);
       return response.json();
     },
     onSuccess: () => {

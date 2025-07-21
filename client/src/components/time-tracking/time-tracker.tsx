@@ -43,7 +43,7 @@ export function TimeTracker({ taskId, userId = "sarah@company.com" }: { taskId?:
       if (taskId) params.append('taskId', taskId.toString());
       if (userId) params.append('userId', userId);
       const response = await apiRequest(`/api/time-entries?${params}`);
-      return response as TimeEntry[];
+      return await response.json() as TimeEntry[];
     },
   });
 
@@ -51,7 +51,7 @@ export function TimeTracker({ taskId, userId = "sarah@company.com" }: { taskId?:
     queryKey: ['tasks'],
     queryFn: async () => {
       const response = await apiRequest('/api/tasks');
-      return response as Task[];
+      return await response.json() as Task[];
     },
   });
 

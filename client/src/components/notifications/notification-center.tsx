@@ -38,7 +38,7 @@ export function NotificationCenter({ userId = "sarah@company.com" }: { userId?: 
     queryKey: ['notifications', userId],
     queryFn: async () => {
       const response = await apiRequest(`/api/notifications/${userId}`);
-      return response as Notification[];
+      return await response.json() as Notification[];
     },
   });
 
@@ -46,7 +46,7 @@ export function NotificationCenter({ userId = "sarah@company.com" }: { userId?: 
     queryKey: ['notifications', userId, 'unread'],
     queryFn: async () => {
       const response = await apiRequest(`/api/notifications/${userId}/unread`);
-      return response as Notification[];
+      return await response.json() as Notification[];
     },
   });
 

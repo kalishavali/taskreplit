@@ -39,7 +39,7 @@ export default function ReportModal({ isOpen, onClose, projects }: ReportModalPr
 
   const generateReportMutation = useMutation({
     mutationFn: async (config: ReportConfig) => {
-      const response = await apiRequest("POST", "/api/reports/generate", config);
+      const response = await apiRequest("/api/reports/generate", "POST", config);
       return response.json();
     },
     onSuccess: (data) => {
@@ -60,7 +60,7 @@ export default function ReportModal({ isOpen, onClose, projects }: ReportModalPr
 
   const previewReportMutation = useMutation({
     mutationFn: async (config: ReportConfig) => {
-      const response = await apiRequest("POST", "/api/reports/generate", config);
+      const response = await apiRequest("/api/reports/generate", "POST", config);
       return response.json();
     },
     onSuccess: (data) => {

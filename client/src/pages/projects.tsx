@@ -36,7 +36,7 @@ export default function Projects() {
 
   const createProjectMutation = useMutation({
     mutationFn: async (data: ProjectFormData) => {
-      const response = await apiRequest("POST", "/api/projects", data);
+      const response = await apiRequest("/api/projects", "POST", data);
       return response.json();
     },
     onSuccess: () => {

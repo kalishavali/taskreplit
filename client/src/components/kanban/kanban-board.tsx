@@ -22,7 +22,7 @@ export default function KanbanBoard({ tasks, projects, isLoading }: KanbanBoardP
 
   const updateTaskStatusMutation = useMutation({
     mutationFn: async ({ taskId, status }: { taskId: number; status: string }) => {
-      const response = await apiRequest("PATCH", `/api/tasks/${taskId}/status`, { status });
+      const response = await apiRequest(`/api/tasks/${taskId}/status`, "PATCH", { status });
       return response.json();
     },
     onSuccess: () => {
