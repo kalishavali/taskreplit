@@ -29,31 +29,10 @@ import {
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { RichTextEditor, RichTextRenderer } from "@/components/rich-text-editor";
 import type { Task, Comment, Project, Application } from "@shared/schema";
 
-// Simple Rich Text Renderer for basic markdown-like formatting
-function RichTextRenderer({ content }: { content: string }) {
-  const renderText = (text: string) => {
-    // Replace **bold** with <strong>
-    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    // Replace *italic* with <em>
-    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    // Replace `code` with <code>
-    text = text.replace(/`(.*?)`/g, '<code class="bg-gray-200 px-1 py-0.5 rounded text-xs font-mono">$1</code>');
-    // Replace line breaks
-    text = text.replace(/\n/g, '<br />');
-    // Handle bullet points
-    text = text.replace(/^- (.+)/gm, '<li>$1</li>');
-    if (text.includes('<li>')) {
-      text = text.replace(/(<li>.*<\/li>)/s, '<ul class="list-disc list-inside ml-2">$1</ul>');
-    }
-    return text;
-  };
 
-  return (
-    <div dangerouslySetInnerHTML={{ __html: renderText(content) }} />
-  );
-}
 
 // Component to fetch and display project and application info
 function ProjectAndApplicationInfo({ projectId, applicationId }: { projectId?: number | null, applicationId?: number | null }) {
@@ -160,20 +139,11 @@ function CommentSection({ taskId }: { taskId: number }) {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <div className="border border-gray-200 rounded-md focus-within:ring-2 focus-within:ring-blue-500">
-              <Textarea
-                placeholder="Write your comment here... You can use **bold**, *italic*, or `code` formatting."
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                className="min-h-[80px] resize-none border-none focus:ring-0"
-              />
-              <div className="border-t px-3 py-2 bg-gray-50 text-xs text-gray-500 flex items-center gap-2">
-                <span>**bold**</span>
-                <span>*italic*</span>
-                <span>`code`</span>
-                <span>- bullet points</span>
-              </div>
-            </div>
+            <RichTextEditor
+              value={newComment}
+              onChange={setNewComment}
+              placeholder="Write your comment here..."
+            />
           </div>
         </div>
         <div className="flex justify-end">

@@ -60,9 +60,11 @@ RESTful endpoints organized by resource:
 - **Reports**: Analytics and report generation
 
 ### Rich Text Support
-- Custom rich text editor component for task descriptions and comments
+- Full-featured rich text editor with toolbar for task descriptions and comments
+- Support for markdown-like formatting: bold, italic, code blocks, lists, quotes, links
+- Live preview functionality for rendered content
 - JSONB storage for rich content in the database
-- Support for basic formatting (bold, italic, lists, etc.)
+- Enhanced code block support with syntax highlighting styling
 
 ## Data Flow
 
