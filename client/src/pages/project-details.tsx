@@ -90,6 +90,9 @@ export default function ProjectDetails() {
     if (selectedPriority !== "all" && task.priority !== selectedPriority) {
       return false;
     }
+    if (selectedApplication && task.applicationId !== selectedApplication) {
+      return false;
+    }
     return true;
   });
 
@@ -132,17 +135,22 @@ export default function ProjectDetails() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-      {/* Header */}
-      <div className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-emerald-100 to-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '2s'}}></div>
+      
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="glass border-b sticky top-0 z-50 animate-slide-right">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Navigation */}
             <div className="flex items-center gap-4">
               <Link href="/projects">
-                <Button variant="ghost" size="sm" className="gap-2">
+                <Button variant="ghost" size="sm" className="gap-2 hover-lift transition-all duration-300 hover:bg-white/20">
                   <ArrowLeft className="h-4 w-4" />
-                  <span className="text-sm text-gray-600">My Projects</span>
+                  <span className="text-sm font-medium">My Projects</span>
                 </Button>
               </Link>
               <span className="text-gray-400">/</span>
@@ -170,11 +178,11 @@ export default function ProjectDetails() {
               </Button>
             </div>
           </div>
+          </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        {/* Project Header */}
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {/* Project Header */}
         <div className="mb-8">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
@@ -281,58 +289,58 @@ export default function ProjectDetails() {
           </div>
 
           {/* Project stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Target className="h-4 w-4 text-blue-600" />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card className="hover-lift border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-100 animate-slide-up" style={{animationDelay: '0ms'}}>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg animate-float">
+                    <Target className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Total Tasks</p>
-                    <p className="text-2xl font-bold text-gray-900">{projectStats.totalTasks}</p>
+                    <p className="text-sm font-medium text-blue-700">Total Tasks</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{projectStats.totalTasks}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
+            <Card className="hover-lift border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-green-100 animate-slide-up" style={{animationDelay: '100ms'}}>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg animate-float" style={{animationDelay: '0.5s'}}>
+                    <CheckCircle className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Completed</p>
-                    <p className="text-2xl font-bold text-gray-900">{completionPercentage}%</p>
+                    <p className="text-sm font-medium text-emerald-700">Completed</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">{completionPercentage}%</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <Clock className="h-4 w-4 text-orange-600" />
+            <Card className="hover-lift border-0 shadow-lg bg-gradient-to-br from-orange-50 to-amber-100 animate-slide-up" style={{animationDelay: '200ms'}}>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg animate-float" style={{animationDelay: '1s'}}>
+                    <Clock className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Time Logged</p>
-                    <p className="text-2xl font-bold text-gray-900">{projectStats.totalTimeLogged}h</p>
+                    <p className="text-sm font-medium text-orange-700">Time Logged</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">{projectStats.totalTimeLogged}h</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Layers className="h-4 w-4 text-purple-600" />
+            <Card className="hover-lift border-0 shadow-lg bg-gradient-to-br from-purple-50 to-violet-100 animate-slide-up" style={{animationDelay: '300ms'}}>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg animate-float" style={{animationDelay: '1.5s'}}>
+                    <Layers className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Applications</p>
-                    <p className="text-2xl font-bold text-gray-900">{applications.length}</p>
+                    <p className="text-sm font-medium text-purple-700">Applications</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">{applications.length}</p>
                   </div>
                 </div>
               </CardContent>
@@ -340,64 +348,81 @@ export default function ProjectDetails() {
           </div>
         </div>
 
-        {/* Applications Filter */}
-        {applications.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center gap-4 mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Applications</h3>
-              <Button size="sm" variant="outline" className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Application
-              </Button>
-            </div>
+          {/* Applications Filter */}
+          {applications.length > 0 && (
+            <div className="mb-8 animate-slide-up" style={{animationDelay: '400ms'}}>
+              <div className="flex items-center gap-4 mb-6">
+                <h3 className="text-xl font-bold text-gray-900 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">Applications</h3>
+                <Button size="sm" variant="outline" className="gap-2 hover-lift transition-all duration-300 bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 hover:shadow-lg">
+                  <Plus className="h-4 w-4" />
+                  Add Application
+                </Button>
+              </div>
             
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap animate-fade-scale">
               <Button
                 size="sm"
                 variant={selectedApplication === null ? "default" : "outline"}
                 onClick={() => setSelectedApplication(null)}
+                className="transition-all duration-300 hover-lift hover:shadow-lg group relative overflow-hidden"
               >
-                All Applications
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <Layers className="w-4 h-4 mr-2 relative z-10" />
+                <span className="relative z-10">All Applications</span>
               </Button>
-              {applications.map((app) => (
+              {applications.map((app, index) => (
                 <Button
                   key={app.id}
                   size="sm"
                   variant={selectedApplication === app.id ? "default" : "outline"}
                   onClick={() => setSelectedApplication(app.id)}
-                  className="gap-2"
+                  className="gap-2 transition-all duration-300 hover-lift hover:shadow-lg group relative overflow-hidden"
+                  style={{
+                    animationDelay: `${index * 100}ms`
+                  }}
                 >
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div 
-                    className="w-3 h-3 rounded-full" 
+                    className="w-3 h-3 rounded-full relative z-10 animate-pulse-glow" 
                     style={{ backgroundColor: app.color || '#10b981' }}
                   />
-                  {app.name}
+                  <span className="relative z-10 font-medium">{app.name}</span>
                 </Button>
               ))}
             </div>
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Main Content */}
-        <Tabs defaultValue="kanban" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <TabsList className="grid w-fit grid-cols-4">
-              <TabsTrigger value="kanban">Kanban</TabsTrigger>
-              <TabsTrigger value="table">Table</TabsTrigger>
-              <TabsTrigger value="list">List</TabsTrigger>
-              <TabsTrigger value="timeline">Timeline</TabsTrigger>
-            </TabsList>
-          </div>
+          {/* Main Content */}
+          <Tabs defaultValue="kanban" className="space-y-8">
+            <div className="flex items-center justify-between animate-fade-scale" style={{animationDelay: '500ms'}}>
+              <TabsList className="grid w-fit grid-cols-4 bg-white/60 backdrop-blur-sm border-0 shadow-lg p-1">
+                <TabsTrigger value="kanban" className="relative overflow-hidden transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white font-medium">
+                  <span className="relative z-10">Kanban</span>
+                </TabsTrigger>
+                <TabsTrigger value="table" className="relative overflow-hidden transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white font-medium">
+                  <span className="relative z-10">Table</span>
+                </TabsTrigger>
+                <TabsTrigger value="list" className="relative overflow-hidden transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-500 data-[state=active]:text-white font-medium">
+                  <span className="relative z-10">List</span>
+                </TabsTrigger>
+                <TabsTrigger value="timeline" className="relative overflow-hidden transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white font-medium">
+                  <span className="relative z-10">Timeline</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-          <TabsContent value="kanban" className="space-y-6">
-            <ModernKanbanBoard 
-              projectId={projectId!} 
-              applicationId={selectedApplication || undefined} 
-            />
-          </TabsContent>
+            <TabsContent value="kanban" className="space-y-6 animate-fade-scale">
+              <div className="glass rounded-xl p-1 shadow-lg">
+                <ModernKanbanBoard 
+                  projectId={projectId!} 
+                  applicationId={selectedApplication || undefined} 
+                />
+              </div>
+            </TabsContent>
 
-          <TabsContent value="table">
-            <div className="bg-white rounded-lg border">
+            <TabsContent value="table" className="animate-fade-scale">
+              <div className="glass rounded-xl shadow-lg border-0">
               <div className="p-6">
                 <div className="mb-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -480,26 +505,29 @@ export default function ProjectDetails() {
                     <p>No tasks found matching your filters</p>
                   </div>
                 )}
+                </div>
               </div>
-            </div>
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="list">
-            <TaskListView 
-              tasks={tasks} 
-              projects={[project]} 
-            />
-          </TabsContent>
+            <TabsContent value="list" className="animate-fade-scale">
+              <div className="glass rounded-xl shadow-lg p-6">
+                <TaskListView 
+                  tasks={tasks} 
+                  projects={[project]} 
+                />
+              </div>
+            </TabsContent>
 
-          <TabsContent value="timeline">
-            <div className="bg-white rounded-lg border p-6">
-              <TimelineView 
-                tasks={tasks} 
-                projects={[project]} 
-              />
-            </div>
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="timeline" className="animate-fade-scale">
+              <div className="glass rounded-xl shadow-lg p-6">
+                <TimelineView 
+                  tasks={tasks} 
+                  projects={[project]} 
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );
