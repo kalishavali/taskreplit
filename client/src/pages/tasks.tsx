@@ -152,7 +152,7 @@ export default function Tasks() {
         </div>
 
         {/* Task List */}
-        <div className="p-6">
+        <div className="p-6 h-full overflow-auto">
           <TaskListView tasks={filteredTasks} projects={projects} isLoading={tasksLoading} />
         </div>
       </main>

@@ -17,7 +17,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import TaskModal from "@/components/modals/task-modal";
+import { TaskEditModal } from "@/components/task-modal/task-edit-modal";
 import { cn } from "@/lib/utils";
 import type { Task, Project } from "@shared/schema";
 
@@ -95,21 +95,22 @@ export default function TaskListView({ tasks, projects, isLoading }: TaskListVie
   return (
     <>
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-8"></TableHead>
-              <TableHead>Task</TableHead>
-              <TableHead>Project</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Priority</TableHead>
-              <TableHead>Assignee</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead>Progress</TableHead>
-              <TableHead className="w-8"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <div className="max-h-[600px] overflow-y-auto">
+          <Table>
+            <TableHeader className="sticky top-0 bg-white z-10">
+              <TableRow>
+                <TableHead className="w-8"></TableHead>
+                <TableHead>Task</TableHead>
+                <TableHead>Project</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Priority</TableHead>
+                <TableHead>Assignee</TableHead>
+                <TableHead>Due Date</TableHead>
+                <TableHead>Progress</TableHead>
+                <TableHead className="w-8"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
             {tasks.map((task) => {
               const project = getProject(task.projectId);
               const overdue = isOverdue(task.dueDate, task.status);
@@ -237,18 +238,24 @@ export default function TaskListView({ tasks, projects, isLoading }: TaskListVie
               );
             })}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
       </div>
 
-      <TaskModal 
-        isOpen={isTaskModalOpen}
-        onClose={() => {
-          setIsTaskModalOpen(false);
-          setSelectedTask(undefined);
-        }}
-        task={selectedTask}
-        projects={projects}
-      />
+      {selectedTask && (
+        <TaskEditModal 
+          task={selectedTask}
+          open={isTaskModalOpen}
+          onOpenChange={(open) => {
+            setIsTaskModalOpen(open);
+            if (!open) {
+              setSelectedTask(undefined);
+            }
+          }}
+          projectId={selectedTask.projectId}
+          applicationId={selectedTask.applicationId}
+        />
+      )}
     </>
   );
 }
