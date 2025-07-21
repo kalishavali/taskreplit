@@ -27,6 +27,8 @@ import {
   type UpdateProject,
   type UpdateApplication
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, sql, and, or, ilike } from "drizzle-orm";
 
 export interface IStorage {
   // Projects
@@ -184,7 +186,6 @@ export class MemStorage implements IStorage {
       status: "active",
       startDate: new Date("2024-11-01"),
       endDate: new Date("2025-01-31"),
-      budget: 50000,
       teamMembers: ["Sarah Miller", "John Doe"],
       tags: ["design", "frontend", "ux"],
       createdAt: new Date(),
@@ -199,7 +200,6 @@ export class MemStorage implements IStorage {
       status: "active",
       startDate: new Date("2024-12-01"),
       endDate: new Date("2025-06-30"),
-      budget: 120000,
       teamMembers: ["John Doe"],
       tags: ["mobile", "react-native", "ios", "android"],
       createdAt: new Date(),
@@ -214,7 +214,6 @@ export class MemStorage implements IStorage {
       status: "active",
       startDate: new Date("2024-11-15"),
       endDate: new Date("2025-02-15"),
-      budget: 30000,
       teamMembers: ["Alex Johnson"],
       tags: ["marketing", "social-media", "content"],
       createdAt: new Date(),
@@ -477,6 +476,8 @@ export class MemStorage implements IStorage {
       id: this.currentProjectId++,
       color: insertProject.color || "blue",
       description: insertProject.description || null,
+      status: insertProject.status || "active",
+      assignees: insertProject.assignees || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -849,4 +850,410 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database Storage Implementation
+export class DatabaseStorage implements IStorage {
+  constructor() {
+    setTimeout(() => this.initializeData(), 100);
+  }
+
+  private async initializeData() {
+    try {
+      // Check if data already exists
+      const existingProjects = await db.select().from(projects);
+      if (existingProjects.length > 0) {
+        return; // Data already exists
+      }
+
+      // Initialize with sample data
+      const sampleProjects = [
+        {
+          name: "Website Redesign",
+          description: "Redesign the company website with modern UI/UX",
+          color: "blue",
+          status: "active",
+          startDate: new Date("2024-11-01"),
+          endDate: new Date("2025-01-31"),
+          assignees: ["Sarah Miller", "John Doe"],
+          teamMembers: ["Sarah Miller", "John Doe"],
+          tags: ["design", "frontend", "ux"],
+        },
+        {
+          name: "Mobile App",
+          description: "Develop a mobile application for iOS and Android",
+          color: "green",
+          status: "active",
+          startDate: new Date("2024-12-01"),
+          endDate: new Date("2025-06-30"),
+          assignees: ["John Doe"],
+          teamMembers: ["John Doe"],
+          tags: ["mobile", "react-native", "ios", "android"],
+        },
+        {
+          name: "Marketing Campaign",
+          description: "Launch a comprehensive digital marketing campaign",
+          color: "purple",
+          status: "active",
+          startDate: new Date("2024-11-15"),
+          endDate: new Date("2025-02-15"),
+          assignees: ["Alex Johnson"],
+          teamMembers: ["Alex Johnson"],
+          tags: ["marketing", "social-media", "content"],
+        }
+      ];
+
+      const insertedProjects = await db.insert(projects).values(sampleProjects).returning();
+      
+      // Create sample tasks
+      const sampleTasks = [
+        {
+          title: "Update homepage design",
+          description: "Redesign the homepage layout to improve user engagement",
+          status: "Open",
+          priority: "high",
+          projectId: insertedProjects[0].id,
+          assignee: "Sarah Miller",
+          dueDate: new Date("2024-12-15"),
+          progress: 0,
+          tags: ["design", "ui", "homepage"],
+          content: null,
+          actualHours: null,
+          applicationId: null,
+          dependencies: null
+        },
+        {
+          title: "Design user authentication flow",
+          description: "Create wireframes and prototypes for login process",
+          status: "Open",
+          priority: "medium",
+          projectId: insertedProjects[1].id,
+          assignee: "John Doe",
+          dueDate: new Date("2024-12-20"),
+          progress: 0,
+          tags: ["design", "authentication", "ux"],
+          content: null,
+          actualHours: null,
+          applicationId: null,
+          dependencies: null
+        },
+        {
+          title: "Create social media content",
+          description: "Develop engaging posts for social media campaigns",
+          status: "InProgress",
+          priority: "low",
+          projectId: insertedProjects[2].id,
+          assignee: "Alex Johnson",
+          dueDate: new Date("2024-12-18"),
+          progress: 60,
+          tags: ["content", "social-media", "marketing"],
+          content: null,
+          actualHours: null,
+          applicationId: null,
+          dependencies: null
+        }
+      ];
+
+      await db.insert(tasks).values(sampleTasks);
+
+      // Create team members
+      const sampleTeamMembers = [
+        {
+          name: "Sarah Miller",
+          email: "sarah@company.com",
+          role: "manager",
+          department: "Design",
+          isActive: true,
+        },
+        {
+          name: "John Doe",
+          email: "john@company.com",
+          role: "member",
+          department: "Engineering",
+          isActive: true,
+        },
+        {
+          name: "Alex Johnson",
+          email: "alex@company.com",
+          role: "member",
+          department: "Marketing",
+          isActive: true,
+        }
+      ];
+
+      await db.insert(teamMembers).values(sampleTeamMembers);
+    } catch (error) {
+      console.log('Database initialization skipped or failed:', error);
+    }
+  }
+
+  // Projects
+  async getProjects(): Promise<Project[]> {
+    return await db.select().from(projects);
+  }
+
+  async getProject(id: number): Promise<Project | undefined> {
+    const [project] = await db.select().from(projects).where(eq(projects.id, id));
+    return project;
+  }
+
+  async createProject(insertProject: InsertProject): Promise<Project> {
+    const [project] = await db.insert(projects).values(insertProject).returning();
+    return project;
+  }
+
+  async updateProject(id: number, updateProject: UpdateProject): Promise<Project | undefined> {
+    const [project] = await db
+      .update(projects)
+      .set({ ...updateProject, updatedAt: new Date() })
+      .where(eq(projects.id, id))
+      .returning();
+    return project;
+  }
+
+  async deleteProject(id: number): Promise<boolean> {
+    const result = await db.delete(projects).where(eq(projects.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Applications
+  async getApplications(projectId?: number): Promise<Application[]> {
+    if (projectId) {
+      return await db.select().from(applications).where(eq(applications.projectId, projectId));
+    }
+    return await db.select().from(applications);
+  }
+
+  async getApplication(id: number): Promise<Application | undefined> {
+    const [application] = await db.select().from(applications).where(eq(applications.id, id));
+    return application;
+  }
+
+  async createApplication(insertApplication: InsertApplication): Promise<Application> {
+    const [application] = await db.insert(applications).values(insertApplication).returning();
+    return application;
+  }
+
+  async updateApplication(id: number, updateApplication: UpdateApplication): Promise<Application | undefined> {
+    const [application] = await db
+      .update(applications)
+      .set({ ...updateApplication, updatedAt: new Date() })
+      .where(eq(applications.id, id))
+      .returning();
+    return application;
+  }
+
+  async deleteApplication(id: number): Promise<boolean> {
+    const result = await db.delete(applications).where(eq(applications.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Tasks
+  async getTasks(projectId?: number): Promise<Task[]> {
+    if (projectId) {
+      return await db.select().from(tasks).where(eq(tasks.projectId, projectId));
+    }
+    return await db.select().from(tasks);
+  }
+
+  async getTask(id: number): Promise<Task | undefined> {
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, id));
+    return task;
+  }
+
+  async createTask(insertTask: InsertTask): Promise<Task> {
+    const [task] = await db.insert(tasks).values(insertTask).returning();
+    return task;
+  }
+
+  async updateTask(id: number, updateTask: UpdateTask): Promise<Task | undefined> {
+    const [task] = await db
+      .update(tasks)
+      .set({ ...updateTask, updatedAt: new Date() })
+      .where(eq(tasks.id, id))
+      .returning();
+    return task;
+  }
+
+  async deleteTask(id: number): Promise<boolean> {
+    const result = await db.delete(tasks).where(eq(tasks.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async updateTaskStatus(id: number, status: string): Promise<Task | undefined> {
+    const [task] = await db
+      .update(tasks)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(tasks.id, id))
+      .returning();
+    return task;
+  }
+
+  async getTasksByAssignee(assignee: string): Promise<Task[]> {
+    return await db.select().from(tasks).where(eq(tasks.assignee, assignee));
+  }
+
+  // Comments
+  async getTaskComments(taskId: number): Promise<Comment[]> {
+    return await db.select().from(comments).where(eq(comments.taskId, taskId));
+  }
+
+  async createComment(insertComment: InsertComment): Promise<Comment> {
+    const [comment] = await db.insert(comments).values(insertComment).returning();
+    return comment;
+  }
+
+  async deleteComment(id: number): Promise<boolean> {
+    const result = await db.delete(comments).where(eq(comments.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Activities
+  async getActivities(limit = 50): Promise<Activity[]> {
+    return await db.select().from(activities).limit(limit);
+  }
+
+  async getActivitiesByProject(projectId: number): Promise<Activity[]> {
+    return await db.select().from(activities).where(eq(activities.projectId, projectId));
+  }
+
+  async createActivity(insertActivity: InsertActivity): Promise<Activity> {
+    const [activity] = await db.insert(activities).values(insertActivity).returning();
+    return activity;
+  }
+
+  // Notifications
+  async getNotifications(userId: string): Promise<Notification[]> {
+    return await db.select().from(notifications).where(eq(notifications.userId, userId));
+  }
+
+  async getUnreadNotifications(userId: string): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+  }
+
+  async createNotification(insertNotification: InsertNotification): Promise<Notification> {
+    const [notification] = await db.insert(notifications).values(insertNotification).returning();
+    return notification;
+  }
+
+  async markNotificationAsRead(id: number): Promise<boolean> {
+    const result = await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async markAllNotificationsAsRead(userId: string): Promise<boolean> {
+    const result = await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.userId, userId));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Time tracking
+  async getTimeEntries(taskId?: number, userId?: string): Promise<TimeEntry[]> {
+    let query = db.select().from(timeEntries);
+    
+    if (taskId && userId) {
+      return await query.where(and(eq(timeEntries.taskId, taskId), eq(timeEntries.userId, userId)));
+    } else if (taskId) {
+      return await query.where(eq(timeEntries.taskId, taskId));
+    } else if (userId) {
+      return await query.where(eq(timeEntries.userId, userId));
+    }
+    
+    return await query;
+  }
+
+  async createTimeEntry(insertTimeEntry: InsertTimeEntry): Promise<TimeEntry> {
+    const [timeEntry] = await db.insert(timeEntries).values(insertTimeEntry).returning();
+    return timeEntry;
+  }
+
+  async deleteTimeEntry(id: number): Promise<boolean> {
+    const result = await db.delete(timeEntries).where(eq(timeEntries.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Team members
+  async getTeamMembers(): Promise<TeamMember[]> {
+    return await db.select().from(teamMembers);
+  }
+
+  async getTeamMember(id: number): Promise<TeamMember | undefined> {
+    const [teamMember] = await db.select().from(teamMembers).where(eq(teamMembers.id, id));
+    return teamMember;
+  }
+
+  async createTeamMember(insertTeamMember: InsertTeamMember): Promise<TeamMember> {
+    const [teamMember] = await db.insert(teamMembers).values(insertTeamMember).returning();
+    return teamMember;
+  }
+
+  async updateTeamMember(id: number, updateTeamMember: Partial<InsertTeamMember>): Promise<TeamMember | undefined> {
+    const [teamMember] = await db
+      .update(teamMembers)
+      .set(updateTeamMember)
+      .where(eq(teamMembers.id, id))
+      .returning();
+    return teamMember;
+  }
+
+  async deleteTeamMember(id: number): Promise<boolean> {
+    const result = await db.delete(teamMembers).where(eq(teamMembers.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Search
+  async searchTasks(query: string): Promise<Task[]> {
+    return await db
+      .select()
+      .from(tasks)
+      .where(
+        or(
+          ilike(tasks.title, `%${query}%`),
+          ilike(tasks.description, `%${query}%`)
+        )
+      );
+  }
+
+  // Stats
+  async getStats(): Promise<{
+    totalTasks: number;
+    totalProjects: number;
+    todoTasks: number;
+    inProgressTasks: number;
+    doneTasks: number;
+    blockedTasks: number;
+    totalTimeLogged: number;
+    activeTeamMembers: number;
+    unreadNotifications: number;
+  }> {
+    const [totalTasksResult] = await db.select({ count: sql<number>`count(*)` }).from(tasks);
+    const [totalProjectsResult] = await db.select({ count: sql<number>`count(*)` }).from(projects);
+    const [todoTasksResult] = await db.select({ count: sql<number>`count(*)` }).from(tasks).where(eq(tasks.status, 'Open'));
+    const [inProgressTasksResult] = await db.select({ count: sql<number>`count(*)` }).from(tasks).where(eq(tasks.status, 'InProgress'));
+    const [doneTasksResult] = await db.select({ count: sql<number>`count(*)` }).from(tasks).where(eq(tasks.status, 'Closed'));
+    const [blockedTasksResult] = await db.select({ count: sql<number>`count(*)` }).from(tasks).where(eq(tasks.status, 'Blocked'));
+    const [totalTimeResult] = await db.select({ sum: sql<number>`coalesce(sum(hours), 0)` }).from(timeEntries);
+    const [activeTeamMembersResult] = await db.select({ count: sql<number>`count(*)` }).from(teamMembers).where(eq(teamMembers.isActive, true));
+    const [unreadNotificationsResult] = await db.select({ count: sql<number>`count(*)` }).from(notifications).where(eq(notifications.isRead, false));
+
+    return {
+      totalTasks: totalTasksResult.count,
+      totalProjects: totalProjectsResult.count,
+      todoTasks: todoTasksResult.count,
+      inProgressTasks: inProgressTasksResult.count,
+      doneTasks: doneTasksResult.count,
+      blockedTasks: blockedTasksResult.count,
+      totalTimeLogged: totalTimeResult.sum,
+      activeTeamMembers: activeTeamMembersResult.count,
+      unreadNotifications: unreadNotificationsResult.count,
+    };
+  }
+}
+
+export const storage = new DatabaseStorage();
