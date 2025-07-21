@@ -24,13 +24,49 @@ import {
   Edit3,
   CheckCircle,
   AlertCircle,
-  Archive
+  Archive,
+  FileText,
+  Hash,
+  Play,
+  Pause,
+  XCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { RichTextEditor, RichTextRenderer } from "@/components/rich-text-editor";
 import type { Task, Comment, Project, Application } from "@shared/schema";
+
+// Utility functions for status styling
+function getStatusColor(status: string) {
+  switch (status) {
+    case 'todo':
+      return 'bg-blue-500 text-white';
+    case 'in-progress':
+      return 'bg-yellow-500 text-white';
+    case 'blocked':
+      return 'bg-red-500 text-white';
+    case 'done':
+      return 'bg-green-500 text-white';
+    default:
+      return 'bg-gray-500 text-white';
+  }
+}
+
+function getStatusIcon(status: string) {
+  switch (status) {
+    case 'todo':
+      return <Play className="h-4 w-4" />;
+    case 'in-progress':
+      return <Clock className="h-4 w-4" />;
+    case 'blocked':
+      return <XCircle className="h-4 w-4" />;
+    case 'done':
+      return <CheckCircle className="h-4 w-4" />;
+    default:
+      return <Flag className="h-4 w-4" />;
+  }
+}
 
 
 
@@ -218,14 +254,21 @@ function CommentSection({ taskId }: { taskId: number }) {
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="font-semibold text-lg">Comments ({comments.length})</h3>
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg text-white">
+          <MessageCircle className="h-5 w-5" />
+        </div>
+        <h3 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+          Comments ({comments.length})
+        </h3>
+      </div>
       
       {/* Add new comment */}
-      <div className="space-y-3">
-        <div className="flex gap-3">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-purple-100 text-purple-700">
+      <div className="glass rounded-2xl p-6 shadow-lg animate-slide-up">
+        <div className="flex gap-4 mb-4">
+          <Avatar className="h-10 w-10 ring-2 ring-gradient-to-r from-blue-400 to-purple-400">
+            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold">
               CU
             </AvatarFallback>
           </Avatar>
@@ -242,8 +285,19 @@ function CommentSection({ taskId }: { taskId: number }) {
             size="sm" 
             onClick={handleAddComment}
             disabled={!newComment.trim() || addCommentMutation.isPending}
+            className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300"
           >
-            {addCommentMutation.isPending ? "Adding..." : "Add Comment"}
+            {addCommentMutation.isPending ? (
+              <>
+                <Clock className="h-4 w-4 mr-2 animate-spin" />
+                Adding...
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Comment
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -371,10 +425,12 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="pb-4">
-          <div className="flex items-start justify-between">
-            <div className="flex-1 space-y-2">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col glass border-0 shadow-2xl">
+        {/* Beautiful gradient header */}
+        <div className="relative bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 p-6 -m-6 mb-4 rounded-t-xl">
+          <div className="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-t-xl" />
+          <div className="relative flex items-start justify-between text-white">
+            <div className="flex-1 space-y-3">
               {editingTitle ? (
                 <Input
                   value={title}
@@ -393,54 +449,82 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
                       }
                     }
                   }}
-                  className="text-xl font-bold border-none p-0 h-auto focus-visible:ring-0"
+                  className="text-2xl font-bold bg-white/20 border-white/30 text-white placeholder-white/70 focus:bg-white/30 transition-all duration-300"
                   autoFocus
                 />
               ) : (
                 <DialogTitle 
-                  className="text-xl cursor-pointer hover:bg-gray-50 rounded px-2 py-1 -mx-2 -my-1 flex items-center gap-2"
+                  className="text-2xl font-bold cursor-pointer hover:bg-white/20 rounded-lg px-3 py-2 -mx-3 -my-2 flex items-center gap-3 transition-all duration-300 group"
                   onClick={() => setEditingTitle(true)}
                 >
-                  {task.title}
-                  <Edit3 className="h-4 w-4 opacity-40" />
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${getStatusColor(task.status)} shadow-lg`}>
+                      {getStatusIcon(task.status)}
+                    </div>
+                    <span>{task.title}</span>
+                    <Edit3 className="h-5 w-5 opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
                 </DialogTitle>
               )}
               
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <span>Task #{task.id}</span>
+              <div className="flex items-center gap-4 text-white/90">
+                <div className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full">
+                  <Hash className="h-4 w-4" />
+                  <span className="font-medium">Task #{task.id}</span>
+                </div>
                 {dueDateStatus && (
-                  <>
-                    <span>•</span>
-                    <div className={cn("flex items-center gap-1", dueDateStatus.color)}>
-                      <Calendar className="h-3 w-3" />
-                      <span>{dueDateStatus.text}</span>
-                    </div>
-                  </>
+                  <div className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full">
+                    <Calendar className="h-4 w-4" />
+                    <span className="font-medium">{dueDateStatus.text}</span>
+                  </div>
                 )}
+                <div className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full">
+                  <User className="h-4 w-4" />
+                  <span className="font-medium">{task.assignee || 'Unassigned'}</span>
+                </div>
               </div>
             </div>
             
-            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
-              <X className="h-4 w-4" />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => onOpenChange(false)}
+              className="text-white hover:bg-white/20 hover:text-white transition-all duration-300"
+            >
+              <X className="h-5 w-5" />
             </Button>
           </div>
-        </DialogHeader>
+        </div>
 
         <div className="flex-1 overflow-hidden">
           <Tabs defaultValue="details" className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="comments">Comments</TabsTrigger>
-              <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 glass border-0 shadow-lg">
+              <TabsTrigger value="details" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white transition-all duration-300">
+                <FileText className="h-4 w-4 mr-2" />
+                Details
+              </TabsTrigger>
+              <TabsTrigger value="comments" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white transition-all duration-300">
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Comments
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white transition-all duration-300">
+                <Clock className="h-4 w-4 mr-2" />
+                Activity
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="details" className="flex-1 overflow-auto space-y-6 mt-4">
-              <div className="grid grid-cols-3 gap-6">
+            <TabsContent value="details" className="flex-1 overflow-auto space-y-6 mt-6 custom-scrollbar">
+              <div className="grid grid-cols-3 gap-8">
                 {/* Main content */}
-                <div className="col-span-2 space-y-6">
+                <div className="col-span-2 space-y-8">
                   {/* Description */}
-                  <div>
-                    <h3 className="font-semibold mb-3">Description</h3>
+                  <div className="glass rounded-2xl p-6 shadow-lg animate-slide-up">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg text-white">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <h3 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">Description</h3>
+                    </div>
                     {editingDescription ? (
                       <Textarea
                         value={description}
