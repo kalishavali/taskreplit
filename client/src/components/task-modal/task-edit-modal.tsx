@@ -31,6 +31,57 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Task, Comment, Project, Application } from "@shared/schema";
 
+// Simple Rich Text Renderer for basic markdown-like formatting
+function RichTextRenderer({ content }: { content: string }) {
+  const renderText = (text: string) => {
+    // Replace **bold** with <strong>
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Replace *italic* with <em>
+    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    // Replace `code` with <code>
+    text = text.replace(/`(.*?)`/g, '<code class="bg-gray-200 px-1 py-0.5 rounded text-xs font-mono">$1</code>');
+    // Replace line breaks
+    text = text.replace(/\n/g, '<br />');
+    // Handle bullet points
+    text = text.replace(/^- (.+)/gm, '<li>$1</li>');
+    if (text.includes('<li>')) {
+      text = text.replace(/(<li>.*<\/li>)/s, '<ul class="list-disc list-inside ml-2">$1</ul>');
+    }
+    return text;
+  };
+
+  return (
+    <div dangerouslySetInnerHTML={{ __html: renderText(content) }} />
+  );
+}
+
+// Component to fetch and display project and application info
+function ProjectAndApplicationInfo({ projectId, applicationId }: { projectId?: number | null, applicationId?: number | null }) {
+  const { data: projects = [] } = useQuery<Project[]>({
+    queryKey: ["/api/projects"],
+  });
+
+  const { data: applications = [] } = useQuery<Application[]>({
+    queryKey: ["/api/applications"],
+  });
+
+  const project = projects.find(p => p.id === projectId);
+  const application = applications.find(a => a.id === applicationId);
+
+  return (
+    <div className="space-y-2 text-sm">
+      <div className="flex justify-between">
+        <span className="text-gray-600">Project:</span>
+        <span>{project?.name || "Unassigned"}</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="text-gray-600">Application:</span>
+        <span>{application?.name || "Not specified"}</span>
+      </div>
+    </div>
+  );
+}
+
 interface TaskEditModalProps {
   task: Task | null;
   open: boolean;
@@ -58,13 +109,14 @@ function CommentSection({ taskId }: { taskId: number }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: comments = [] } = useQuery<Comment[]>({
+  const { data: comments = [], refetch: refetchComments } = useQuery<Comment[]>({
     queryKey: ["/api/comments", taskId],
     queryFn: async () => {
       const response = await fetch(`/api/comments?taskId=${taskId}`);
       if (!response.ok) throw new Error("Failed to fetch comments");
       return await response.json() as Comment[];
-    }
+    },
+    refetchInterval: 5000 // Auto-refresh comments every 5 seconds
   });
 
   const addCommentMutation = useMutation({
@@ -108,12 +160,20 @@ function CommentSection({ taskId }: { taskId: number }) {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <Textarea
-              placeholder="Add a comment..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className="min-h-[80px] resize-none border-gray-200 focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="border border-gray-200 rounded-md focus-within:ring-2 focus-within:ring-blue-500">
+              <Textarea
+                placeholder="Write your comment here... You can use **bold**, *italic*, or `code` formatting."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                className="min-h-[80px] resize-none border-none focus:ring-0"
+              />
+              <div className="border-t px-3 py-2 bg-gray-50 text-xs text-gray-500 flex items-center gap-2">
+                <span>**bold**</span>
+                <span>*italic*</span>
+                <span>`code`</span>
+                <span>- bullet points</span>
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex justify-end">
@@ -146,7 +206,7 @@ function CommentSection({ taskId }: { taskId: number }) {
                 </span>
               </div>
               <div className="bg-gray-50 rounded-lg p-3 text-sm">
-                {typeof comment.content === 'string' ? comment.content : JSON.stringify(comment.content)}
+                <RichTextRenderer content={typeof comment.content === 'string' ? comment.content : JSON.stringify(comment.content)} />
               </div>
             </div>
           </div>
@@ -343,7 +403,6 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
                       <h3 className="font-semibold">Progress</h3>
                       <span className="text-sm text-gray-500">{progress}%</span>
                     </div>
-                    <Progress value={progress} className="mb-2" />
                     <input
                       type="range"
                       min="0"
@@ -351,7 +410,7 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
                       value={progress}
                       onChange={(e) => setProgress(Number(e.target.value))}
                       onMouseUp={() => handleQuickUpdate("progress", progress)}
-                      className="w-full"
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
                 </div>
@@ -455,6 +514,33 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
                       }}
                       placeholder="Assign to..."
                     />
+                  </div>
+
+                  {/* Project & Application Info */}
+                  <div>
+                    <h3 className="font-semibold mb-2">Project & Application</h3>
+                    <div className="space-y-2 text-sm">
+                      <ProjectAndApplicationInfo projectId={task.projectId} applicationId={task.applicationId} />
+                    </div>
+                  </div>
+
+                  {/* Due Date */}
+                  <div>
+                    <h3 className="font-semibold mb-2">Due Date</h3>
+                    <div className="text-sm">
+                      {dueDateStatus ? (
+                        <div className={`${dueDateStatus.color} font-medium`}>
+                          {dueDateStatus.text}
+                        </div>
+                      ) : (
+                        <span className="text-gray-500">No due date set</span>
+                      )}
+                      {task.dueDate && (
+                        <div className="text-gray-600 mt-1">
+                          {new Date(task.dueDate).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Time tracking */}
