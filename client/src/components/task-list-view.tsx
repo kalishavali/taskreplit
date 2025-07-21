@@ -23,11 +23,11 @@ import type { Task, Project } from "@shared/schema";
 
 interface TaskListViewProps {
   tasks: Task[];
-  projects: Project[];
+  projects?: Project[];
   isLoading?: boolean;
 }
 
-export default function TaskListView({ tasks, projects, isLoading }: TaskListViewProps) {
+export default function TaskListView({ tasks, projects = [], isLoading }: TaskListViewProps) {
   const [selectedTask, setSelectedTask] = useState<Task | undefined>();
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
@@ -52,7 +52,7 @@ export default function TaskListView({ tasks, projects, isLoading }: TaskListVie
   };
 
   const getProject = (projectId: number | null) => {
-    return projects.find(p => p.id === projectId);
+    return projects?.find(p => p.id === projectId);
   };
 
   const isOverdue = (dueDate: Date | null, status: string) => {

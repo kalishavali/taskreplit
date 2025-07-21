@@ -498,8 +498,7 @@ export default function ProjectDetails() {
           <TabsContent value="list">
             <TaskListView 
               tasks={tasks} 
-              projectId={projectId} 
-              applicationId={selectedApplication}
+              projects={[project]} 
             />
           </TabsContent>
 
