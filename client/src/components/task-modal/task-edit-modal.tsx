@@ -180,14 +180,14 @@ function CommentSection({ taskId }: { taskId: number }) {
           <div key={comment.id} className="flex gap-3">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-blue-100 text-blue-700">
-                {comment.author.split(' ').map(n => n[0]).join('').toUpperCase()}
+                {comment.author ? comment.author.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 space-y-1">
               <div className="flex items-center gap-2">
-                <span className="font-medium text-sm">{comment.author}</span>
+                <span className="font-medium text-sm">{comment.author || 'Unknown User'}</span>
                 <span className="text-xs text-gray-500">
-                  {new Date(comment.createdAt).toLocaleDateString()}
+                  {comment.createdAt ? new Date(comment.createdAt).toLocaleDateString() : 'Just now'}
                 </span>
               </div>
               <div className="bg-gray-50 rounded-lg p-3 text-sm">
