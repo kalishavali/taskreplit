@@ -24,7 +24,7 @@ Font preference: "Quicksand", sans-serif for all application text.
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
 - **Database ORM**: Drizzle ORM with PostgreSQL dialect
-- **Database Provider**: Neon Database (serverless PostgreSQL)
+- **Database Provider**: Auto-detects between local PostgreSQL and Neon Database (serverless PostgreSQL)
 - **Session Storage**: PostgreSQL-based sessions with connect-pg-simple
 - **API Design**: RESTful API architecture
 
@@ -144,3 +144,11 @@ The architecture prioritizes developer experience with hot reloading, type safet
 - Removed time logging and budget tracking functionality per user request
 - Removed estimated hours fields from all task forms and displays
 - Simplified project statistics to focus on task completion metrics
+
+### Local PostgreSQL Support (July 2025)
+- Added automatic database provider detection (local PostgreSQL vs Neon)
+- Enhanced database configuration to support both local and cloud databases
+- Added comprehensive local setup guide (LOCAL_SETUP.md)
+- Installed native PostgreSQL driver (pg) alongside Neon serverless driver
+- Created environment configuration template (.env.example)
+- Database connection automatically chooses appropriate driver based on URL
