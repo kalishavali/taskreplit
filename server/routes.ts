@@ -274,6 +274,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generic comments routes
+  app.get("/api/comments", async (req, res) => {
+    try {
+      const taskId = req.query.taskId ? parseInt(req.query.taskId as string) : undefined;
+      if (taskId) {
+        const comments = await storage.getTaskComments(taskId);
+        res.json(comments);
+      } else {
+        res.status(400).json({ message: "taskId parameter is required" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch comments" });
+    }
+  });
+
+  app.post("/api/comments", async (req, res) => {
+    try {
+      const commentData = insertCommentSchema.parse(req.body);
+      const comment = await storage.createComment(commentData);
+      res.status(201).json(comment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid comment data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create comment" });
+    }
+  });
+
   // Activities routes
   app.get("/api/activities", async (req, res) => {
     try {

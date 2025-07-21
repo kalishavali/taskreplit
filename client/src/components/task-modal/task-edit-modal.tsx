@@ -94,24 +94,39 @@ function CommentSection({ taskId }: { taskId: number }) {
       const response = await fetch(`/api/comments?taskId=${taskId}`);
       if (!response.ok) throw new Error("Failed to fetch comments");
       return await response.json() as Comment[];
-    },
-    refetchInterval: 5000 // Auto-refresh comments every 5 seconds
+    }
   });
 
   const addCommentMutation = useMutation({
     mutationFn: async (content: string) => {
-      return await apiRequest("/api/comments", 'POST', {
+      const response = await apiRequest("/api/comments", 'POST', {
         taskId,
         content,
         author: "Current User" // TODO: Get from auth
       });
+      return response;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/comments", taskId] });
+    onSuccess: (newComment) => {
+      // Immediately update the cache with the new comment
+      queryClient.setQueryData(["/api/comments", taskId], (oldComments: Comment[] = []) => {
+        // Create comment with proper metadata
+        const commentWithDate = {
+          ...newComment,
+          createdAt: new Date().toISOString(),
+          id: Date.now() // Temporary ID until server confirms
+        };
+        return [...oldComments, commentWithDate];
+      });
       setNewComment("");
       toast({ title: "Comment added successfully" });
+      
+      // Refetch to get server-confirmed data shortly after
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/comments", taskId] });
+      }, 100);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Failed to add comment:", error);
       toast({ 
         title: "Error", 
         description: "Failed to add comment",
