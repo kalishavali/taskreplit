@@ -29,7 +29,17 @@ export default function Dashboard() {
     queryKey: ["/api/projects"],
   });
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery<{
+    totalTasks: number;
+    totalProjects: number;
+    todoTasks: number;
+    inProgressTasks: number;
+    doneTasks: number;
+    blockedTasks: number;
+    totalTimeLogged: number;
+    activeTeamMembers: number;
+    unreadNotifications: number;
+  }>({
     queryKey: ["/api/stats"],
   });
 
@@ -237,14 +247,14 @@ export default function Dashboard() {
                   />
                 </div>
 
-                {stats?.blockedTasks > 0 && (
+                {(stats?.blockedTasks || 0) > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm text-destructive">
                       <span>Blocked</span>
-                      <span>{stats.blockedTasks}</span>
+                      <span>{stats?.blockedTasks || 0}</span>
                     </div>
                     <Progress 
-                      value={stats.totalTasks ? (stats.blockedTasks / stats.totalTasks) * 100 : 0} 
+                      value={stats?.totalTasks ? ((stats?.blockedTasks || 0) / stats.totalTasks) * 100 : 0} 
                       className="h-2"
                     />
                   </div>

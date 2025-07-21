@@ -252,14 +252,6 @@ export function ModernKanbanBoard({ projectId, applicationId }: ModernKanbanBoar
 
   const { data: tasks = [], isLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks", selectedProject, applicationId],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedProject) params.append('projectId', selectedProject.toString());
-      if (applicationId) params.append('applicationId', applicationId.toString());
-      
-      const response = await apiRequest(`/api/tasks?${params}`);
-      return response as Task[];
-    }
   });
 
   const { data: projects = [] } = useQuery<Project[]>({
@@ -268,13 +260,6 @@ export function ModernKanbanBoard({ projectId, applicationId }: ModernKanbanBoar
 
   const { data: applications = [] } = useQuery<Application[]>({
     queryKey: ["/api/applications", selectedProject],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedProject) params.append('projectId', selectedProject.toString());
-      
-      const response = await apiRequest(`/api/applications?${params}`);
-      return response as Application[];
-    },
     enabled: !!selectedProject
   });
 
@@ -378,14 +363,14 @@ export function ModernKanbanBoard({ projectId, applicationId }: ModernKanbanBoar
         task={selectedTask}
         open={taskModalOpen}
         onOpenChange={setTaskModalOpen}
-        projectId={selectedProject}
+        projectId={selectedProject || undefined}
         applicationId={applicationId}
       />
 
       <TaskCreateModal
         open={createTaskModalOpen}
         onOpenChange={setCreateTaskModalOpen}
-        projectId={selectedProject}
+        projectId={selectedProject || undefined}
         applicationId={applicationId}
         initialStatus={createTaskStatus}
       />
