@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Smartphone, Globe, Watch } from "lucide-react";
+import { Plus, Search, Smartphone, Globe, Watch, Edit, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertApplicationSchema, type Application, type Project } from "@shared/schema";
@@ -29,6 +29,7 @@ import { toast } from "@/hooks/use-toast";
 
 export default function Applications() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingApplication, setEditingApplication] = useState<Application | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
 
@@ -44,6 +45,29 @@ export default function Applications() {
     },
   });
 
+  // Reset form when editing application changes
+  useEffect(() => {
+    if (editingApplication) {
+      form.reset({
+        name: editingApplication.name,
+        description: editingApplication.description || "",
+        icon: editingApplication.icon || "",
+        type: editingApplication.type,
+        color: editingApplication.color || "#3b82f6",
+        status: editingApplication.status,
+      });
+    } else {
+      form.reset({
+        name: "",
+        description: "",
+        icon: "",
+        type: "Web",
+        color: "#3b82f6",
+        status: "active",
+      });
+    }
+  }, [editingApplication, form]);
+
   const { data: applications = [], isLoading } = useQuery<Application[]>({
     queryKey: ['/api/applications'],
   });
@@ -54,8 +78,11 @@ export default function Applications() {
 
   const createApplication = useMutation({
     mutationFn: async (data: any) => {
-      return await fetch("/api/applications", {
-        method: "POST",
+      const url = editingApplication ? `/api/applications/${editingApplication.id}` : "/api/applications";
+      const method = editingApplication ? "PUT" : "POST";
+      
+      return await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
@@ -65,14 +92,35 @@ export default function Applications() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
       setIsCreateDialogOpen(false);
+      setEditingApplication(null);
       form.reset();
       toast({
-        title: "Application created successfully",
+        title: editingApplication ? "Application updated successfully" : "Application created successfully",
       });
     },
     onError: () => {
       toast({
-        title: "Failed to create application",
+        title: editingApplication ? "Failed to update application" : "Failed to create application",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteApplication = useMutation({
+    mutationFn: async (id: number) => {
+      return await fetch(`/api/applications/${id}`, {
+        method: "DELETE",
+      }).then(res => res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
+      toast({
+        title: "Application deleted successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to delete application",
         variant: "destructive",
       });
     },
@@ -80,6 +128,23 @@ export default function Applications() {
 
   const onSubmit = (data: any) => {
     createApplication.mutate(data);
+  };
+
+  const handleEdit = (app: Application) => {
+    setEditingApplication(app);
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this application?")) {
+      deleteApplication.mutate(id);
+    }
+  };
+
+  const handleDialogClose = () => {
+    setIsCreateDialogOpen(false);
+    setEditingApplication(null);
+    form.reset();
   };
 
   const filteredApplications = applications.filter((app: Application) =>
@@ -135,7 +200,7 @@ export default function Applications() {
             <p className="text-gray-600">Manage your applications and services</p>
           </div>
           
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <Dialog open={isCreateDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
@@ -144,7 +209,9 @@ export default function Applications() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Application</DialogTitle>
+                <DialogTitle>
+                  {editingApplication ? "Edit Application" : "Create New Application"}
+                </DialogTitle>
               </DialogHeader>
               
               <Form {...form}>
@@ -227,12 +294,15 @@ export default function Applications() {
                     <Button 
                       type="button" 
                       variant="outline" 
-                      onClick={() => setIsCreateDialogOpen(false)}
+                      onClick={handleDialogClose}
                     >
                       Cancel
                     </Button>
                     <Button type="submit" disabled={createApplication.isPending}>
-                      {createApplication.isPending ? "Creating..." : "Create Application"}
+                      {createApplication.isPending 
+                        ? (editingApplication ? "Updating..." : "Creating...") 
+                        : (editingApplication ? "Update Application" : "Create Application")
+                      }
                     </Button>
                   </div>
                 </form>
@@ -270,7 +340,7 @@ export default function Applications() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-4">
                   <Badge className={getTypeColor(app.type)}>
                     {getTypeIcon(app.type)}
                     <span className="ml-1">{app.type}</span>
@@ -279,6 +349,23 @@ export default function Applications() {
                     className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
                     style={{ backgroundColor: app.color || "#3b82f6" }}
                   />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(app)}
+                  >
+                    <Edit className="w-3 h-3" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDelete(app.id)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -292,7 +379,10 @@ export default function Applications() {
             </div>
             {!searchQuery && (
               <Button 
-                onClick={() => setIsCreateDialogOpen(true)}
+                onClick={() => {
+                  setEditingApplication(null);
+                  setIsCreateDialogOpen(true);
+                }}
                 variant="outline"
               >
                 <Plus className="w-4 h-4 mr-2" />

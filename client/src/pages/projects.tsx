@@ -74,8 +74,34 @@ export default function Projects() {
     },
   });
 
-  const onSubmit = (data: ProjectFormData) => {
-    createProjectMutation.mutate(data);
+  const onSubmit = async (data: ProjectFormData) => {
+    try {
+      // Create the project first
+      const projectResponse = await apiRequest("/api/projects", "POST", data);
+      const project = await projectResponse.json();
+      
+      // Link selected applications to the project if any
+      if (selectedApplications.length > 0) {
+        await apiRequest(`/api/projects/${project.id}/applications`, "POST", {
+          applicationIds: selectedApplications
+        });
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      setIsDialogOpen(false);
+      setSelectedApplications([]);
+      form.reset();
+      toast({
+        title: "Success",
+        description: "Project created successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create project.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getProjectProgress = (projectId: number) => {
@@ -195,6 +221,41 @@ export default function Projects() {
                       </FormItem>
                     )}
                   />
+                  
+                  {/* Applications Selection */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Related Applications</label>
+                    <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                      {applications.length === 0 ? (
+                        <p className="text-sm text-gray-500">No applications available</p>
+                      ) : (
+                        applications.map((app) => (
+                          <div key={app.id} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={`app-${app.id}`}
+                              checked={selectedApplications.includes(app.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedApplications([...selectedApplications, app.id]);
+                                } else {
+                                  setSelectedApplications(selectedApplications.filter(id => id !== app.id));
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <label htmlFor={`app-${app.id}`} className="flex items-center space-x-2 text-sm cursor-pointer">
+                              <span className="text-lg">{app.icon}</span>
+                              <span>{app.name}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {app.type}
+                              </Badge>
+                            </label>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                   
                   {/* Icon Upload */}
                   <div>
