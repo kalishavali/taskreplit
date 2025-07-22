@@ -442,6 +442,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteTask(id: number): Promise<boolean> {
+    // First delete all comments associated with this task
+    await db.delete(comments).where(eq(comments.taskId, id));
+    
+    // Then delete the task itself
     const result = await db.delete(tasks).where(eq(tasks.id, id));
     return (result.rowCount ?? 0) > 0;
   }
