@@ -11,7 +11,8 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-const databaseUrl = process.env.DATABASE_URL;
+// Force Supabase connection - override any system DATABASE_URL
+const databaseUrl = "postgresql://postgres:ojSfaUO2ftS3Cobd@db.wjhbttuvsehawslpbgai.supabase.co:5432/postgres";
 
 console.log(`🗃️  Connecting to database: ${databaseUrl.replace(/:[^:@]*@/, ':****@')}`);
 
@@ -29,9 +30,11 @@ if (isSupabase) {
   pool = new PgPool({ 
     connectionString: databaseUrl,
     ssl: { rejectUnauthorized: false }, // Supabase requires SSL
-    max: 20,
+    max: 5, // Reduce connection pool size
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    connectionTimeoutMillis: 15000, // Increase timeout
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10000,
   });
   db = drizzlePg({ client: pool, schema });
 } else if (isNeon) {
