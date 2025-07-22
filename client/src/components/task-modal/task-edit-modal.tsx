@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Progress } from "@/components/ui/progress";
 import { 
   Calendar,
@@ -40,6 +42,7 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
   const [status, setStatus] = useState(task.status || "Open");
   const [priority, setPriority] = useState(task.priority || "medium");
   const [assignee, setAssignee] = useState(task.assignee || "");
+  const [dueDate, setDueDate] = useState<Date | undefined>(task.dueDate ? new Date(task.dueDate) : undefined);
   const [selectedProjectId, setSelectedProjectId] = useState(task.projectId || projectId);
   const [selectedApplicationId, setSelectedApplicationId] = useState(task.applicationId || applicationId);
 
@@ -76,6 +79,7 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
       setStatus(task.status || "Open");
       setPriority(task.priority || "medium");
       setAssignee(task.assignee || "");
+      setDueDate(task.dueDate ? new Date(task.dueDate) : undefined);
       setSelectedProjectId(task.projectId || projectId);
       setSelectedApplicationId(task.applicationId || applicationId);
     }
@@ -113,6 +117,7 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
       status,
       priority,
       assignee,
+      dueDate: dueDate?.toISOString() || null,
       projectId: selectedProjectId,
       applicationId: selectedApplicationId
     });
@@ -186,7 +191,7 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Open">Open</SelectItem>
-                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="InProgress">In Progress</SelectItem>
                   <SelectItem value="Blocked">Blocked</SelectItem>
                   <SelectItem value="Closed">Closed</SelectItem>
                 </SelectContent>
@@ -232,6 +237,34 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Due Date */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Due Date</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !dueDate && "text-muted-foreground"
+                  )}
+                >
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {dueDate ? dueDate.toLocaleDateString() : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <CalendarComponent
+                  mode="single"
+                  selected={dueDate}
+                  onSelect={setDueDate}
+                  disabled={(date) => date < new Date("1900-01-01")}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Description */}

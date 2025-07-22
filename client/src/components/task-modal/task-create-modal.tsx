@@ -241,28 +241,28 @@ export function TaskCreateModal({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="todo">
+                          <SelectItem value="Open">
                             <div className="flex items-center gap-2">
                               <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                              To Do
+                              Open
                             </div>
                           </SelectItem>
-                          <SelectItem value="inprogress">
+                          <SelectItem value="InProgress">
                             <div className="flex items-center gap-2">
                               <div className="w-3 h-3 rounded-full bg-orange-400"></div>
                               In Progress
                             </div>
                           </SelectItem>
-                          <SelectItem value="review">
+                          <SelectItem value="Blocked">
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded-full bg-blue-400"></div>
-                              Review
+                              <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                              Blocked
                             </div>
                           </SelectItem>
-                          <SelectItem value="done">
+                          <SelectItem value="Closed">
                             <div className="flex items-center gap-2">
                               <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                              Done
+                              Closed
                             </div>
                           </SelectItem>
                         </SelectContent>

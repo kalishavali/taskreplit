@@ -12,9 +12,10 @@ interface KanbanBoardProps {
 }
 
 const COLUMNS = [
-  { id: "todo", title: "To Do", status: "todo" },
-  { id: "inprogress", title: "In Progress", status: "inprogress" },
-  { id: "done", title: "Done", status: "done" },
+  { id: "Open", title: "Open", status: "Open" },
+  { id: "InProgress", title: "In Progress", status: "InProgress" },
+  { id: "Blocked", title: "Blocked", status: "Blocked" },
+  { id: "Closed", title: "Closed", status: "Closed" },
 ];
 
 export default function KanbanBoard({ tasks, projects, isLoading }: KanbanBoardProps) {
