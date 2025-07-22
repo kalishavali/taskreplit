@@ -31,9 +31,10 @@ export function TeamManagement() {
   const queryClient = useQueryClient();
 
   const { data: teamMembers = [], isLoading } = useQuery<TeamMember[]>({
-    queryKey: ['team-members'],
+    queryKey: ['/api/team-members'],
     queryFn: async () => {
       const response = await apiRequest('/api/team-members');
+      console.log('Fetched team members:', response);
       return response as TeamMember[];
     },
   });
@@ -43,7 +44,7 @@ export function TeamManagement() {
       return await apiRequest('/api/team-members', 'POST', data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/team-members'] });
       setIsAddDialogOpen(false);
     },
   });
@@ -53,7 +54,7 @@ export function TeamManagement() {
       return await apiRequest(`/api/team-members/${id}`, 'PATCH', data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/team-members'] });
       setIsEditDialogOpen(false);
       setEditingMember(null);
     },
@@ -64,7 +65,7 @@ export function TeamManagement() {
       return await apiRequest(`/api/team-members/${id}`, 'DELETE');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/team-members'] });
     },
   });
 
