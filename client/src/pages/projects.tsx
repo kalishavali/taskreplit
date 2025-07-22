@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, FolderOpen, Calendar, Users, Upload, X, Sidebar, Layers } from "lucide-react";
+import { Plus, FolderOpen, Calendar, Users, Upload, X, Sidebar, Layers, Filter } from "lucide-react";
 import { ApplicationsPanel } from "@/components/applications-panel";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
