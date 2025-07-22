@@ -218,11 +218,10 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
           {/* Description */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Description</label>
-            <Textarea
+            <RichTextEditor
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Task description"
-              className="min-h-[120px] resize-none"
+              onChange={setDescription}
+              placeholder="Enter detailed task description..."
             />
           </div>
 
@@ -304,11 +303,11 @@ function CommentSection({ taskId }: { taskId: number }) {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <Textarea
+            <RichTextEditor
               value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
+              onChange={setNewComment}
               placeholder="Write a comment..."
-              className="min-h-[60px] resize-none text-sm"
+              className="text-sm"
             />
           </div>
         </div>
@@ -344,7 +343,9 @@ function CommentSection({ taskId }: { taskId: number }) {
               </div>
               
               <div className="text-sm text-gray-700">
-                {comment.content ? (typeof comment.content === 'string' ? comment.content : JSON.stringify(comment.content)) : 'No content'}
+                <RichTextRenderer 
+                  content={comment.content ? (typeof comment.content === 'string' ? comment.content : JSON.stringify(comment.content)) : 'No content'} 
+                />
               </div>
             </div>
           </div>
