@@ -11,7 +11,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, FolderOpen, Calendar, Users, Upload, X } from "lucide-react";
+import { Plus, FolderOpen, Calendar, Users, Upload, X, Sidebar } from "lucide-react";
+import { ApplicationsPanel } from "@/components/applications-panel";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertProjectSchema, type Project, type Task, type Application } from "@shared/schema";
@@ -26,6 +27,8 @@ export default function Projects() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedApplications, setSelectedApplications] = useState<number[]>([]);
   const [iconFile, setIconFile] = useState<File | null>(null);
+  const [isApplicationsPanelOpen, setIsApplicationsPanelOpen] = useState(false);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
   const { toast } = useToast();
 
   const { data: projects = [], isLoading } = useQuery<Project[]>({
@@ -112,18 +115,28 @@ export default function Projects() {
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-emerald-100 to-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '2s'}}></div>
       
-      <div className="relative z-10">
+      <div className="relative z-10 flex flex-col h-screen">
         <Header 
           title="Projects" 
           subtitle={`${projects.length} Active Projects`}
           action={
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover-lift">
-                <Plus className="w-4 h-4 mr-2" />
-                New Project
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsApplicationsPanelOpen(!isApplicationsPanelOpen)}
+                className="border-gray-300 hover:bg-gray-50"
+              >
+                <Sidebar className="w-4 h-4 mr-2" />
+                Apps
               </Button>
-            </DialogTrigger>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover-lift">
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Project
+                  </Button>
+                </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create New Project</DialogTitle>
@@ -280,10 +293,12 @@ export default function Projects() {
               </Form>
             </DialogContent>
           </Dialog>
+            </div>
         }
       />
       
-      <main className="flex-1 overflow-auto p-6">
+      <div className="flex flex-1 relative">
+        <main className={`flex-1 overflow-auto p-6 transition-all duration-300 ${isApplicationsPanelOpen ? 'mr-80' : ''}`}>
         {projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <FolderOpen className="w-16 h-16 text-gray-400 mb-4" />
@@ -372,6 +387,18 @@ export default function Projects() {
           </div>
           )}
         </main>
+        
+        {/* Applications Panel */}
+        {isApplicationsPanelOpen && (
+          <div className="fixed right-0 top-0 h-full z-50">
+            <ApplicationsPanel
+              projects={projects}
+              selectedProjectIds={selectedProjectIds}
+              onProjectSelectionChange={setSelectedProjectIds}
+            />
+          </div>
+        )}
+      </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -21,12 +21,21 @@ export const applications = pgTable("applications", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  projectId: integer("project_id").references(() => projects.id),
+  icon: text("icon"), // Icon URL or path
+  type: text("type").notNull().default("Web"), // Mobile, Web, Watch
   color: text("color").default("#10b981"),
   status: text("status").default("active"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+// Many-to-many relationship between projects and applications
+export const projectApplications = pgTable("project_applications", {
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  applicationId: integer("application_id").references(() => applications.id).notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.projectId, table.applicationId] })
+}));
 
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
@@ -111,6 +120,8 @@ export const insertApplicationSchema = createInsertSchema(applications).omit({
   updatedAt: true,
 });
 
+export const insertProjectApplicationSchema = createInsertSchema(projectApplications);
+
 export const insertTaskSchema = createInsertSchema(tasks).omit({
   id: true,
   createdAt: true,
@@ -150,6 +161,7 @@ export const updateApplicationSchema = insertApplicationSchema.partial();
 // Types
 export type Project = typeof projects.$inferSelect;
 export type Application = typeof applications.$inferSelect;
+export type ProjectApplication = typeof projectApplications.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type Activity = typeof activities.$inferSelect;
@@ -159,6 +171,7 @@ export type TeamMember = typeof teamMembers.$inferSelect;
 
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 export type InsertApplication = z.infer<typeof insertApplicationSchema>;
+export type InsertProjectApplication = z.infer<typeof insertProjectApplicationSchema>;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type InsertActivity = z.infer<typeof insertActivitySchema>;

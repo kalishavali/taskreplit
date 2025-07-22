@@ -1,6 +1,7 @@
 import { 
   projects, 
   applications,
+  projectApplications,
   tasks, 
   comments, 
   activities,
@@ -9,6 +10,7 @@ import {
   teamMembers,
   type Project,
   type Application,
+  type ProjectApplication,
   type Task, 
   type Comment, 
   type Activity,
@@ -17,6 +19,7 @@ import {
   type TeamMember,
   type InsertProject,
   type InsertApplication,
+  type InsertProjectApplication,
   type InsertTask, 
   type InsertComment, 
   type InsertActivity,
@@ -44,6 +47,11 @@ export interface IStorage {
   createApplication(application: InsertApplication): Promise<Application>;
   updateApplication(id: number, application: UpdateApplication): Promise<Application | undefined>;
   deleteApplication(id: number): Promise<boolean>;
+  
+  // Project-Application relationships
+  getProjectApplications(projectId: number): Promise<Application[]>;
+  linkApplicationsToProject(projectId: number, applicationIds: number[]): Promise<void>;
+  unlinkApplicationFromProject(projectId: number, applicationId: number): Promise<void>;
 
   // Tasks
   getTasks(projectId?: number): Promise<Task[]>;
@@ -1042,8 +1050,54 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteApplication(id: number): Promise<boolean> {
+    // First, remove all project-application relationships
+    await db.delete(projectApplications).where(eq(projectApplications.applicationId, id));
+    // Then delete the application
     const result = await db.delete(applications).where(eq(applications.id, id));
     return (result.rowCount ?? 0) > 0;
+  }
+
+  // Project-Application relationships
+  async getProjectApplications(projectId: number): Promise<Application[]> {
+    const result = await db
+      .select({
+        id: applications.id,
+        name: applications.name,
+        description: applications.description,
+        icon: applications.icon,
+        type: applications.type,
+        color: applications.color,
+        status: applications.status,
+        createdAt: applications.createdAt,
+        updatedAt: applications.updatedAt,
+      })
+      .from(projectApplications)
+      .innerJoin(applications, eq(projectApplications.applicationId, applications.id))
+      .where(eq(projectApplications.projectId, projectId));
+    
+    return result;
+  }
+
+  async linkApplicationsToProject(projectId: number, applicationIds: number[]): Promise<void> {
+    // Remove existing relationships for this project
+    await db.delete(projectApplications).where(eq(projectApplications.projectId, projectId));
+    
+    // Add new relationships
+    if (applicationIds.length > 0) {
+      const relationships = applicationIds.map(applicationId => ({
+        projectId,
+        applicationId
+      }));
+      await db.insert(projectApplications).values(relationships);
+    }
+  }
+
+  async unlinkApplicationFromProject(projectId: number, applicationId: number): Promise<void> {
+    await db.delete(projectApplications)
+      .where(and(
+        eq(projectApplications.projectId, projectId),
+        eq(projectApplications.applicationId, applicationId)
+      ));
   }
 
   // Tasks

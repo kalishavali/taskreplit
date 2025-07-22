@@ -149,6 +149,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Project-Application relationship routes
+  app.get("/api/projects/:projectId/applications", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const applications = await storage.getProjectApplications(projectId);
+      res.json(applications);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch project applications" });
+    }
+  });
+
+  app.post("/api/projects/:projectId/applications", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { applicationIds } = z.object({ applicationIds: z.array(z.number()) }).parse(req.body);
+      await storage.linkApplicationsToProject(projectId, applicationIds);
+      res.status(201).json({ message: "Applications linked successfully" });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid application IDs", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to link applications" });
+    }
+  });
+
+  app.delete("/api/projects/:projectId/applications/:applicationId", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const applicationId = parseInt(req.params.applicationId);
+      await storage.unlinkApplicationFromProject(projectId, applicationId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to unlink application" });
+    }
+  });
+
   // Tasks routes
   app.get("/api/tasks", async (req, res) => {
     try {
