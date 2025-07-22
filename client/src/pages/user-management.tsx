@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
-import type { User as UserType, Project, UserProjectPermission } from "@shared/schema";
+import type { User as UserType, Client, UserClientPermission } from "@shared/schema";
 
 export default function UserManagement() {
   const { user: currentUser } = useAuth();
@@ -41,15 +41,15 @@ export default function UserManagement() {
     enabled: currentUser?.role === 'admin',
   });
 
-  // Fetch all projects for permissions management
-  const { data: projects = [] } = useQuery<Project[]>({
-    queryKey: ["/api/projects"],
+  // Fetch all clients for permissions management
+  const { data: clients = [] } = useQuery<Client[]>({
+    queryKey: ["/api/clients"],
     enabled: currentUser?.role === 'admin',
   });
 
   // Fetch user permissions when a user is selected
-  const { data: userPermissions = [] } = useQuery<UserProjectPermission[]>({
-    queryKey: ["/api/auth/users", selectedUser?.id, "permissions"],
+  const { data: userPermissions = [] } = useQuery<UserClientPermission[]>({
+    queryKey: ["/api/users", selectedUser?.id, "client-permissions"],
     enabled: !!selectedUser && currentUser?.role === 'admin',
   });
 
@@ -90,29 +90,29 @@ export default function UserManagement() {
 
   // Set user permissions mutation
   const setPermissionMutation = useMutation({
-    mutationFn: async ({ userId, projectId, permissions }: { 
+    mutationFn: async ({ userId, clientId, permissions }: { 
       userId: number; 
-      projectId: number; 
+      clientId: number; 
       permissions: any; 
     }) => {
       const response = await apiRequest(
-        `/api/auth/users/${userId}/projects/${projectId}/permissions`, 
+        `/api/users/${userId}/client-permissions`, 
         "POST", 
-        permissions
+        { ...permissions, clientId }
       );
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ["/api/auth/users", selectedUser?.id, "permissions"] 
+        queryKey: ["/api/users", selectedUser?.id, "client-permissions"] 
       });
     },
   });
 
-  const handlePermissionChange = (projectId: number, permission: string, value: boolean) => {
+  const handlePermissionChange = (clientId: number, permission: string, value: boolean) => {
     if (!selectedUser) return;
 
-    const currentPermission = userPermissions.find(p => p.projectId === projectId);
+    const currentPermission = userPermissions.find(p => p.clientId === clientId);
     const updatedPermissions = {
       canView: currentPermission?.canView ?? true,
       canEdit: currentPermission?.canEdit ?? false,
@@ -123,7 +123,7 @@ export default function UserManagement() {
 
     setPermissionMutation.mutate({
       userId: selectedUser.id,
-      projectId,
+      clientId,
       permissions: updatedPermissions,
     });
   };
@@ -402,15 +402,15 @@ export default function UserManagement() {
           <Card>
             <CardHeader>
               <CardTitle style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                Project Permissions Overview
+                Client Permissions Overview
               </CardTitle>
               <CardDescription>
-                View and manage user permissions across all projects
+                View and manage user permissions across all clients
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                Select a user from the Users tab to manage their project permissions.
+                Select a user from the Users tab to manage their client permissions.
               </p>
             </CardContent>
           </Card>
@@ -422,24 +422,24 @@ export default function UserManagement() {
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: "'Quicksand', sans-serif" }}>
-              Project Permissions for {selectedUser?.firstName} {selectedUser?.lastName}
+              Client Permissions for {selectedUser?.firstName} {selectedUser?.lastName}
             </DialogTitle>
             <DialogDescription>
-              Set what this user can do in each project
+              Set what this user can do in each client
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
-            {projects.map((project) => {
-              const permission = userPermissions.find(p => p.projectId === project.id);
+            {clients.map((client: any) => {
+              const permission = userPermissions.find(p => p.clientId === client.id);
               
               return (
-                <Card key={project.id}>
+                <Card key={client.id}>
                   <CardHeader>
                     <CardTitle className="text-lg" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                      {project.name}
+                      {client.name}
                     </CardTitle>
-                    <CardDescription>{project.description}</CardDescription>
+                    <CardDescription>{client.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -447,7 +447,7 @@ export default function UserManagement() {
                         <Switch
                           checked={permission?.canView ?? false}
                           onCheckedChange={(checked) => 
-                            handlePermissionChange(project.id, 'canView', checked)
+                            handlePermissionChange(client.id, 'canView', checked)
                           }
                           disabled={setPermissionMutation.isPending}
                         />
@@ -461,7 +461,7 @@ export default function UserManagement() {
                         <Switch
                           checked={permission?.canEdit ?? false}
                           onCheckedChange={(checked) => 
-                            handlePermissionChange(project.id, 'canEdit', checked)
+                            handlePermissionChange(client.id, 'canEdit', checked)
                           }
                           disabled={setPermissionMutation.isPending}
                         />
@@ -475,7 +475,7 @@ export default function UserManagement() {
                         <Switch
                           checked={permission?.canDelete ?? false}
                           onCheckedChange={(checked) => 
-                            handlePermissionChange(project.id, 'canDelete', checked)
+                            handlePermissionChange(client.id, 'canDelete', checked)
                           }
                           disabled={setPermissionMutation.isPending}
                         />
@@ -489,7 +489,7 @@ export default function UserManagement() {
                         <Switch
                           checked={permission?.canManage ?? false}
                           onCheckedChange={(checked) => 
-                            handlePermissionChange(project.id, 'canManage', checked)
+                            handlePermissionChange(client.id, 'canManage', checked)
                           }
                           disabled={setPermissionMutation.isPending}
                         />

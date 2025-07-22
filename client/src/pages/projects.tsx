@@ -15,7 +15,7 @@ import { Plus, FolderOpen, Calendar, Users, Upload, X, Sidebar, Layers } from "l
 import { ApplicationsPanel } from "@/components/applications-panel";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertProjectSchema, type Project, type Task, type Application } from "@shared/schema";
+import { insertProjectSchema, type Project, type Task, type Application, type Client } from "@shared/schema";
 import type { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -30,6 +30,10 @@ export default function Projects() {
   const [isApplicationsPanelOpen, setIsApplicationsPanelOpen] = useState(false);
   const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
   const { toast } = useToast();
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["/api/clients"],
+  });
 
   const { data: projects = [], isLoading } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
@@ -233,6 +237,31 @@ export default function Projects() {
                   
                   <FormField
                     control={form.control}
+                    name="clientId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Client</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a client" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {(clients as any[]).map((client: any) => (
+                                <SelectItem key={client.id} value={client.id.toString()}>
+                                  {client.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
                     name="color"
                     render={({ field }) => (
                       <FormItem>
@@ -433,6 +462,16 @@ export default function Projects() {
                           {project.color}
                         </Badge>
                       </div>
+                      
+                      {/* Show client name */}
+                      {project.clientId && (
+                        <div className="mb-2">
+                          <Badge variant="outline" className="text-xs">
+                            {(clients as any[])?.find(c => c.id === project.clientId)?.name || 'Client'}
+                          </Badge>
+                        </div>
+                      )}
+                      
                       {project.description && (
                         <p className="text-sm text-muted-foreground">{project.description}</p>
                       )}

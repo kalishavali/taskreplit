@@ -287,16 +287,16 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // Set user project permissions (admin only)
-  app.post('/api/auth/users/:userId/projects/:projectId/permissions', requireAuth, requireAdmin, async (req, res) => {
+  // Set user client permissions (admin only)
+  app.post('/api/auth/users/:userId/clients/:clientId/permissions', requireAuth, requireAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
-      const projectId = parseInt(req.params.projectId);
+      const clientId = parseInt(req.params.clientId);
       const { canView = true, canEdit = false, canDelete = false, canManage = false } = req.body;
 
-      const permission = await storage.setUserProjectPermissions(userId, projectId, {
+      const permission = await storage.setUserClientPermissions(userId, clientId, {
         userId,
-        projectId,
+        clientId,
         canView,
         canEdit,
         canDelete,
@@ -314,7 +314,7 @@ export function setupAuthRoutes(app: Express) {
   app.get('/api/auth/users/:userId/permissions', requireAuth, requireAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
-      const permissions = await storage.getUserProjectPermissions(userId);
+      const permissions = await storage.getUserClientPermissions(userId);
       res.json(permissions);
     } catch (error) {
       console.error('Get permissions error:', error);
@@ -322,13 +322,13 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // Remove user project permission (admin only)
-  app.delete('/api/auth/users/:userId/projects/:projectId/permissions', requireAuth, requireAdmin, async (req, res) => {
+  // Remove user client permission (admin only)
+  app.delete('/api/auth/users/:userId/clients/:clientId/permissions', requireAuth, requireAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
-      const projectId = parseInt(req.params.projectId);
+      const clientId = parseInt(req.params.clientId);
 
-      const removed = await storage.removeUserProjectPermission(userId, projectId);
+      const removed = await storage.removeUserClientPermission(userId, clientId);
       if (!removed) {
         return res.status(404).json({ message: 'Permission not found' });
       }

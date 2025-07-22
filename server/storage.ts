@@ -190,6 +190,55 @@ export class DatabaseStorage implements IStorage {
     return (deleted.rowCount ?? 0) > 0;
   }
 
+  async getUserAccessibleClients(userId: number): Promise<Client[]> {
+    const user = await this.getUser(userId);
+    if (!user) return [];
+
+    // Admins can see all clients
+    if (user.role === 'admin') {
+      return await this.getClients();
+    }
+
+    // Regular users can only see clients they have permissions for
+    const userPermissions = await this.getUserClientPermissions(userId);
+    const clientIds = userPermissions.map(p => p.clientId);
+    
+    if (clientIds.length === 0) return [];
+
+    return await db.select().from(clients)
+      .where(inArray(clients.id, clientIds))
+      .orderBy(clients.name);
+  }
+
+  async checkUserClientPermission(userId: number, clientId: number, action: 'view' | 'edit' | 'delete' | 'manage'): Promise<boolean> {
+    const user = await this.getUser(userId);
+    if (!user) return false;
+
+    // Admins have all permissions
+    if (user.role === 'admin') return true;
+
+    const [permission] = await db.select().from(userClientPermissions)
+      .where(and(
+        eq(userClientPermissions.userId, userId),
+        eq(userClientPermissions.clientId, clientId)
+      ));
+
+    if (!permission) return false;
+
+    switch (action) {
+      case 'view':
+        return permission.canView;
+      case 'edit':
+        return permission.canEdit;
+      case 'delete':
+        return permission.canDelete;
+      case 'manage':
+        return permission.canManage;
+      default:
+        return false;
+    }
+  }
+
   // Projects
   async getProjects(clientId?: number): Promise<Project[]> {
     if (clientId) {
@@ -387,16 +436,7 @@ export class DatabaseStorage implements IStorage {
         if (projectIds.length === 0) {
           return [];
         }
-        searchQuery = searchQuery.where(
-          and(
-            or(
-              like(tasks.title, searchPattern),
-              like(tasks.description, searchPattern),
-              like(tasks.assignee, searchPattern)
-            ),
-            inArray(tasks.projectId, projectIds)
-          )
-        );
+        searchQuery = searchQuery.where(inArray(tasks.projectId, projectIds));
       }
     }
 
@@ -494,7 +534,7 @@ export class DatabaseStorage implements IStorage {
   async updateComment(id: number, updateComment: UpdateComment): Promise<Comment | undefined> {
     const [comment] = await db
       .update(comments)
-      .set({ ...updateComment, updatedAt: new Date() })
+      .set({ ...updateComment })
       .where(eq(comments.id, id))
       .returning();
     return comment;
@@ -547,7 +587,6 @@ export class DatabaseStorage implements IStorage {
       const conditions = [];
       if (filters.taskId) conditions.push(eq(timeEntries.taskId, filters.taskId));
       if (filters.userId) conditions.push(eq(timeEntries.userId, filters.userId));
-      if (filters.projectId) conditions.push(eq(timeEntries.projectId, filters.projectId));
 
       if (conditions.length > 0) {
         query = query.where(and(...conditions));

@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Search, Filter, Columns, List, Users, Clock, Bell, TrendingUp, CheckCircle, AlertTriangle, Timer, FolderOpen } from "lucide-react";
+import { Search, Filter, Columns, List, Users, Clock, Bell, TrendingUp, CheckCircle, AlertTriangle, Timer, FolderOpen, Building } from "lucide-react";
 import type { Task, Project } from "@shared/schema";
 
 export default function Dashboard() {
@@ -38,6 +38,10 @@ export default function Dashboard() {
 
   const { data: tasks = [], isLoading: tasksLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
+  });
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["/api/clients"],
   });
 
   const { data: projects = [] } = useQuery<Project[]>({
@@ -119,6 +123,22 @@ export default function Dashboard() {
                     </div>
                     <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                       <CheckCircle className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover-lift group">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Active Clients</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                        {(clients as any[]).length || 0}
+                      </p>
+                    </div>
+                    <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <Building className="h-6 w-6 text-white" />
                     </div>
                   </div>
                 </CardContent>
