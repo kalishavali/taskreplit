@@ -95,7 +95,7 @@ export default function ProjectDetails() {
   }, [allTasks]);
   
   // Get unique assignees for filter dropdown
-  const uniqueAssignees = Array.from(new Set(safeAllTasks.map((task: Task) => task.assignee).filter(Boolean)));
+  const uniqueAssignees = Array.from(new Set(safeAllTasks.map((task: Task) => task.assignee).filter(Boolean))) as string[];
 
   // Filter tasks based on search and filters
   const tasks = safeAllTasks.filter((task: Task) => {
@@ -497,7 +497,7 @@ export default function ProjectDetails() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Assignees</SelectItem>
-                        {uniqueAssignees.map((assignee) => (
+                        {uniqueAssignees.map((assignee: string) => (
                           <SelectItem key={assignee} value={assignee}>
                             {assignee}
                           </SelectItem>
@@ -614,7 +614,7 @@ export default function ProjectDetails() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Assignees</SelectItem>
-                      {uniqueAssignees.map((assignee) => (
+                      {uniqueAssignees.map((assignee: string) => (
                         <SelectItem key={assignee} value={assignee}>
                           {assignee}
                         </SelectItem>
