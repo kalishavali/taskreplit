@@ -32,6 +32,8 @@ export default function UserManagement() {
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
   const [newUserDialogOpen, setNewUserDialogOpen] = useState(false);
+  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
 
   // Fetch all users
   const { data: users = [], isLoading: usersLoading } = useQuery<UserType[]>({
@@ -71,6 +73,18 @@ export default function UserManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/users"] });
+    },
+  });
+
+  // Reset password mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, newPassword }: { userId: number; newPassword: string }) => {
+      const response = await apiRequest(`/api/auth/users/${userId}/reset-password`, "POST", { newPassword });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/users"] });
+      // You could add a toast notification here if needed
     },
   });
 
@@ -344,6 +358,20 @@ export default function UserManagement() {
                           Permissions
                         </Button>
                         
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setNewPassword("");
+                            setResetPasswordDialogOpen(true);
+                          }}
+                          style={{ fontFamily: "'Quicksand', sans-serif" }}
+                        >
+                          <Settings className="w-4 h-4 mr-1" />
+                          Reset Password
+                        </Button>
+                        
                         {user.id !== currentUser?.id && (
                           <Button
                             variant="outline"
@@ -476,6 +504,75 @@ export default function UserManagement() {
               );
             })}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Password Reset Dialog */}
+      <Dialog open={resetPasswordDialogOpen} onOpenChange={setResetPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle style={{ fontFamily: "'Quicksand', sans-serif" }}>
+              Reset Password for {selectedUser?.firstName} {selectedUser?.lastName}
+            </DialogTitle>
+            <DialogDescription>
+              Enter a new password for this user
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (selectedUser && newPassword.trim()) {
+                resetPasswordMutation.mutate({ 
+                  userId: selectedUser.id, 
+                  newPassword: newPassword.trim() 
+                });
+                setResetPasswordDialogOpen(false);
+                setNewPassword("");
+              }
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <Label htmlFor="newPassword" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                New Password
+              </Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+                required
+                minLength={6}
+                style={{ fontFamily: "'Quicksand', sans-serif" }}
+              />
+              <p className="text-sm text-gray-500 mt-1" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                Password must be at least 6 characters long
+              </p>
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setResetPasswordDialogOpen(false);
+                  setNewPassword("");
+                }}
+                style={{ fontFamily: "'Quicksand', sans-serif" }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={resetPasswordMutation.isPending || !newPassword.trim()}
+                style={{ fontFamily: "'Quicksand', sans-serif" }}
+              >
+                {resetPasswordMutation.isPending ? "Resetting..." : "Reset Password"}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

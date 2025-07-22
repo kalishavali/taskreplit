@@ -90,8 +90,7 @@ export function setupAuthRoutes(app: Express) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
-      // Update last login
-      await storage.updateUser(user.id, { lastLogin: new Date() });
+      // User successfully authenticated
 
       // Set session
       req.session.userId = user.id;
@@ -254,6 +253,37 @@ export function setupAuthRoutes(app: Express) {
     } catch (error) {
       console.error('Delete user error:', error);
       res.status(500).json({ message: 'Failed to delete user' });
+    }
+  });
+
+  // Reset user password (admin only)
+  app.post('/api/auth/users/:id/reset-password', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { newPassword } = req.body;
+
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Hash new password
+      const hashedPassword = await hashPassword(newPassword);
+
+      // Update user password
+      const updated = await storage.updateUser(userId, { password: hashedPassword });
+      if (!updated) {
+        return res.status(500).json({ message: 'Failed to reset password' });
+      }
+
+      res.json({ message: 'Password reset successfully' });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ message: 'Failed to reset password' });
     }
   });
 
