@@ -16,7 +16,8 @@ import {
   User,
   Save,
   X,
-  Plus
+  Plus,
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
@@ -112,6 +113,26 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
     },
   });
 
+  const deleteTaskMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(`/api/tasks/${task.id}`, 'DELETE');
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      onOpenChange(false);
+      toast({ title: "Task deleted successfully!" });
+    },
+    onError: () => {
+      toast({ 
+        title: "Error", 
+        description: "Failed to delete task",
+        variant: "destructive" 
+      });
+    }
+  });
+
   const handleSave = () => {
     updateTaskMutation.mutate({
       title,
@@ -123,6 +144,10 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
       projectId: selectedProjectId,
       applicationId: selectedApplicationId
     });
+  };
+
+  const handleDelete = () => {
+    deleteTaskMutation.mutate();
   };
 
   return (
@@ -286,16 +311,28 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 pt-4 border-t">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
+          <div className="flex justify-between items-center pt-4 border-t">
             <Button 
-              onClick={handleSave}
-              disabled={updateTaskMutation.isPending}
+              variant="destructive" 
+              onClick={handleDelete}
+              disabled={deleteTaskMutation.isPending}
+              className="flex items-center gap-2"
             >
-              {updateTaskMutation.isPending ? "Saving..." : "Save Changes"}
+              <Trash2 className="h-4 w-4" />
+              {deleteTaskMutation.isPending ? "Deleting..." : "Delete Task"}
             </Button>
+            
+            <div className="flex space-x-3">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSave}
+                disabled={updateTaskMutation.isPending}
+              >
+                {updateTaskMutation.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
