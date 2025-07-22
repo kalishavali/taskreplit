@@ -946,15 +946,15 @@ export default function Clients() {
 
       </div>
       
-      {/* Unassign Project Confirmation Dialog */}
-      <AlertDialog open={showUnassignDialog} onOpenChange={setShowUnassignDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Unassign Project</AlertDialogTitle>
-            <AlertDialogDescription>
+      {/* Unassign Project Confirmation Dialog - Using a separate Dialog */}
+      <Dialog open={showUnassignDialog} onOpenChange={setShowUnassignDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Unassign Project</DialogTitle>
+            <DialogDescription>
               Are you sure you want to unassign "{projectToUnassign?.name}" from {viewingClient?.name}?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+            </DialogDescription>
+          </DialogHeader>
           
           <div className="space-y-3 text-sm text-gray-600">
             <p>This action will:</p>
@@ -966,20 +966,26 @@ export default function Clients() {
             <p className="font-medium text-gray-700">No data will be deleted.</p>
           </div>
           
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setProjectToUnassign(null)}>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowUnassignDialog(false);
+                setProjectToUnassign(null);
+              }}
+            >
               Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
+            </Button>
+            <Button
               onClick={confirmUnassignProject}
               disabled={unassignProjectMutation.isPending}
-              className="bg-orange-500 hover:bg-orange-600"
+              className="bg-orange-500 hover:bg-orange-600 text-white"
             >
               {unassignProjectMutation.isPending ? "Unassigning..." : "Unassign Project"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
