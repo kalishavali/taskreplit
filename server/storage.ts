@@ -10,6 +10,8 @@ import {
   notifications,
   projectApplications,
   timeEntries,
+  users,
+  sessions,
   type Project,
   type Task,
   type Application,
@@ -19,6 +21,8 @@ import {
   type Notification,
   type ProjectApplication,
   type TimeEntry,
+  type User,
+  type Session,
   type InsertProject,
   type InsertTask,
   type InsertApplication,
@@ -28,6 +32,8 @@ import {
   type InsertNotification,
   type InsertProjectApplication,
   type InsertTimeEntry,
+  type InsertUser,
+  type InsertSession,
   type UpdateProject,
   type UpdateTask,
   type UpdateApplication,
@@ -36,6 +42,7 @@ import {
   type UpdateComment,
   type UpdateNotification,
   type UpdateTimeEntry,
+  type UpdateUser,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -108,6 +115,14 @@ export interface IStorage {
   createTimeEntry(timeEntry: InsertTimeEntry): Promise<TimeEntry>;
   updateTimeEntry(id: number, updates: UpdateTimeEntry): Promise<TimeEntry | undefined>;
   deleteTimeEntry(id: number): Promise<boolean>;
+
+  // Authentication methods
+  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUser(id: number): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, updates: UpdateUser): Promise<User | undefined>;
+  verifyPassword(user: User, password: string): Promise<boolean>;
 
   // Stats
   getStats(): Promise<{
@@ -564,6 +579,40 @@ export class DatabaseStorage implements IStorage {
       .groupBy(tasks.projectId, projects.name);
 
     return results;
+  }
+
+  // Authentication methods
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values(user).returning();
+    return newUser;
+  }
+
+  async updateUser(id: number, updates: UpdateUser): Promise<User | undefined> {
+    const [user] = await db.update(users).set({
+      ...updates,
+      updatedAt: new Date(),
+    }).where(eq(users.id, id)).returning();
+    return user;
+  }
+
+  async verifyPassword(user: User, password: string): Promise<boolean> {
+    const bcrypt = await import('bcryptjs');
+    return bcrypt.compare(password, user.password);
   }
 }
 

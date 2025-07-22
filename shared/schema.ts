@@ -107,6 +107,28 @@ export const teamMembers = pgTable("team_members", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Users table for authentication
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(), // Hashed password
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  role: text("role").notNull().default("member"), // admin, member
+  isActive: boolean("is_active").default(true),
+  lastLogin: timestamp("last_login"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Sessions table for session management
+export const sessions = pgTable("sessions", {
+  sid: text("sid").primaryKey(),
+  sess: jsonb("sess").notNull(),
+  expire: timestamp("expire").notNull(),
+});
+
 // Insert schemas
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
@@ -159,6 +181,15 @@ export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
   createdAt: true,
 });
 
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastLogin: true,
+});
+
+export const insertSessionSchema = createInsertSchema(sessions);
+
 // Update schemas with proper date handling
 export const updateTaskSchema = insertTaskSchema.partial();
 export const updateProjectSchema = insertProjectSchema.partial().extend({
@@ -174,6 +205,12 @@ export const updateProjectSchema = insertProjectSchema.partial().extend({
   }),
 });
 export const updateApplicationSchema = insertApplicationSchema.partial();
+export const updateTeamMemberSchema = insertTeamMemberSchema.partial();
+export const updateActivitySchema = insertActivitySchema.partial();
+export const updateCommentSchema = insertCommentSchema.partial();
+export const updateNotificationSchema = insertNotificationSchema.partial();
+export const updateTimeEntrySchema = insertTimeEntrySchema.partial();
+export const updateUserSchema = insertUserSchema.partial();
 
 // Types
 export type Project = typeof projects.$inferSelect;
@@ -185,6 +222,8 @@ export type Activity = typeof activities.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type TimeEntry = typeof timeEntries.$inferSelect;
 export type TeamMember = typeof teamMembers.$inferSelect;
+export type User = typeof users.$inferSelect;
+export type Session = typeof sessions.$inferSelect;
 
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 export type InsertApplication = z.infer<typeof insertApplicationSchema>;
@@ -195,7 +234,15 @@ export type InsertActivity = z.infer<typeof insertActivitySchema>;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type InsertTimeEntry = z.infer<typeof insertTimeEntrySchema>;
 export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertSession = z.infer<typeof insertSessionSchema>;
 
 export type UpdateTask = z.infer<typeof updateTaskSchema>;
 export type UpdateProject = z.infer<typeof updateProjectSchema>;
 export type UpdateApplication = z.infer<typeof updateApplicationSchema>;
+export type UpdateTeamMember = z.infer<typeof updateTeamMemberSchema>;
+export type UpdateActivity = z.infer<typeof updateActivitySchema>;
+export type UpdateComment = z.infer<typeof updateCommentSchema>;
+export type UpdateNotification = z.infer<typeof updateNotificationSchema>;
+export type UpdateTimeEntry = z.infer<typeof updateTimeEntrySchema>;
+export type UpdateUser = z.infer<typeof updateUserSchema>;

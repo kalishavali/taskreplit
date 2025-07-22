@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { z } from "zod";
 import { storage } from "./storage";
+import { configureSession, setupAuthRoutes, requireAuth } from "./auth";
 import {
   insertProjectSchema,
   insertApplicationSchema,
@@ -16,8 +17,14 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Projects routes
-  app.get("/api/projects", async (req, res) => {
+  // Configure session middleware
+  app.use(configureSession());
+
+  // Setup authentication routes
+  setupAuthRoutes(app);
+
+  // Projects routes (protected)
+  app.get("/api/projects", requireAuth, async (req, res) => {
     try {
       const projects = await storage.getProjects();
       res.json(projects);
@@ -26,7 +33,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/projects/:id", async (req, res) => {
+  app.get("/api/projects/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const project = await storage.getProject(id);
@@ -39,7 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects", async (req, res) => {
+  app.post("/api/projects", requireAuth, async (req, res) => {
     try {
       const projectData = insertProjectSchema.parse(req.body);
       const project = await storage.createProject(projectData);
@@ -52,7 +59,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/projects/:id", async (req, res) => {
+  app.patch("/api/projects/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const updateData = updateProjectSchema.parse(req.body);
@@ -69,7 +76,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/projects/:id", async (req, res) => {
+  app.delete("/api/projects/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteProject(id);
@@ -82,8 +89,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Applications routes
-  app.get("/api/applications", async (req, res) => {
+  // Applications routes (protected)
+  app.get("/api/applications", requireAuth, async (req, res) => {
     try {
       const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
       const applications = await storage.getApplications(projectId);
@@ -94,7 +101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/applications/:id", async (req, res) => {
+  app.get("/api/applications/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const application = await storage.getApplication(id);
@@ -107,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/applications", async (req, res) => {
+  app.post("/api/applications", requireAuth, async (req, res) => {
     try {
       const applicationData = insertApplicationSchema.parse(req.body);
       const application = await storage.createApplication(applicationData);
@@ -120,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/applications/:id", async (req, res) => {
+  app.put("/api/applications/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const applicationData = insertApplicationSchema.parse(req.body);
@@ -150,7 +157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/applications/:id", async (req, res) => {
+  app.patch("/api/applications/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const updateData = updateApplicationSchema.parse(req.body);
@@ -180,8 +187,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Project-Application relationship routes
-  app.get("/api/projects/:projectId/applications", async (req, res) => {
+  // Project-Application relationship routes (protected)
+  app.get("/api/projects/:projectId/applications", requireAuth, async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
       const applications = await storage.getProjectApplications(projectId);
@@ -191,7 +198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects/:projectId/applications", async (req, res) => {
+  app.post("/api/projects/:projectId/applications", requireAuth, async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
       const { applicationIds } = z.object({ applicationIds: z.array(z.number()) }).parse(req.body);
@@ -210,7 +217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/projects/:projectId/applications", async (req, res) => {
+  app.put("/api/projects/:projectId/applications", requireAuth, async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
       const { applicationIds } = z.object({ applicationIds: z.array(z.number()) }).parse(req.body);
@@ -245,7 +252,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/projects/:projectId/applications/:applicationId", async (req, res) => {
+  app.delete("/api/projects/:projectId/applications/:applicationId", requireAuth, async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
       const applicationId = parseInt(req.params.applicationId);
@@ -256,8 +263,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Tasks routes
-  app.get("/api/tasks", async (req, res) => {
+  // Tasks routes (protected)
+  app.get("/api/tasks", requireAuth, async (req, res) => {
     try {
       const filters: any = {};
       if (req.query.projectId) filters.projectId = parseInt(req.query.projectId as string);
@@ -273,7 +280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/tasks/search", async (req, res) => {
+  app.get("/api/tasks/search", requireAuth, async (req, res) => {
     try {
       const query = req.query.q as string;
       if (!query) {
