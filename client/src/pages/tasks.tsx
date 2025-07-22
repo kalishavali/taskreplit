@@ -42,31 +42,36 @@ export default function Tasks() {
 
 
 
+  // Apply filters to both search results and regular tasks
+  const applyFilters = (taskList: Task[]) => {
+    return taskList.filter(task => {
+      // Filter by client first (affects which projects are available)
+      if (selectedClient !== "all") {
+        const project = projects.find(p => p.id === task.projectId);
+        if (!project || project.clientId !== parseInt(selectedClient)) {
+          return false;
+        }
+      }
+      if (selectedProject !== "all" && task.projectId !== parseInt(selectedProject)) {
+        return false;
+      }
+      if (selectedStatus !== "all" && task.status !== selectedStatus) {
+        return false;
+      }
+      if (selectedPriority !== "all" && task.priority !== selectedPriority) {
+        return false;
+      }
+      if (selectedAssignee !== "all" && task.assignee !== selectedAssignee) {
+        return false;
+      }
+      return true;
+    });
+  };
+
   // Filter tasks based on search and filters
   const filteredTasks = searchQuery.trim() 
-    ? searchResults 
-    : tasks.filter(task => {
-        // Filter by client first (affects which projects are available)
-        if (selectedClient !== "all") {
-          const project = projects.find(p => p.id === task.projectId);
-          if (!project || project.clientId !== parseInt(selectedClient)) {
-            return false;
-          }
-        }
-        if (selectedProject !== "all" && task.projectId !== parseInt(selectedProject)) {
-          return false;
-        }
-        if (selectedStatus !== "all" && task.status !== selectedStatus) {
-          return false;
-        }
-        if (selectedPriority !== "all" && task.priority !== selectedPriority) {
-          return false;
-        }
-        if (selectedAssignee !== "all" && task.assignee !== selectedAssignee) {
-          return false;
-        }
-        return true;
-      });
+    ? applyFilters(searchResults)
+    : applyFilters(tasks);
 
   // Filter projects based on selected client
   const availableProjects = selectedClient === "all" 
