@@ -45,12 +45,12 @@ export default function Projects() {
 
   // Fetch project applications data for all projects
   const { data: allProjectApplications = {} } = useQuery({
-    queryKey: ["/api/projects-applications", projects.map(p => p.id)],
+    queryKey: ["/api/projects-applications", ...(projects || []).map(p => p.id)],
     queryFn: async () => {
       const projectApplicationsMap: {[key: number]: Application[]} = {};
       
       // Fetch applications for each project
-      for (const project of projects) {
+      for (const project of projects || []) {
         try {
           const response = await fetch(`/api/projects/${project.id}/applications`);
           if (response.ok) {
@@ -66,7 +66,7 @@ export default function Projects() {
       
       return projectApplicationsMap;
     },
-    enabled: projects.length > 0,
+    enabled: (projects || []).length > 0,
     staleTime: 0, // Always refetch to get latest data
   });
 
@@ -133,14 +133,14 @@ export default function Projects() {
   };
 
   const getProjectProgress = (projectId: number) => {
-    const projectTasks = allTasks.filter(task => task.projectId === projectId);
+    const projectTasks = (allTasks || []).filter(task => task.projectId === projectId);
     if (projectTasks.length === 0) return 0;
     const completedTasks = projectTasks.filter(task => task.status === "done").length;
     return Math.round((completedTasks / projectTasks.length) * 100);
   };
 
   const getProjectTaskCounts = (projectId: number) => {
-    const projectTasks = allTasks.filter(task => task.projectId === projectId);
+    const projectTasks = (allTasks || []).filter(task => task.projectId === projectId);
     return {
       total: projectTasks.length,
       todo: projectTasks.filter(t => t.status === "todo").length,
