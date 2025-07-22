@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import TaskModal from "@/components/modals/task-modal";
+import { RichTextRenderer } from "@/components/rich-text-editor";
 import { cn } from "@/lib/utils";
 import type { Task, Project } from "@shared/schema";
 
@@ -98,7 +99,9 @@ export default function TaskCard({ task, projects, isDragging }: TaskCardProps) 
         <h4 className="font-medium text-gray-900 mb-2 line-clamp-2">{task.title}</h4>
         
         {task.description && (
-          <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.description}</p>
+          <div className="text-sm text-gray-600 mb-3 line-clamp-2">
+            <RichTextRenderer content={task.description} />
+          </div>
         )}
         
         {task.status === "inprogress" && task.progress !== null && task.progress > 0 && (

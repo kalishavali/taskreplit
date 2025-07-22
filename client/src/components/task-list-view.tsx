@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { TaskEditModal } from "@/components/task-modal/task-edit-modal";
+import { RichTextRenderer } from "@/components/rich-text-editor";
 import { cn } from "@/lib/utils";
 import type { Task, Project } from "@shared/schema";
 
@@ -133,7 +134,7 @@ export default function TaskListView({ tasks, projects = [], isLoading }: TaskLi
                       <div className="font-medium text-gray-900">{task.title}</div>
                       {task.description && (
                         <div className="text-sm text-gray-500 truncate max-w-xs">
-                          {task.description}
+                          <RichTextRenderer content={task.description} />
                         </div>
                       )}
                     </div>
