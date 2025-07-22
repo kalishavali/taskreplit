@@ -23,10 +23,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuthRoutes(app);
 
-  // Projects routes (protected)
+  // Projects routes (protected with user permissions)
   app.get("/api/projects", requireAuth, async (req, res) => {
     try {
-      const projects = await storage.getProjects();
+      const userId = req.session.userId!;
+      const projects = await storage.getUserAccessibleProjects(userId);
       res.json(projects);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch projects" });
@@ -36,6 +37,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/projects/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.session.userId!;
+      
+      // Check if user has permission to view this project
+      const hasPermission = await storage.checkUserProjectPermission(userId, id, 'view');
+      if (!hasPermission) {
+        return res.status(403).json({ message: "You don't have permission to view this project" });
+      }
+      
       const project = await storage.getProject(id);
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
@@ -48,6 +57,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/projects", requireAuth, async (req, res) => {
     try {
+      const userId = req.session.userId!;
+      const user = await storage.getUser(userId);
+      
+      // Only admins can create projects
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Only administrators can create projects" });
+      }
+      
       const projectData = insertProjectSchema.parse(req.body);
       const project = await storage.createProject(projectData);
       res.status(201).json(project);
@@ -62,6 +79,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/projects/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.session.userId!;
+      
+      // Check if user has permission to edit this project
+      const hasPermission = await storage.checkUserProjectPermission(userId, id, 'edit');
+      if (!hasPermission) {
+        return res.status(403).json({ message: "You don't have permission to edit this project" });
+      }
+      
       const updateData = updateProjectSchema.parse(req.body);
       const project = await storage.updateProject(id, updateData);
       if (!project) {
@@ -79,6 +104,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/projects/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.session.userId!;
+      
+      // Check if user has permission to delete this project
+      const hasPermission = await storage.checkUserProjectPermission(userId, id, 'delete');
+      if (!hasPermission) {
+        return res.status(403).json({ message: "You don't have permission to delete this project" });
+      }
+      
       const deleted = await storage.deleteProject(id);
       if (!deleted) {
         return res.status(404).json({ message: "Project not found" });

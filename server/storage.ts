@@ -1,4 +1,4 @@
-import { eq, like, and, desc, or, asc, sql } from "drizzle-orm";
+import { eq, like, and, desc, or, asc, sql, inArray } from "drizzle-orm";
 import { db } from "./db.js";
 import {
   projects,
@@ -12,6 +12,7 @@ import {
   timeEntries,
   users,
   sessions,
+  userProjectPermissions,
   type Project,
   type Task,
   type Application,
@@ -23,6 +24,7 @@ import {
   type TimeEntry,
   type User,
   type Session,
+  type UserProjectPermission,
   type InsertProject,
   type InsertTask,
   type InsertApplication,
@@ -34,6 +36,7 @@ import {
   type InsertTimeEntry,
   type InsertUser,
   type InsertSession,
+  type InsertUserProjectPermission,
   type UpdateProject,
   type UpdateTask,
   type UpdateApplication,
@@ -613,6 +616,126 @@ export class DatabaseStorage implements IStorage {
   async verifyPassword(user: User, password: string): Promise<boolean> {
     const bcrypt = await import('bcryptjs');
     return bcrypt.compare(password, user.password);
+  }
+
+  // User management methods
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(users.username);
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    const deleted = await db.delete(users).where(eq(users.id, id));
+    return deleted.rowCount > 0;
+  }
+
+  // User project permissions methods
+  async getUserProjectPermissions(userId: number): Promise<UserProjectPermission[]> {
+    return await db.select().from(userProjectPermissions).where(eq(userProjectPermissions.userId, userId));
+  }
+
+  async setUserProjectPermissions(userId: number, projectId: number, permissions: InsertUserProjectPermission): Promise<UserProjectPermission> {
+    // Check if permission already exists
+    const [existing] = await db.select()
+      .from(userProjectPermissions)
+      .where(
+        and(
+          eq(userProjectPermissions.userId, userId),
+          eq(userProjectPermissions.projectId, projectId)
+        )
+      );
+
+    if (existing) {
+      // Update existing permission
+      const [updated] = await db.update(userProjectPermissions)
+        .set({
+          ...permissions,
+          updatedAt: new Date(),
+        })
+        .where(eq(userProjectPermissions.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Create new permission
+      const [created] = await db.insert(userProjectPermissions)
+        .values({
+          userId,
+          projectId,
+          ...permissions,
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  async removeUserProjectPermission(userId: number, projectId: number): Promise<boolean> {
+    const deleted = await db.delete(userProjectPermissions)
+      .where(
+        and(
+          eq(userProjectPermissions.userId, userId),
+          eq(userProjectPermissions.projectId, projectId)
+        )
+      );
+    return deleted.rowCount > 0;
+  }
+
+  async getUserAccessibleProjects(userId: number): Promise<Project[]> {
+    // Admin can access all projects
+    const user = await this.getUser(userId);
+    if (user?.role === 'admin') {
+      return await this.getProjects();
+    }
+
+    // Regular users can only access projects they have permissions for
+    const projectIds = await db.select({ projectId: userProjectPermissions.projectId })
+      .from(userProjectPermissions)
+      .where(
+        and(
+          eq(userProjectPermissions.userId, userId),
+          eq(userProjectPermissions.canView, true)
+        )
+      );
+
+    if (projectIds.length === 0) {
+      return [];
+    }
+
+    return await db.select()
+      .from(projects)
+      .where(inArray(projects.id, projectIds.map(p => p.projectId)));
+  }
+
+  async checkUserProjectPermission(userId: number, projectId: number, permission: 'view' | 'edit' | 'delete' | 'manage'): Promise<boolean> {
+    // Admin has all permissions
+    const user = await this.getUser(userId);
+    if (user?.role === 'admin') {
+      return true;
+    }
+
+    const [userPermission] = await db.select()
+      .from(userProjectPermissions)
+      .where(
+        and(
+          eq(userProjectPermissions.userId, userId),
+          eq(userProjectPermissions.projectId, projectId)
+        )
+      );
+
+    if (!userPermission) {
+      return false;
+    }
+
+    switch (permission) {
+      case 'view':
+        return userPermission.canView;
+      case 'edit':
+        return userPermission.canEdit;
+      case 'delete':
+        return userPermission.canDelete;
+      case 'manage':
+        return userPermission.canManage;
+      default:
+        return false;
+    }
   }
 }
 

@@ -225,12 +225,88 @@ export function setupAuthRoutes(app: Express) {
   // Get all users (admin only)
   app.get('/api/auth/users', requireAuth, requireAdmin, async (req, res) => {
     try {
-      // This would need to be implemented in storage
-      // For now, return empty array
-      res.json([]);
+      const users = await storage.getAllUsers();
+      // Remove passwords from response
+      const safeUsers = users.map(({ password, ...user }) => user);
+      res.json(safeUsers);
     } catch (error) {
       console.error('Get users error:', error);
       res.status(500).json({ message: 'Failed to get users' });
+    }
+  });
+
+  // Delete user (admin only)
+  app.delete('/api/auth/users/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Prevent admin from deleting themselves
+      if (userId === req.session.userId) {
+        return res.status(400).json({ message: 'Cannot delete your own account' });
+      }
+
+      const deleted = await storage.deleteUser(userId);
+      if (!deleted) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+      console.error('Delete user error:', error);
+      res.status(500).json({ message: 'Failed to delete user' });
+    }
+  });
+
+  // Set user project permissions (admin only)
+  app.post('/api/auth/users/:userId/projects/:projectId/permissions', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const projectId = parseInt(req.params.projectId);
+      const { canView = true, canEdit = false, canDelete = false, canManage = false } = req.body;
+
+      const permission = await storage.setUserProjectPermissions(userId, projectId, {
+        userId,
+        projectId,
+        canView,
+        canEdit,
+        canDelete,
+        canManage,
+      });
+
+      res.json({ message: 'Permissions updated successfully', permission });
+    } catch (error) {
+      console.error('Set permissions error:', error);
+      res.status(500).json({ message: 'Failed to set permissions' });
+    }
+  });
+
+  // Get user project permissions (admin only)
+  app.get('/api/auth/users/:userId/permissions', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const permissions = await storage.getUserProjectPermissions(userId);
+      res.json(permissions);
+    } catch (error) {
+      console.error('Get permissions error:', error);
+      res.status(500).json({ message: 'Failed to get permissions' });
+    }
+  });
+
+  // Remove user project permission (admin only)
+  app.delete('/api/auth/users/:userId/projects/:projectId/permissions', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const projectId = parseInt(req.params.projectId);
+
+      const removed = await storage.removeUserProjectPermission(userId, projectId);
+      if (!removed) {
+        return res.status(404).json({ message: 'Permission not found' });
+      }
+
+      res.json({ message: 'Permission removed successfully' });
+    } catch (error) {
+      console.error('Remove permission error:', error);
+      res.status(500).json({ message: 'Failed to remove permission' });
     }
   });
 }

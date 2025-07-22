@@ -129,6 +129,19 @@ export const sessions = pgTable("sessions", {
   expire: timestamp("expire").notNull(),
 });
 
+// User project permissions table
+export const userProjectPermissions = pgTable("user_project_permissions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  projectId: integer("project_id").references(() => projects.id, { onDelete: "cascade" }).notNull(),
+  canView: boolean("can_view").default(true).notNull(),
+  canEdit: boolean("can_edit").default(false).notNull(),
+  canDelete: boolean("can_delete").default(false).notNull(),
+  canManage: boolean("can_manage").default(false).notNull(), // Can assign tasks, manage team members
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
@@ -190,6 +203,12 @@ export const insertUserSchema = createInsertSchema(users).omit({
 
 export const insertSessionSchema = createInsertSchema(sessions);
 
+export const insertUserProjectPermissionSchema = createInsertSchema(userProjectPermissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Update schemas with proper date handling
 export const updateTaskSchema = insertTaskSchema.partial();
 export const updateProjectSchema = insertProjectSchema.partial().extend({
@@ -211,6 +230,7 @@ export const updateCommentSchema = insertCommentSchema.partial();
 export const updateNotificationSchema = insertNotificationSchema.partial();
 export const updateTimeEntrySchema = insertTimeEntrySchema.partial();
 export const updateUserSchema = insertUserSchema.partial();
+export const updateUserProjectPermissionSchema = insertUserProjectPermissionSchema.partial();
 
 // Types
 export type Project = typeof projects.$inferSelect;
@@ -224,6 +244,7 @@ export type TimeEntry = typeof timeEntries.$inferSelect;
 export type TeamMember = typeof teamMembers.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
+export type UserProjectPermission = typeof userProjectPermissions.$inferSelect;
 
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 export type InsertApplication = z.infer<typeof insertApplicationSchema>;
@@ -236,6 +257,7 @@ export type InsertTimeEntry = z.infer<typeof insertTimeEntrySchema>;
 export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
+export type InsertUserProjectPermission = z.infer<typeof insertUserProjectPermissionSchema>;
 
 export type UpdateTask = z.infer<typeof updateTaskSchema>;
 export type UpdateProject = z.infer<typeof updateProjectSchema>;
@@ -246,3 +268,4 @@ export type UpdateComment = z.infer<typeof updateCommentSchema>;
 export type UpdateNotification = z.infer<typeof updateNotificationSchema>;
 export type UpdateTimeEntry = z.infer<typeof updateTimeEntrySchema>;
 export type UpdateUser = z.infer<typeof updateUserSchema>;
+export type UpdateUserProjectPermission = z.infer<typeof updateUserProjectPermissionSchema>;
