@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
+
 import { 
   Home, 
   Building,
@@ -111,7 +111,7 @@ export default function Sidebar() {
               {user?.role || 'Member'}
             </p>
           </div>
-          <ThemeToggle />
+
         </div>
         
         <Button
