@@ -502,6 +502,22 @@ export default function ProjectDetails() {
                       </SelectContent>
                     </Select>
 
+                    {applications.length > 0 && (
+                      <Select value={selectedApplication?.toString() || "all"} onValueChange={(value) => setSelectedApplication(value === "all" ? null : parseInt(value))}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue placeholder="All Applications" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Applications</SelectItem>
+                          {applications.map((app) => (
+                            <SelectItem key={app.id} value={app.id.toString()}>
+                              {app.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+
                     <Button variant="outline" size="sm" onClick={handleClearFilters}>
                       <Filter className="w-4 h-4 mr-2" />
                       Clear Filters
@@ -602,6 +618,22 @@ export default function ProjectDetails() {
                       ))}
                     </SelectContent>
                   </Select>
+
+                  {applications.length > 0 && (
+                    <Select value={selectedApplication?.toString() || "all"} onValueChange={(value) => setSelectedApplication(value === "all" ? null : parseInt(value))}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="All Applications" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Applications</SelectItem>
+                        {applications.map((app) => (
+                          <SelectItem key={app.id} value={app.id.toString()}>
+                            {app.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
 
                   <Button variant="outline" size="sm" onClick={handleClearFilters}>
                     <Filter className="w-4 h-4 mr-2" />

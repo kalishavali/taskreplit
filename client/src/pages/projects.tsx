@@ -45,7 +45,7 @@ export default function Projects() {
 
   // Fetch project applications data for all projects
   const { data: allProjectApplications = {} } = useQuery({
-    queryKey: ["/api/projects-applications"],
+    queryKey: ["/api/projects-applications", projects.map(p => p.id)],
     queryFn: async () => {
       const projectApplicationsMap: {[key: number]: Application[]} = {};
       
@@ -67,6 +67,7 @@ export default function Projects() {
       return projectApplicationsMap;
     },
     enabled: projects.length > 0,
+    staleTime: 0, // Always refetch to get latest data
   });
 
   const createProjectMutation = useMutation({
@@ -114,6 +115,7 @@ export default function Projects() {
       }
       
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects-applications"] });
       setIsDialogOpen(false);
       setSelectedApplications([]);
       form.reset();
