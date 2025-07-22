@@ -3,10 +3,22 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Download, BarChart3, PieChart, TrendingUp, Calendar, Users, Target, Activity } from "lucide-react";
+import { 
+  BarChart3, 
+  PieChart, 
+  TrendingUp, 
+  Users, 
+  Target, 
+  Activity, 
+  Building2, 
+  FolderOpen, 
+  FileText,
+  CheckCircle,
+  Clock,
+  UserCheck
+} from "lucide-react";
 import { 
   BarChart, 
   Bar, 
@@ -18,9 +30,15 @@ import {
   PieChart as RechartsPieChart, 
   Pie,
   Cell,
-  Legend
+  Legend,
+  LineChart,
+  Line,
+  Area,
+  AreaChart,
+  RadialBarChart,
+  RadialBar
 } from "recharts";
-import type { Project, Task, Application, TeamMember } from "@shared/schema";
+import type { Project, Task, Application, TeamMember, Client } from "@shared/schema";
 
 interface Stats {
   totalTasks: number;
@@ -35,9 +53,12 @@ interface Stats {
 }
 
 export default function Reports() {
-  const [selectedReportType, setSelectedReportType] = useState("overview");
   const [selectedDateRange, setSelectedDateRange] = useState("7d");
-  const [selectedProject, setSelectedProject] = useState("all");
+  const [activeTab, setActiveTab] = useState("overview");
+
+  const { data: clients = [] } = useQuery<Client[]>({
+    queryKey: ["/api/clients"],
+  });
 
   const { data: projects = [] } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
@@ -59,104 +80,114 @@ export default function Reports() {
     queryKey: ["/api/stats"],
   });
 
-  // Chart data processing
-  const projectTasksData = projects.map(project => {
+  // Enhanced Chart data processing with beautiful colors
+  const brandColors = {
+    primary: '#6366f1',
+    secondary: '#8b5cf6', 
+    success: '#10b981',
+    warning: '#f59e0b',
+    danger: '#ef4444',
+    info: '#06b6d4',
+    light: '#f1f5f9',
+    dark: '#1e293b'
+  };
+
+  const chartColors = {
+    Open: '#94a3b8',
+    InProgress: '#f59e0b', 
+    Blocked: '#ef4444',
+    Closed: '#10b981'
+  };
+
+  // Clients data processing 
+  const clientsData = clients.map(client => {
+    const clientProjects = projects.filter(p => p.clientId === client.id);
+    const clientTasks = tasks.filter(t => clientProjects.some(p => p.id === t.projectId));
+    return {
+      name: client.name,
+      projects: clientProjects.length,
+      tasks: clientTasks.length,
+      completedTasks: clientTasks.filter(t => t.status === 'Closed').length,
+      completion: clientTasks.length > 0 ? Math.round((clientTasks.filter(t => t.status === 'Closed').length / clientTasks.length) * 100) : 0
+    };
+  });
+
+  // Projects data with enhanced metrics
+  const projectsData = projects.map(project => {
     const projectTasks = tasks.filter(task => task.projectId === project.id);
     return {
-      name: project.name,
+      name: project.name.length > 12 ? project.name.substring(0, 12) + '...' : project.name,
+      fullName: project.name,
       Open: projectTasks.filter(t => t.status === 'Open').length,
       InProgress: projectTasks.filter(t => t.status === 'InProgress').length,
       Blocked: projectTasks.filter(t => t.status === 'Blocked').length,
       Closed: projectTasks.filter(t => t.status === 'Closed').length,
       total: projectTasks.length,
+      completion: projectTasks.length > 0 ? Math.round((projectTasks.filter(t => t.status === 'Closed').length / projectTasks.length) * 100) : 0
     };
   });
 
-  const applicationTasksData = applications.map(app => {
+  // Applications data with enhanced visuals
+  const applicationsData = applications.map(app => {
     const appTasks = tasks.filter(task => task.applicationId === app.id);
     return {
       name: app.name,
+      icon: app.icon,
+      type: app.type,
       Open: appTasks.filter(t => t.status === 'Open').length,
       InProgress: appTasks.filter(t => t.status === 'InProgress').length,
       Blocked: appTasks.filter(t => t.status === 'Blocked').length,
       Closed: appTasks.filter(t => t.status === 'Closed').length,
       total: appTasks.length,
+      completion: appTasks.length > 0 ? Math.round((appTasks.filter(t => t.status === 'Closed').length / appTasks.length) * 100) : 0
     };
   });
 
-  const teamTasksData = teamMembers.map(member => {
+  // Team performance data
+  const teamData = teamMembers.map(member => {
     const memberTasks = tasks.filter(task => task.assignee === member.name);
     return {
       name: member.name,
+      email: member.email,
+      role: member.role,
       Open: memberTasks.filter(t => t.status === 'Open').length,
       InProgress: memberTasks.filter(t => t.status === 'InProgress').length,  
       Blocked: memberTasks.filter(t => t.status === 'Blocked').length,
       Closed: memberTasks.filter(t => t.status === 'Closed').length,
       total: memberTasks.length,
+      productivity: memberTasks.length > 0 ? Math.round((memberTasks.filter(t => t.status === 'Closed').length / memberTasks.length) * 100) : 0
     };
   });
 
+  // Status distribution for pie charts
   const statusDistributionData = [
-    { name: 'Open', value: tasks.filter(t => t.status === 'Open').length, color: '#9CA3AF' },
-    { name: 'In Progress', value: tasks.filter(t => t.status === 'InProgress').length, color: '#F59E0B' },
-    { name: 'Blocked', value: tasks.filter(t => t.status === 'Blocked').length, color: '#EF4444' },
-    { name: 'Closed', value: tasks.filter(t => t.status === 'Closed').length, color: '#10B981' },
+    { name: 'Open', value: tasks.filter(t => t.status === 'Open').length, color: chartColors.Open, fill: chartColors.Open },
+    { name: 'In Progress', value: tasks.filter(t => t.status === 'InProgress').length, color: chartColors.InProgress, fill: chartColors.InProgress },
+    { name: 'Blocked', value: tasks.filter(t => t.status === 'Blocked').length, color: chartColors.Blocked, fill: chartColors.Blocked },
+    { name: 'Closed', value: tasks.filter(t => t.status === 'Closed').length, color: chartColors.Closed, fill: chartColors.Closed },
   ];
 
-  const chartColors = {
-    Open: '#9CA3AF',
-    InProgress: '#F59E0B', 
-    Blocked: '#EF4444',
-    Closed: '#10B981'
-  };
+  // Priority analysis
+  const priorityData = [
+    { name: 'High', value: tasks.filter(t => t.priority === 'high').length, color: '#dc2626', fill: '#dc2626' },
+    { name: 'Medium', value: tasks.filter(t => t.priority === 'medium').length, color: '#d97706', fill: '#d97706' },
+    { name: 'Low', value: tasks.filter(t => t.priority === 'low').length, color: '#059669', fill: '#059669' },
+    { name: 'Urgent', value: tasks.filter(t => t.priority === 'urgent').length, color: '#7c2d12', fill: '#7c2d12' },
+  ];
 
   const generateReport = () => {
-    // Generate charts based on selected type - no PDF creation
-    console.log(`Generating ${selectedReportType} charts for ${selectedDateRange} period`);
+    console.log(`Generating overview charts for ${selectedDateRange} period`);
   };
 
-  const priorityData = [
-    { name: 'High Priority', value: tasks.filter(t => t.priority === 'high').length, color: '#DC2626' },
-    { name: 'Medium Priority', value: tasks.filter(t => t.priority === 'medium').length, color: '#D97706' },
-    { name: 'Low Priority', value: tasks.filter(t => t.priority === 'low').length, color: '#059669' },
-  ];
-
-  const reportOptions = [
-    {
-      id: "overview",
-      name: "Project Overview",
-      description: "High-level metrics and task distribution",
-      icon: BarChart3,
-    },
-    {
-      id: "progress",
-      name: "Progress Tracking",
-      description: "Detailed progress across projects and teams",
-      icon: TrendingUp,
-    },
-    {
-      id: "performance",
-      name: "Team Performance",
-      description: "Individual and team productivity analysis",
-      icon: Users,
-    },
-    {
-      id: "priority",
-      name: "Priority Analysis",
-      description: "Task priority distribution and trends",
-      icon: Target,
-    },
-  ];
-
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <Header 
         title="Analytics Dashboard" 
-        subtitle="Interactive reports and data visualizations"
+        subtitle="Beautiful insights across Clients, Projects, Applications, and Teams"
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Select value={selectedDateRange} onValueChange={setSelectedDateRange}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-36 bg-white/70 backdrop-blur-sm border-0 shadow-lg">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -166,109 +197,89 @@ export default function Reports() {
                 <SelectItem value="1y">Last year</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={generateReport} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+            <Button 
+              onClick={generateReport} 
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+            >
               <Activity className="w-4 h-4 mr-2" />
-              Generate Charts
+              Refresh Data
             </Button>
           </div>
         }
       />
       
-      <main className="flex-1 overflow-auto p-6">
-        {/* Report Type Selection */}
-        <div className="mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {reportOptions.map((option) => {
-              const Icon = option.icon;
-              return (
-                <Card 
-                  key={option.id}
-                  className={`cursor-pointer transition-all hover:shadow-lg ${
-                    selectedReportType === option.id 
-                      ? 'ring-2 ring-blue-500 shadow-md bg-gradient-to-br from-blue-50 to-purple-50' 
-                      : 'hover:shadow-md'
-                  }`}
-                  onClick={() => setSelectedReportType(option.id)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg ${
-                        selectedReportType === option.id 
-                          ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-sm">{option.name}</h3>
-                        <p className="text-xs text-gray-500">{option.description}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Enhanced Quick Stats */}
+      <main className="flex-1 overflow-auto p-6 space-y-8">
+        
+        {/* Beautiful Statistics Overview Cards */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover-lift">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-blue-700 font-medium">Total Tasks</p>
-                    <p className="text-3xl font-bold text-blue-900">{stats.totalTasks}</p>
-                    <p className="text-xs text-blue-600 mt-1">+12% from last month</p>
+                    <p className="text-sm text-indigo-700 font-semibold tracking-wide">TOTAL TASKS</p>
+                    <p className="text-4xl font-bold text-indigo-900 mt-2">{stats.totalTasks}</p>
+                    <div className="flex items-center mt-2">
+                      <TrendingUp className="w-4 h-4 text-green-500" />
+                      <p className="text-sm text-green-600 ml-1">+12% from last month</p>
+                    </div>
                   </div>
-                  <div className="p-3 bg-blue-500 rounded-full">
-                    <FileText className="h-6 w-6 text-white" />
+                  <div className="p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg">
+                    <FileText className="h-8 w-8 text-white" />
                   </div>
                 </div>
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200">
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover-lift">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-700 font-medium">Open Tasks</p>
-                    <p className="text-3xl font-bold text-gray-900">{stats.todoTasks}</p>
-                    <p className="text-xs text-gray-600 mt-1">-5% from last week</p>
+                    <p className="text-sm text-slate-700 font-semibold tracking-wide">OPEN TASKS</p>
+                    <p className="text-4xl font-bold text-slate-900 mt-2">{stats.todoTasks}</p>
+                    <div className="flex items-center mt-2">
+                      <Clock className="w-4 h-4 text-amber-500" />
+                      <p className="text-sm text-amber-600 ml-1">Needs attention</p>
+                    </div>
                   </div>
-                  <div className="p-3 bg-gray-500 rounded-full">
-                    <BarChart3 className="h-6 w-6 text-white" />
+                  <div className="p-4 bg-gradient-to-br from-slate-500 to-slate-600 rounded-2xl shadow-lg">
+                    <BarChart3 className="h-8 w-8 text-white" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover-lift">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-orange-700 font-medium">In Progress</p>
-                    <p className="text-3xl font-bold text-orange-900">{stats.inProgressTasks}</p>
-                    <p className="text-xs text-orange-600 mt-1">+8% this week</p>
+                    <p className="text-sm text-amber-700 font-semibold tracking-wide">IN PROGRESS</p>
+                    <p className="text-4xl font-bold text-amber-900 mt-2">{stats.inProgressTasks}</p>
+                    <div className="flex items-center mt-2">
+                      <Activity className="w-4 h-4 text-blue-500" />
+                      <p className="text-sm text-blue-600 ml-1">+8% this week</p>
+                    </div>
                   </div>
-                  <div className="p-3 bg-orange-500 rounded-full">
-                    <TrendingUp className="h-6 w-6 text-white" />
+                  <div className="p-4 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-lg">
+                    <TrendingUp className="h-8 w-8 text-white" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover-lift">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-red-700 font-medium">Blocked</p>
-                    <p className="text-3xl font-bold text-red-900">{stats.blockedTasks}</p>
-                    <p className="text-xs text-red-600 mt-1">-2% from yesterday</p>
+                    <p className="text-sm text-green-700 font-semibold tracking-wide">COMPLETED</p>
+                    <p className="text-4xl font-bold text-green-900 mt-2">{stats.doneTasks}</p>
+                    <div className="flex items-center mt-2">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <p className="text-sm text-green-600 ml-1">Great progress!</p>
+                    </div>
                   </div>
-                  <div className="p-3 bg-red-500 rounded-full">
-                    <PieChart className="h-6 w-6 text-white" />
+                  <div className="p-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg">
+                    <CheckCircle className="h-8 w-8 text-white" />
                   </div>
                 </div>
               </CardContent>
@@ -276,183 +287,56 @@ export default function Reports() {
           </div>
         )}
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Tasks by Project Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Open Issues by Project</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={projectTasksData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="Open" stackId="a" fill={chartColors.Open} />
-                  <Bar dataKey="InProgress" stackId="a" fill={chartColors.InProgress} />
-                  <Bar dataKey="Blocked" stackId="a" fill={chartColors.Blocked} />
-                  <Bar dataKey="Closed" stackId="a" fill={chartColors.Closed} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Status Distribution Pie Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Task Status Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <RechartsPieChart>
-                  <Pie
-                    data={statusDistributionData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    label={({ name, value }) => `${name}: ${value}`}
-                  >
-                    {statusDistributionData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </RechartsPieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Enhanced Charts Section with Tabs */}
-        <div className="mb-8">
-          <Tabs defaultValue="applications" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="applications">By Application</TabsTrigger>
-              <TabsTrigger value="team">By Team Member</TabsTrigger>
-              <TabsTrigger value="priority">By Priority</TabsTrigger>
+        {/* Beautiful Tabbed Charts */}
+        <div className="mt-12">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-4 bg-white/60 backdrop-blur-sm border-0 shadow-lg h-14">
+              <TabsTrigger 
+                value="overview" 
+                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white font-semibold"
+              >
+                <BarChart3 className="w-4 h-4" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger 
+                value="clients" 
+                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-600 data-[state=active]:text-white font-semibold"
+              >
+                <Building2 className="w-4 h-4" />
+                Clients
+              </TabsTrigger>
+              <TabsTrigger 
+                value="projects" 
+                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white font-semibold"
+              >
+                <FolderOpen className="w-4 h-4" />
+                Projects
+              </TabsTrigger>
+              <TabsTrigger 
+                value="team" 
+                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-600 data-[state=active]:text-white font-semibold"
+              >
+                <Users className="w-4 h-4" />
+                Team
+              </TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="applications" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
-                  <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-t-lg">
-                    <CardTitle className="flex items-center gap-2">
-                      <BarChart3 className="w-5 h-5" />
-                      Tasks by Application
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <ResponsiveContainer width="100%" height={320}>
-                      <BarChart data={applicationTasksData}>
-                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                        <XAxis dataKey="name" fontSize={12} />
-                        <YAxis fontSize={12} />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                            border: 'none', 
-                            borderRadius: '8px',
-                            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' 
-                          }} 
-                        />
-                        <Legend />
-                        <Bar dataKey="Open" stackId="a" fill={chartColors.Open} radius={[0, 0, 0, 0]} />
-                        <Bar dataKey="InProgress" stackId="a" fill={chartColors.InProgress} radius={[0, 0, 0, 0]} />
-                        <Bar dataKey="Blocked" stackId="a" fill={chartColors.Blocked} radius={[0, 0, 0, 0]} />
-                        <Bar dataKey="Closed" stackId="a" fill={chartColors.Closed} radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
 
-                <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
-                  <CardHeader className="bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-t-lg">
+            {/* Overview Tab Content */}
+            <TabsContent value="overview" className="space-y-6 mt-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Task Status Distribution */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+                  <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-lg">
                     <CardTitle className="flex items-center gap-2">
                       <PieChart className="w-5 h-5" />
-                      Application Distribution
+                      Task Status Distribution
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
-                    <ResponsiveContainer width="100%" height={320}>
+                    <ResponsiveContainer width="100%" height={300}>
                       <RechartsPieChart>
                         <Pie
-                          data={applicationTasksData.map(app => ({ 
-                            name: app.name, 
-                            value: app.total,
-                            color: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'][applicationTasksData.indexOf(app) % 4]
-                          }))}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={100}
-                          label={({ name, value, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {applicationTasksData.map((entry, index) => (
-                            <Cell key={`app-cell-${index}`} fill={['#3B82F6', '#10B981', '#F59E0B', '#EF4444'][index % 4]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </RechartsPieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="team" className="space-y-6">
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
-                <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    Team Performance Analytics
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <ResponsiveContainer width="100%" height={400}>
-                    <BarChart data={teamTasksData}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                      <XAxis dataKey="name" fontSize={12} />
-                      <YAxis fontSize={12} />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                          border: 'none', 
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' 
-                        }} 
-                      />
-                      <Legend />
-                      <Bar dataKey="Open" stackId="a" fill={chartColors.Open} />
-                      <Bar dataKey="InProgress" stackId="a" fill={chartColors.InProgress} />
-                      <Bar dataKey="Blocked" stackId="a" fill={chartColors.Blocked} />
-                      <Bar dataKey="Closed" stackId="a" fill={chartColors.Closed} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="priority" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
-                  <CardHeader className="bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-t-lg">
-                    <CardTitle className="flex items-center gap-2">
-                      <Target className="w-5 h-5" />
-                      Priority Distribution
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <ResponsiveContainer width="100%" height={320}>
-                      <RechartsPieChart>
-                        <Pie
-                          data={priorityData}
+                          data={statusDistributionData}
                           dataKey="value"
                           nameKey="name"
                           cx="50%"
@@ -460,75 +344,288 @@ export default function Reports() {
                           outerRadius={100}
                           label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
                         >
-                          {priorityData.map((entry, index) => (
-                            <Cell key={`priority-cell-${index}`} fill={entry.color} />
+                          {statusDistributionData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            border: 'none', 
+                            borderRadius: '12px',
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)' 
+                          }} 
+                        />
                         <Legend />
                       </RechartsPieChart>
                     </ResponsiveContainer>
                   </CardContent>
                 </Card>
 
-                <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
-                  <CardHeader className="bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-t-lg">
+                {/* Priority Distribution */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+                  <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-t-lg">
                     <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5" />
-                      Priority Trends
+                      <Target className="w-5 h-5" />
+                      Priority Analysis
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
-                    <div className="space-y-4">
-                      {priorityData.map((priority, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 rounded-lg border bg-gray-50">
-                          <div className="flex items-center gap-3">
-                            <div 
-                              className="w-4 h-4 rounded-full" 
-                              style={{ backgroundColor: priority.color }}
-                            />
-                            <span className="font-medium">{priority.name}</span>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-lg font-bold">{priority.value}</div>
-                            <div className="text-xs text-gray-500">
-                              {((priority.value / tasks.length) * 100).toFixed(1)}% of total
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <RechartsPieChart>
+                        <Pie
+                          data={priorityData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={100}
+                          paddingAngle={5}
+                          label={({ name, value }) => `${name}: ${value}`}
+                        >
+                          {priorityData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            border: 'none', 
+                            borderRadius: '12px',
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)' 
+                          }} 
+                        />
+                        <Legend />
+                      </RechartsPieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* Clients Tab Content */}
+            <TabsContent value="clients" className="space-y-6 mt-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Client Performance Chart */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+                  <CardHeader className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-t-lg">
+                    <CardTitle className="flex items-center gap-2">
+                      <Building2 className="w-5 h-5" />
+                      Client Project Distribution
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={clientsData}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                        <XAxis dataKey="name" fontSize={12} />
+                        <YAxis fontSize={12} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            border: 'none', 
+                            borderRadius: '12px',
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)' 
+                          }} 
+                        />
+                        <Legend />
+                        <Bar dataKey="projects" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Projects" />
+                        <Bar dataKey="tasks" fill="#06b6d4" radius={[4, 4, 0, 0]} name="Total Tasks" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Client Completion Rates */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+                  <CardHeader className="bg-gradient-to-r from-teal-500 to-green-600 text-white rounded-t-lg">
+                    <CardTitle className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5" />
+                      Client Completion Rates
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <RadialBarChart data={clientsData} innerRadius="20%" outerRadius="90%">
+                        <RadialBar 
+                          dataKey="completion" 
+                          cornerRadius={10} 
+                          fill="#10b981"
+                          label={{ position: 'insideStart', fill: '#fff' }}
+                        />
+                        <Legend 
+                          iconSize={18}
+                          layout="horizontal"
+                          verticalAlign="bottom"
+                          align="center"
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            border: 'none', 
+                            borderRadius: '12px',
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)' 
+                          }} 
+                        />
+                      </RadialBarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* Projects Tab Content */}
+            <TabsContent value="projects" className="space-y-6 mt-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Project Tasks Chart */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+                  <CardHeader className="bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-t-lg">
+                    <CardTitle className="flex items-center gap-2">
+                      <FolderOpen className="w-5 h-5" />
+                      Tasks by Project
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <ResponsiveContainer width="100%" height={320}>
+                      <BarChart data={projectsData}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                        <XAxis dataKey="name" fontSize={12} />
+                        <YAxis fontSize={12} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            border: 'none', 
+                            borderRadius: '12px',
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)' 
+                          }} 
+                        />
+                        <Legend />
+                        <Bar dataKey="Open" stackId="a" fill={chartColors.Open} name="Open" />
+                        <Bar dataKey="InProgress" stackId="a" fill={chartColors.InProgress} name="In Progress" />
+                        <Bar dataKey="Blocked" stackId="a" fill={chartColors.Blocked} name="Blocked" />
+                        <Bar dataKey="Closed" stackId="a" fill={chartColors.Closed} name="Completed" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Project Completion Trend */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+                  <CardHeader className="bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-t-lg">
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5" />
+                      Project Completion Progress
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <ResponsiveContainer width="100%" height={320}>
+                      <AreaChart data={projectsData}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                        <XAxis dataKey="name" fontSize={12} />
+                        <YAxis fontSize={12} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            border: 'none', 
+                            borderRadius: '12px',
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)' 
+                          }} 
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="completion" 
+                          stroke="#10b981" 
+                          fill="url(#colorCompletion)" 
+                          strokeWidth={3}
+                        />
+                        <defs>
+                          <linearGradient id="colorCompletion" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
+                          </linearGradient>
+                        </defs>
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* Team Tab Content */}
+            <TabsContent value="team" className="space-y-6 mt-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Team Performance */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+                  <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-t-lg">
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="w-5 h-5" />
+                      Team Task Distribution
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <ResponsiveContainer width="100%" height={320}>
+                      <BarChart data={teamData}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                        <XAxis dataKey="name" fontSize={12} />
+                        <YAxis fontSize={12} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            border: 'none', 
+                            borderRadius: '12px',
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)' 
+                          }} 
+                        />
+                        <Legend />
+                        <Bar dataKey="Open" stackId="a" fill={chartColors.Open} name="Open" />
+                        <Bar dataKey="InProgress" stackId="a" fill={chartColors.InProgress} name="In Progress" />
+                        <Bar dataKey="Blocked" stackId="a" fill={chartColors.Blocked} name="Blocked" />
+                        <Bar dataKey="Closed" stackId="a" fill={chartColors.Closed} name="Completed" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Team Productivity */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+                  <CardHeader className="bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-t-lg">
+                    <CardTitle className="flex items-center gap-2">
+                      <UserCheck className="w-5 h-5" />
+                      Team Productivity Rates
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <ResponsiveContainer width="100%" height={320}>
+                      <LineChart data={teamData}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                        <XAxis dataKey="name" fontSize={12} />
+                        <YAxis fontSize={12} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            border: 'none', 
+                            borderRadius: '12px',
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)' 
+                          }} 
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="productivity" 
+                          stroke="#ec4899" 
+                          strokeWidth={4}
+                          dot={{ fill: '#ec4899', strokeWidth: 2, r: 6 }}
+                          activeDot={{ r: 8, stroke: '#ec4899', strokeWidth: 2, fill: '#fff' }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </CardContent>
                 </Card>
               </div>
             </TabsContent>
           </Tabs>
         </div>
-
-
-        {/* Quick Actions */}
-        <div className="space-y-6">
-          <Card className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-bold mb-2">Generate Custom Reports</h3>
-                  <p className="text-indigo-100">Create interactive charts and visualizations instantly</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Button 
-                    onClick={generateReport}
-                    className="bg-white text-indigo-600 hover:bg-gray-100"
-                  >
-                    <Activity className="w-4 h-4 mr-2" />
-                    Generate Now
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </main>
-    </>
+    </div>
   );
 }
