@@ -172,8 +172,20 @@ psql -U pm_user -d project_management -f database_setup.sql
 ## Next Steps
 
 1. Run the application: `npm run dev`
-2. Navigate to the application URL
-3. Login with admin credentials
+2. Navigate to `http://localhost:5000` in your browser
+3. Login with admin credentials:
+   - Username: `admin`
+   - Password: `password`
 4. Start using the project management system!
 
-The application will automatically connect to your local PostgreSQL database and you can begin creating projects, tasks, and managing your workflow.
+The application will automatically:
+- Detect your local PostgreSQL connection
+- Use the native `pg` driver instead of Neon serverless
+- Bind to `localhost:5000` for local development
+
+## Local Development Notes
+
+- The server automatically detects local PostgreSQL and adjusts configuration
+- Uses `localhost` instead of `0.0.0.0` for local compatibility
+- Disables `reusePort` option for local development
+- All data will be stored in your local PostgreSQL database
