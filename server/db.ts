@@ -11,8 +11,12 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Force Supabase connection - try connection pooler
-const databaseUrl = "postgresql://postgres.wjhbttuvsehawslpbgai:ojSfaUO2ftS3Cobd@aws-0-us-east-1.pooler.supabase.com:6543/postgres";
+// Try different Supabase connection approaches
+const supabaseDirectUrl = "postgresql://postgres:ojSfaUO2ftS3Cobd@db.wjhbttuvsehawslpbgai.supabase.co:5432/postgres";
+const supabasePoolerUrl = "postgresql://postgres:ojSfaUO2ftS3Cobd@aws-0-us-east-1.pooler.supabase.com:6543/postgres";
+
+// Start with direct connection since execute_sql_tool works with it
+const databaseUrl = supabaseDirectUrl;
 
 console.log(`🗃️  Connecting to database: ${databaseUrl.replace(/:[^:@]*@/, ':****@')}`);
 
@@ -30,11 +34,10 @@ if (isSupabase) {
   pool = new PgPool({ 
     connectionString: databaseUrl,
     ssl: { rejectUnauthorized: false }, // Supabase requires SSL
-    max: 3, // Small connection pool
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 20000,
-    keepAlive: true,
-    keepAliveInitialDelayMillis: 10000,
+    max: 1, // Single connection to avoid issues
+    idleTimeoutMillis: 60000,
+    connectionTimeoutMillis: 30000,
+    application_name: 'replit-taskloop-app',
   });
   db = drizzlePg({ client: pool, schema });
 } else if (isNeon) {
