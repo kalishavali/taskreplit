@@ -102,12 +102,7 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold">Task Details</DialogTitle>
-            <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="text-xl font-semibold">Task Details</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6 py-4">
