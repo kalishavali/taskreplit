@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, Eye, Building, Users, ArrowLeft, FolderOpen, Calendar, Layers } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Building, Users, ArrowLeft, FolderOpen, Calendar, Layers, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -141,21 +141,21 @@ export default function Clients() {
     },
   });
 
-  const deleteProjectMutation = useMutation({
-    mutationFn: async (projectId: number) => {
-      return await apiRequest(`/api/projects/${projectId}`, "DELETE");
+  const unassignProjectMutation = useMutation({
+    mutationFn: async ({ projectId, updateData }: { projectId: number; updateData: any }) => {
+      return await apiRequest(`/api/projects/${projectId}`, "PATCH", updateData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       toast({
         title: "Success",
-        description: "Project deleted successfully",
+        description: "Project unassigned from client successfully",
       });
     },
     onError: (error: Error) => {
       toast({
         title: "Error", 
-        description: error.message || "Failed to delete project",
+        description: error.message || "Failed to unassign project",
         variant: "destructive",
       });
     },
@@ -257,9 +257,11 @@ export default function Clients() {
     }
   };
 
-  const handleDeleteProject = (project: any) => {
-    if (confirm(`Are you sure you want to delete "${project.name}"? This will also delete all associated tasks.`)) {
-      deleteProjectMutation.mutate(project.id);
+  const handleUnassignProject = (project: any) => {
+    if (confirm(`Are you sure you want to unassign "${project.name}" from ${viewingClient?.name}? The project and its tasks will remain, but will no longer be associated with this client.`)) {
+      // Update project to remove client assignment (set clientId to null)
+      const updateData = { clientId: null };
+      unassignProjectMutation.mutate({ projectId: project.id, updateData });
     }
   };
 
@@ -464,10 +466,11 @@ export default function Clients() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDeleteProject(project)}
-                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleUnassignProject(project)}
+                          className="text-orange-600 hover:text-orange-700"
+                          title="Unassign project from client (project and tasks will remain)"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <X className="w-4 h-4" />
                         </Button>
                       </div>
                     ))

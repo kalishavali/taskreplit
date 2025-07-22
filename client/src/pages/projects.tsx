@@ -32,7 +32,7 @@ export default function Projects() {
   const [selectedClient, setSelectedClient] = useState<string>("all");
   const { toast } = useToast();
 
-  const { data: clients = [] } = useQuery({
+  const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
   });
 
@@ -427,7 +427,7 @@ export default function Projects() {
         }
       />
       
-      <div className="flex flex-1 relative">
+      <div className="flex flex-col flex-1">
         {/* Filters Section */}
         <div className="px-6 py-4 glass border-b border-gray-100/50">
           <div className="flex items-center justify-between">
@@ -443,7 +443,7 @@ export default function Projects() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Clients</SelectItem>
-                  {clients.map((client: any) => (
+                  {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id.toString()}>
                       {client.name}
                     </SelectItem>
