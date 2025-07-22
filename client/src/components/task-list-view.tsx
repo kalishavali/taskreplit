@@ -97,10 +97,10 @@ export default function TaskListView({ tasks, projects = [], isLoading }: TaskLi
 
   return (
     <>
-      <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="max-h-[600px] overflow-y-auto">
           <Table>
-            <TableHeader className="sticky top-0 bg-card z-10">
+            <TableHeader className="sticky top-0 bg-white z-10">
               <TableRow>
                 <TableHead className="w-8"></TableHead>
                 <TableHead className="w-80">Task</TableHead>
@@ -120,7 +120,7 @@ export default function TaskListView({ tasks, projects = [], isLoading }: TaskLi
                 <TableRow 
                   key={task.id} 
                   className={cn(
-                    "hover:bg-muted/50 cursor-pointer",
+                    "hover:bg-gray-50 cursor-pointer",
                     task.status === "Closed" && "opacity-75"
                   )}
                   onClick={() => handleEditTask(task)}
@@ -133,9 +133,9 @@ export default function TaskListView({ tasks, projects = [], isLoading }: TaskLi
                   
                   <TableCell>
                     <div className="max-w-80">
-                      <div className="font-medium text-foreground break-words">{task.title}</div>
+                      <div className="font-medium text-gray-900 break-words">{task.title}</div>
                       {task.description && (
-                        <div className="text-sm text-muted-foreground truncate max-w-80 overflow-hidden whitespace-nowrap text-ellipsis">
+                        <div className="text-sm text-gray-500 truncate max-w-80 overflow-hidden whitespace-nowrap text-ellipsis">
                           {task.description.replace(/<[^>]*>/g, '').trim()}
                         </div>
                       )}
