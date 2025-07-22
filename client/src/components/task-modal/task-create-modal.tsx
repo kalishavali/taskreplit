@@ -247,7 +247,7 @@ export function TaskCreateModal({
                               Open
                             </div>
                           </SelectItem>
-                          <SelectItem value="InProgress">
+                          <SelectItem value="In Progress">
                             <div className="flex items-center gap-2">
                               <div className="w-3 h-3 rounded-full bg-orange-400"></div>
                               In Progress

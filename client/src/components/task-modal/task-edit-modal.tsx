@@ -83,8 +83,7 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
       setSelectedProjectId(task.projectId || projectId);
       setSelectedApplicationId(task.applicationId || applicationId);
       
-      // Debug log to check status values
-      console.log("Task status:", task.status, "Setting status to:", task.status || "Open");
+
     }
   }, [task, projectId, applicationId]);
 
@@ -194,7 +193,7 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Open">Open</SelectItem>
-                  <SelectItem value="InProgress">In Progress</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
                   <SelectItem value="Blocked">Blocked</SelectItem>
                   <SelectItem value="Closed">Closed</SelectItem>
                 </SelectContent>

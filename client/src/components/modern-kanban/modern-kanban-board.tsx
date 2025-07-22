@@ -38,7 +38,7 @@ const statusColumns = [
     taskColor: "border-l-gray-400"
   },
   {
-    id: "InProgress", 
+    id: "In Progress", 
     title: "In Progress",
     color: "bg-orange-50 border-orange-200",
     headerColor: "text-orange-700",

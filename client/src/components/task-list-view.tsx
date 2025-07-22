@@ -39,17 +39,19 @@ export default function TaskListView({ tasks, projects = [], isLoading }: TaskLi
   };
 
   const statusColors = {
-    Open: "bg-gray-100 text-gray-800",
-    InProgress: "bg-blue-100 text-blue-800",
-    Blocked: "bg-red-100 text-red-800",
-    Closed: "bg-green-100 text-green-800",
+    "Open": "bg-gray-100 text-gray-800",
+    "In Progress": "bg-blue-100 text-blue-800",
+    "InProgress": "bg-blue-100 text-blue-800",
+    "Blocked": "bg-red-100 text-red-800",
+    "Closed": "bg-green-100 text-green-800",
   };
 
   const statusLabels = {
-    Open: "Open",
-    InProgress: "In Progress", 
-    Blocked: "Blocked",
-    Closed: "Closed",
+    "Open": "Open",
+    "In Progress": "In Progress",
+    "InProgress": "In Progress", 
+    "Blocked": "Blocked",
+    "Closed": "Closed",
   };
 
   const getProject = (projectId: number | null) => {

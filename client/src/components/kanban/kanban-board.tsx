@@ -13,7 +13,7 @@ interface KanbanBoardProps {
 
 const COLUMNS = [
   { id: "Open", title: "Open", status: "Open" },
-  { id: "InProgress", title: "In Progress", status: "InProgress" },
+  { id: "In Progress", title: "In Progress", status: "In Progress" },
   { id: "Blocked", title: "Blocked", status: "Blocked" },
   { id: "Closed", title: "Closed", status: "Closed" },
 ];
