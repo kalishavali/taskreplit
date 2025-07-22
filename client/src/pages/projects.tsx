@@ -29,6 +29,7 @@ export default function Projects() {
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [isApplicationsPanelOpen, setIsApplicationsPanelOpen] = useState(false);
   const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
+  const [selectedClient, setSelectedClient] = useState<string>("all");
   const { toast } = useToast();
 
   const { data: clients = [] } = useQuery({
@@ -158,6 +159,11 @@ export default function Projects() {
     const projectApps = allProjectApplications[projectId] || [];
     return projectApps.length;
   };
+
+  // Filter projects based on selected client
+  const filteredProjects = selectedClient === "all" 
+    ? projects 
+    : projects.filter(project => project.clientId === parseInt(selectedClient));
 
   if (isLoading) {
     return (
@@ -422,8 +428,40 @@ export default function Projects() {
       />
       
       <div className="flex flex-1 relative">
+        {/* Filters Section */}
+        <div className="px-6 py-4 glass border-b border-gray-100/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">Filters:</span>
+              </div>
+              
+              <Select value={selectedClient} onValueChange={setSelectedClient}>
+                <SelectTrigger className="w-48 glass border-0 shadow-md hover:shadow-lg transition-all duration-300">
+                  <SelectValue placeholder="All Clients" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Clients</SelectItem>
+                  {clients.map((client: any) => (
+                    <SelectItem key={client.id} value={client.id.toString()}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Badge variant="outline" className="bg-white/50">
+                {filteredProjects.length} {filteredProjects.length === 1 ? 'Project' : 'Projects'}
+              </Badge>
+            </div>
+          </div>
+        </div>
+
         <main className={`flex-1 overflow-auto p-6 transition-all duration-300 ${isApplicationsPanelOpen ? 'mr-80' : ''}`}>
-        {projects.length === 0 ? (
+        {filteredProjects.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <FolderOpen className="w-16 h-16 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No projects yet</h3>
@@ -439,7 +477,7 @@ export default function Projects() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => {
+            {filteredProjects.map((project) => {
               const progress = getProjectProgress(project.id);
               const taskCounts = getProjectTaskCounts(project.id);
               

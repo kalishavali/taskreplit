@@ -18,10 +18,16 @@ import type { Task, Project } from "@shared/schema";
 export default function Dashboard() {
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedClient, setSelectedClient] = useState<string>("all");
   const [selectedProject, setSelectedProject] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
   // Filter handlers
+  const handleClientFilter = (value: string) => {
+    setSelectedClient(value);
+    setSelectedProject("all"); // Reset project filter when client changes
+  };
+
   const handleProjectFilter = (value: string) => {
     setSelectedProject(value);
   };
@@ -31,6 +37,7 @@ export default function Dashboard() {
   };
 
   const clearFilters = () => {
+    setSelectedClient("all");
     setSelectedProject("all");
     setSelectedStatus("all");
     setSearchQuery("");
@@ -83,8 +90,30 @@ export default function Dashboard() {
 
   // Filter tasks based on search and filters
   const filteredTasks = searchQuery.trim() 
-    ? searchResults 
+    ? searchResults.filter(task => {
+        // Filter by client first (affects which projects are available)
+        if (selectedClient !== "all") {
+          const project = projects.find(p => p.id === task.projectId);
+          if (!project || project.clientId !== parseInt(selectedClient)) {
+            return false;
+          }
+        }
+        if (selectedProject !== "all" && task.projectId !== parseInt(selectedProject)) {
+          return false;
+        }
+        if (selectedStatus !== "all" && task.status !== selectedStatus) {
+          return false;
+        }
+        return true;
+      })
     : tasks.filter(task => {
+        // Filter by client first (affects which projects are available)
+        if (selectedClient !== "all") {
+          const project = projects.find(p => p.id === task.projectId);
+          if (!project || project.clientId !== parseInt(selectedClient)) {
+            return false;
+          }
+        }
         if (selectedProject !== "all" && task.projectId !== parseInt(selectedProject)) {
           return false;
         }
@@ -93,6 +122,11 @@ export default function Dashboard() {
         }
         return true;
       });
+
+  // Filter projects based on selected client
+  const availableProjects = selectedClient === "all" 
+    ? projects 
+    : projects.filter(project => project.clientId === parseInt(selectedClient));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 relative">
@@ -227,13 +261,27 @@ export default function Dashboard() {
               
                 {/* Filters */}
                 <div className="flex items-center space-x-3">
+                  <Select value={selectedClient} onValueChange={handleClientFilter}>
+                    <SelectTrigger className="w-40 glass border-0 shadow-md hover:shadow-lg transition-all duration-300">
+                      <SelectValue placeholder="All Clients" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Clients</SelectItem>
+                      {clients.map((client: any) => (
+                        <SelectItem key={client.id} value={client.id.toString()}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
                   <Select value={selectedProject} onValueChange={handleProjectFilter}>
                     <SelectTrigger className="w-40 glass border-0 shadow-md hover:shadow-lg transition-all duration-300">
                       <SelectValue placeholder="All Projects" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Projects</SelectItem>
-                      {projects.map((project) => (
+                      {availableProjects.map((project) => (
                         <SelectItem key={project.id} value={project.id.toString()}>
                           {project.name}
                         </SelectItem>

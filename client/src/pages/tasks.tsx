@@ -10,6 +10,7 @@ import type { Task, Project } from "@shared/schema";
 
 export default function Tasks() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedClient, setSelectedClient] = useState<string>("all");
   const [selectedProject, setSelectedProject] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
@@ -22,6 +23,10 @@ export default function Tasks() {
 
   const { data: projects = [] } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
+  });
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["/api/clients"],
   });
 
   const { data: searchResults = [] } = useQuery<Task[]>({
@@ -42,6 +47,13 @@ export default function Tasks() {
   const filteredTasks = searchQuery.trim() 
     ? searchResults 
     : tasks.filter(task => {
+        // Filter by client first (affects which projects are available)
+        if (selectedClient !== "all") {
+          const project = projects.find(p => p.id === task.projectId);
+          if (!project || project.clientId !== parseInt(selectedClient)) {
+            return false;
+          }
+        }
         if (selectedProject !== "all" && task.projectId !== parseInt(selectedProject)) {
           return false;
         }
@@ -56,6 +68,11 @@ export default function Tasks() {
         }
         return true;
       });
+
+  // Filter projects based on selected client
+  const availableProjects = selectedClient === "all" 
+    ? projects 
+    : projects.filter(project => project.clientId === parseInt(selectedClient));
 
   return (
     <>
@@ -81,13 +98,27 @@ export default function Tasks() {
               <span className="text-sm font-medium text-gray-700">Filters:</span>
             </div>
             
+            <Select value={selectedClient} onValueChange={setSelectedClient}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="All Clients" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Clients</SelectItem>
+                {clients.map((client: any) => (
+                  <SelectItem key={client.id} value={client.id.toString()}>
+                    {client.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Select value={selectedProject} onValueChange={setSelectedProject}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="All Projects" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Projects</SelectItem>
-                {projects.map((project) => (
+                {availableProjects.map((project) => (
                   <SelectItem key={project.id} value={project.id.toString()}>
                     {project.name}
                   </SelectItem>

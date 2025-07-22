@@ -161,6 +161,8 @@ export default function Clients() {
     },
   });
 
+
+
   const handleCreateClient = () => {
     if (newClient.name.trim()) {
       createMutation.mutate(newClient);
@@ -841,7 +843,7 @@ export default function Clients() {
         <Dialog open={isCreateProjectModalOpen} onOpenChange={setIsCreateProjectModalOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Create New Project{viewingClient ? ` for ${viewingClient.name}` : ''}</DialogTitle>
+              <DialogTitle>Create New Project{viewingClient && viewingClient.name ? ` for ${viewingClient.name}` : ''}</DialogTitle>
               <DialogDescription>
                 Create a new project and assign it to this client.
               </DialogDescription>
