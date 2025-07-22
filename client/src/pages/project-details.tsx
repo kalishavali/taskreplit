@@ -87,10 +87,10 @@ export default function ProjectDetails() {
   });
 
   // Get unique assignees for filter dropdown
-  const uniqueAssignees = [...new Set(allTasks.map(task => task.assignee).filter(Boolean))];
+  const uniqueAssignees = [...new Set((allTasks || []).map(task => task.assignee).filter(Boolean))];
 
   // Filter tasks based on search and filters
-  const tasks = allTasks.filter(task => {
+  const tasks = (allTasks || []).filter(task => {
     if (searchQuery.trim() && !task.title.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
