@@ -21,7 +21,7 @@ export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  clientId: integer("client_id").references(() => clients.id).notNull(), // Now belongs to a client
+  clientId: integer("client_id").references(() => clients.id), // Can be null for unassigned projects
   color: text("color").notNull().default("blue"),
   status: text("status").notNull().default("active"), // active, paused, completed, archived
   startDate: timestamp("start_date"),
@@ -234,6 +234,7 @@ export const insertUserClientPermissionSchema = createInsertSchema(userClientPer
 // Update schemas with proper date handling
 export const updateTaskSchema = insertTaskSchema.partial();
 export const updateProjectSchema = insertProjectSchema.partial().extend({
+  clientId: z.number().nullable().optional(), // Allow null for unassigning projects
   startDate: z.union([z.string(), z.date(), z.null()]).optional().transform((val) => {
     if (!val) return null;
     if (typeof val === 'string') return new Date(val);

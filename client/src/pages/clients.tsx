@@ -257,11 +257,18 @@ export default function Clients() {
     }
   };
 
+  const [unassignProject, setUnassignProject] = useState<any>(null);
+
   const handleUnassignProject = (project: any) => {
-    if (confirm(`Are you sure you want to unassign "${project.name}" from ${viewingClient?.name}? The project and its tasks will remain, but will no longer be associated with this client.`)) {
+    setUnassignProject(project);
+  };
+
+  const confirmUnassignProject = () => {
+    if (unassignProject) {
       // Update project to remove client assignment (set clientId to null)
       const updateData = { clientId: null };
-      unassignProjectMutation.mutate({ projectId: project.id, updateData });
+      unassignProjectMutation.mutate({ projectId: unassignProject.id, updateData });
+      setUnassignProject(null);
     }
   };
 
@@ -899,6 +906,42 @@ export default function Clients() {
                 disabled={!newProject.name.trim() || createProjectMutation.isPending}
               >
                 {createProjectMutation.isPending ? "Creating..." : "Create Project"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Unassign Project Confirmation Dialog */}
+        <Dialog open={!!unassignProject} onOpenChange={() => setUnassignProject(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Unassign Project</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to unassign "{unassignProject?.name}" from {viewingClient?.name}?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 text-sm text-gray-600">
+              <p>This action will:</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>Remove the project from this client</li>
+                <li>Keep the project and all its tasks</li>
+                <li>Make the project available for assignment to other clients</li>
+              </ul>
+              <p className="font-medium text-gray-700">No data will be deleted.</p>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setUnassignProject(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmUnassignProject}
+                disabled={unassignProjectMutation.isPending}
+                className="bg-orange-500 hover:bg-orange-600 text-white"
+              >
+                {unassignProjectMutation.isPending ? "Unassigning..." : "Unassign Project"}
               </Button>
             </DialogFooter>
           </DialogContent>
