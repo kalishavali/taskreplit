@@ -2,10 +2,26 @@ import { pgTable, text, serial, integer, boolean, timestamp, jsonb, primaryKey }
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// New Clients table - top level entity
+export const clients = pgTable("clients", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  logo: text("logo"), // Logo URL or path
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+  address: text("address"),
+  status: text("status").notNull().default("active"), // active, inactive, archived
+  tags: text("tags").array(), // Client tags
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
+  clientId: integer("client_id").references(() => clients.id).notNull(), // Now belongs to a client
   color: text("color").notNull().default("blue"),
   status: text("status").notNull().default("active"), // active, paused, completed, archived
   startDate: timestamp("start_date"),
@@ -129,11 +145,11 @@ export const sessions = pgTable("sessions", {
   expire: timestamp("expire").notNull(),
 });
 
-// User project permissions table
-export const userProjectPermissions = pgTable("user_project_permissions", {
+// User client permissions table - now permissions are at client level
+export const userClientPermissions = pgTable("user_client_permissions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  projectId: integer("project_id").references(() => projects.id, { onDelete: "cascade" }).notNull(),
+  clientId: integer("client_id").references(() => clients.id, { onDelete: "cascade" }).notNull(),
   canView: boolean("can_view").default(true).notNull(),
   canEdit: boolean("can_edit").default(false).notNull(),
   canDelete: boolean("can_delete").default(false).notNull(),
@@ -143,6 +159,12 @@ export const userProjectPermissions = pgTable("user_project_permissions", {
 });
 
 // Insert schemas
+export const insertClientSchema = createInsertSchema(clients).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
   createdAt: true,
@@ -203,7 +225,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
 
 export const insertSessionSchema = createInsertSchema(sessions);
 
-export const insertUserProjectPermissionSchema = createInsertSchema(userProjectPermissions).omit({
+export const insertUserClientPermissionSchema = createInsertSchema(userClientPermissions).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -223,6 +245,7 @@ export const updateProjectSchema = insertProjectSchema.partial().extend({
     return val;
   }),
 });
+export const updateClientSchema = insertClientSchema.partial();
 export const updateApplicationSchema = insertApplicationSchema.partial();
 export const updateTeamMemberSchema = insertTeamMemberSchema.partial();
 export const updateActivitySchema = insertActivitySchema.partial();
@@ -230,9 +253,10 @@ export const updateCommentSchema = insertCommentSchema.partial();
 export const updateNotificationSchema = insertNotificationSchema.partial();
 export const updateTimeEntrySchema = insertTimeEntrySchema.partial();
 export const updateUserSchema = insertUserSchema.partial();
-export const updateUserProjectPermissionSchema = insertUserProjectPermissionSchema.partial();
+export const updateUserClientPermissionSchema = insertUserClientPermissionSchema.partial();
 
 // Types
+export type Client = typeof clients.$inferSelect;
 export type Project = typeof projects.$inferSelect;
 export type Application = typeof applications.$inferSelect;
 export type ProjectApplication = typeof projectApplications.$inferSelect;
@@ -244,8 +268,9 @@ export type TimeEntry = typeof timeEntries.$inferSelect;
 export type TeamMember = typeof teamMembers.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
-export type UserProjectPermission = typeof userProjectPermissions.$inferSelect;
+export type UserClientPermission = typeof userClientPermissions.$inferSelect;
 
+export type InsertClient = z.infer<typeof insertClientSchema>;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 export type InsertApplication = z.infer<typeof insertApplicationSchema>;
 export type InsertProjectApplication = z.infer<typeof insertProjectApplicationSchema>;
@@ -257,8 +282,9 @@ export type InsertTimeEntry = z.infer<typeof insertTimeEntrySchema>;
 export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
-export type InsertUserProjectPermission = z.infer<typeof insertUserProjectPermissionSchema>;
+export type InsertUserClientPermission = z.infer<typeof insertUserClientPermissionSchema>;
 
+export type UpdateClient = z.infer<typeof updateClientSchema>;
 export type UpdateTask = z.infer<typeof updateTaskSchema>;
 export type UpdateProject = z.infer<typeof updateProjectSchema>;
 export type UpdateApplication = z.infer<typeof updateApplicationSchema>;
@@ -268,4 +294,4 @@ export type UpdateComment = z.infer<typeof updateCommentSchema>;
 export type UpdateNotification = z.infer<typeof updateNotificationSchema>;
 export type UpdateTimeEntry = z.infer<typeof updateTimeEntrySchema>;
 export type UpdateUser = z.infer<typeof updateUserSchema>;
-export type UpdateUserProjectPermission = z.infer<typeof updateUserProjectPermissionSchema>;
+export type UpdateUserClientPermission = z.infer<typeof updateUserClientPermissionSchema>;

@@ -1,6 +1,7 @@
 import { eq, like, and, desc, or, asc, sql, inArray } from "drizzle-orm";
 import { db } from "./db.js";
 import {
+  clients,
   projects,
   tasks,
   applications,
@@ -12,7 +13,8 @@ import {
   timeEntries,
   users,
   sessions,
-  userProjectPermissions,
+  userClientPermissions,
+  type Client,
   type Project,
   type Task,
   type Application,
@@ -24,7 +26,8 @@ import {
   type TimeEntry,
   type User,
   type Session,
-  type UserProjectPermission,
+  type UserClientPermission,
+  type InsertClient,
   type InsertProject,
   type InsertTask,
   type InsertApplication,
@@ -36,7 +39,8 @@ import {
   type InsertTimeEntry,
   type InsertUser,
   type InsertSession,
-  type InsertUserProjectPermission,
+  type InsertUserClientPermission,
+  type UpdateClient,
   type UpdateProject,
   type UpdateTask,
   type UpdateApplication,
@@ -49,8 +53,15 @@ import {
 } from "@shared/schema";
 
 export interface IStorage {
+  // Clients
+  getClients(): Promise<Client[]>;
+  getClient(id: number): Promise<Client | undefined>;
+  createClient(client: InsertClient): Promise<Client>;
+  updateClient(id: number, updates: UpdateClient): Promise<Client | undefined>;
+  deleteClient(id: number): Promise<boolean>;
+
   // Projects
-  getProjects(): Promise<Project[]>;
+  getProjects(clientId?: number): Promise<Project[]>;
   getProject(id: number): Promise<Project | undefined>;
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: number, updates: UpdateProject): Promise<Project | undefined>;
@@ -151,8 +162,39 @@ export class DatabaseStorage implements IStorage {
     console.log('Database storage initialized - using existing data');
   }
 
+  // Clients
+  async getClients(): Promise<Client[]> {
+    return await db.select().from(clients).orderBy(clients.name);
+  }
+
+  async getClient(id: number): Promise<Client | undefined> {
+    const [client] = await db.select().from(clients).where(eq(clients.id, id));
+    return client;
+  }
+
+  async createClient(insertClient: InsertClient): Promise<Client> {
+    const [client] = await db.insert(clients).values(insertClient).returning();
+    return client;
+  }
+
+  async updateClient(id: number, updates: UpdateClient): Promise<Client | undefined> {
+    const [client] = await db.update(clients).set({
+      ...updates,
+      updatedAt: new Date(),
+    }).where(eq(clients.id, id)).returning();
+    return client;
+  }
+
+  async deleteClient(id: number): Promise<boolean> {
+    const deleted = await db.delete(clients).where(eq(clients.id, id));
+    return (deleted.rowCount ?? 0) > 0;
+  }
+
   // Projects
-  async getProjects(): Promise<Project[]> {
+  async getProjects(clientId?: number): Promise<Project[]> {
+    if (clientId) {
+      return await db.select().from(projects).where(eq(projects.clientId, clientId));
+    }
     return await db.select().from(projects);
   }
 
@@ -722,57 +764,88 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(id: number): Promise<boolean> {
     const deleted = await db.delete(users).where(eq(users.id, id));
-    return deleted.rowCount > 0;
+    return (deleted.rowCount ?? 0) > 0;
   }
 
-  // User project permissions methods
-  async getUserProjectPermissions(userId: number): Promise<UserProjectPermission[]> {
-    return await db.select().from(userProjectPermissions).where(eq(userProjectPermissions.userId, userId));
+  // User client permissions methods
+  async getUserClientPermissions(userId: number): Promise<UserClientPermission[]> {
+    return await db.select().from(userClientPermissions).where(eq(userClientPermissions.userId, userId));
   }
 
-  async setUserProjectPermissions(userId: number, projectId: number, permissions: InsertUserProjectPermission): Promise<UserProjectPermission> {
-    // Check if permission already exists
-    const [existing] = await db.select()
-      .from(userProjectPermissions)
+  async getUserPermissionsForClient(userId: number, clientId: number): Promise<UserClientPermission | undefined> {
+    const [permission] = await db.select()
+      .from(userClientPermissions)
       .where(
         and(
-          eq(userProjectPermissions.userId, userId),
-          eq(userProjectPermissions.projectId, projectId)
+          eq(userClientPermissions.userId, userId),
+          eq(userClientPermissions.clientId, clientId)
         )
       );
+    return permission;
+  }
+
+  async setUserClientPermissions(userId: number, clientId: number, permissions: InsertUserClientPermission): Promise<UserClientPermission> {
+    // Check if permission already exists
+    const existing = await this.getUserPermissionsForClient(userId, clientId);
 
     if (existing) {
       // Update existing permission
-      const [updated] = await db.update(userProjectPermissions)
+      const [updated] = await db.update(userClientPermissions)
         .set({
           ...permissions,
           updatedAt: new Date(),
         })
-        .where(eq(userProjectPermissions.id, existing.id))
+        .where(eq(userClientPermissions.id, existing.id))
         .returning();
       return updated;
     } else {
       // Create new permission
-      const [created] = await db.insert(userProjectPermissions)
+      const [created] = await db.insert(userClientPermissions)
         .values({
-          userId,
-          projectId,
           ...permissions,
+          userId,
+          clientId,
         })
         .returning();
       return created;
     }
   }
 
-  async removeUserProjectPermission(userId: number, projectId: number): Promise<boolean> {
-    const deleted = await db.delete(userProjectPermissions)
+  async removeUserClientPermission(userId: number, clientId: number): Promise<boolean> {
+    const deleted = await db.delete(userClientPermissions)
       .where(
         and(
-          eq(userProjectPermissions.userId, userId),
-          eq(userProjectPermissions.projectId, projectId)
+          eq(userClientPermissions.userId, userId),
+          eq(userClientPermissions.clientId, clientId)
         )
       );
-    return deleted.rowCount > 0;
+    return (deleted.rowCount ?? 0) > 0;
+  }
+
+  async getUserAccessibleClients(userId: number): Promise<Client[]> {
+    // Admin can access all clients
+    const user = await this.getUser(userId);
+    if (user?.role === 'admin') {
+      return await this.getClients();
+    }
+
+    // Regular users can only access clients they have permissions for
+    const clientIds = await db.select({ clientId: userClientPermissions.clientId })
+      .from(userClientPermissions)
+      .where(
+        and(
+          eq(userClientPermissions.userId, userId),
+          eq(userClientPermissions.canView, true)
+        )
+      );
+
+    if (clientIds.length === 0) {
+      return [];
+    }
+
+    return await db.select()
+      .from(clients)
+      .where(inArray(clients.id, clientIds.map(c => c.clientId)));
   }
 
   async getUserAccessibleProjects(userId: number): Promise<Project[]> {
@@ -782,40 +855,26 @@ export class DatabaseStorage implements IStorage {
       return await this.getProjects();
     }
 
-    // Regular users can only access projects they have permissions for
-    const projectIds = await db.select({ projectId: userProjectPermissions.projectId })
-      .from(userProjectPermissions)
-      .where(
-        and(
-          eq(userProjectPermissions.userId, userId),
-          eq(userProjectPermissions.canView, true)
-        )
-      );
-
-    if (projectIds.length === 0) {
+    // Regular users can only access projects from clients they have permissions for
+    const accessibleClients = await this.getUserAccessibleClients(userId);
+    
+    if (accessibleClients.length === 0) {
       return [];
     }
 
     return await db.select()
       .from(projects)
-      .where(inArray(projects.id, projectIds.map(p => p.projectId)));
+      .where(inArray(projects.clientId, accessibleClients.map(c => c.id)));
   }
 
-  async checkUserProjectPermission(userId: number, projectId: number, permission: 'view' | 'edit' | 'delete' | 'manage'): Promise<boolean> {
+  async checkUserClientPermission(userId: number, clientId: number, permission: 'view' | 'edit' | 'delete' | 'manage'): Promise<boolean> {
     // Admin has all permissions
     const user = await this.getUser(userId);
     if (user?.role === 'admin') {
       return true;
     }
 
-    const [userPermission] = await db.select()
-      .from(userProjectPermissions)
-      .where(
-        and(
-          eq(userProjectPermissions.userId, userId),
-          eq(userProjectPermissions.projectId, projectId)
-        )
-      );
+    const userPermission = await this.getUserPermissionsForClient(userId, clientId);
 
     if (!userPermission) {
       return false;
@@ -833,6 +892,22 @@ export class DatabaseStorage implements IStorage {
       default:
         return false;
     }
+  }
+
+  async checkUserProjectPermission(userId: number, projectId: number, permission: 'view' | 'edit' | 'delete' | 'manage'): Promise<boolean> {
+    // Admin has all permissions
+    const user = await this.getUser(userId);
+    if (user?.role === 'admin') {
+      return true;
+    }
+
+    // Get project's client and check client permissions
+    const project = await this.getProject(projectId);
+    if (!project) {
+      return false;
+    }
+
+    return await this.checkUserClientPermission(userId, project.clientId, permission);
   }
 }
 

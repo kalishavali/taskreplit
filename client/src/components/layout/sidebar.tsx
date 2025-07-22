@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { 
   Home, 
+  Building,
   Folder, 
   CheckSquare, 
   BarChart3,
@@ -18,6 +19,7 @@ import { apiRequest } from "@/lib/queryClient";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: Home },
+  { name: "Clients", href: "/clients", icon: Building },
   { name: "Projects", href: "/projects", icon: Folder },
   { name: "Applications", href: "/applications", icon: Grid3X3 },
   { name: "My Tasks", href: "/tasks", icon: CheckSquare },

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { storage } from "./storage";
 import { configureSession, setupAuthRoutes, requireAuth } from "./auth";
 import {
+  insertClientSchema,
   insertProjectSchema,
   insertApplicationSchema,
   insertTaskSchema,
@@ -13,7 +14,9 @@ import {
   insertTeamMemberSchema,
   updateTaskSchema,
   updateProjectSchema,
+  updateClientSchema,
   updateApplicationSchema,
+  insertUserClientPermissionSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -23,12 +26,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuthRoutes(app);
 
+  // Client routes (protected with user permissions)
+  app.get("/api/clients", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const clients = await storage.getUserAccessibleClients(userId);
+      res.json(clients);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch clients" });
+    }
+  });
+
+  app.get("/api/clients/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.session.userId!;
+      
+      // Check if user has permission to view this client
+      const hasPermission = await storage.checkUserClientPermission(userId, id, 'view');
+      if (!hasPermission) {
+        return res.status(403).json({ message: "You don't have permission to view this client" });
+      }
+      
+      const client = await storage.getClient(id);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      res.json(client);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch client" });
+    }
+  });
+
+  app.post("/api/clients", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const user = await storage.getUser(userId);
+      
+      // Only admins can create clients
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Only administrators can create clients" });
+      }
+      
+      const clientData = insertClientSchema.parse(req.body);
+      const client = await storage.createClient(clientData);
+      res.status(201).json(client);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid client data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create client" });
+    }
+  });
+
+  app.patch("/api/clients/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.session.userId!;
+      
+      // Check if user has permission to edit this client
+      const hasPermission = await storage.checkUserClientPermission(userId, id, 'edit');
+      if (!hasPermission) {
+        return res.status(403).json({ message: "You don't have permission to edit this client" });
+      }
+      
+      const clientData = updateClientSchema.parse(req.body);
+      const client = await storage.updateClient(id, clientData);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      res.json(client);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid client data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update client" });
+    }
+  });
+
+  app.delete("/api/clients/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.session.userId!;
+      
+      // Check if user has permission to delete this client
+      const hasPermission = await storage.checkUserClientPermission(userId, id, 'delete');
+      if (!hasPermission) {
+        return res.status(403).json({ message: "You don't have permission to delete this client" });
+      }
+      
+      const deleted = await storage.deleteClient(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      res.json({ message: "Client deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete client" });
+    }
+  });
+
   // Projects routes (protected with user permissions)
   app.get("/api/projects", requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId!;
-      const projects = await storage.getUserAccessibleProjects(userId);
-      res.json(projects);
+      const clientId = req.query.clientId ? parseInt(req.query.clientId as string) : undefined;
+      
+      if (clientId) {
+        // Check if user has permission to view this client
+        const hasPermission = await storage.checkUserClientPermission(userId, clientId, 'view');
+        if (!hasPermission) {
+          return res.status(403).json({ message: "You don't have permission to view this client's projects" });
+        }
+        const projects = await storage.getProjects(clientId);
+        res.json(projects);
+      } else {
+        const projects = await storage.getUserAccessibleProjects(userId);
+        res.json(projects);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch projects" });
     }
@@ -732,6 +846,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(activities);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch project activities" });
+    }
+  });
+
+  // User management routes (admin only)
+  app.get("/api/users", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Only administrators can view users" });
+      }
+      
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // User client permissions routes (admin only)
+  app.get("/api/users/:userId/client-permissions", requireAuth, async (req, res) => {
+    try {
+      const currentUserId = req.session.userId!;
+      const targetUserId = parseInt(req.params.userId);
+      const user = await storage.getUser(currentUserId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Only administrators can view user permissions" });
+      }
+      
+      const permissions = await storage.getUserClientPermissions(targetUserId);
+      res.json(permissions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user permissions" });
+    }
+  });
+
+  app.post("/api/users/:userId/client-permissions", requireAuth, async (req, res) => {
+    try {
+      const currentUserId = req.session.userId!;
+      const targetUserId = parseInt(req.params.userId);
+      const user = await storage.getUser(currentUserId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Only administrators can manage user permissions" });
+      }
+      
+      const permissionData = insertUserClientPermissionSchema.parse(req.body);
+      const permission = await storage.setUserClientPermissions(
+        targetUserId,
+        permissionData.clientId,
+        permissionData
+      );
+      res.status(201).json(permission);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid permission data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to set user permissions" });
+    }
+  });
+
+  app.delete("/api/users/:userId/client-permissions/:clientId", requireAuth, async (req, res) => {
+    try {
+      const currentUserId = req.session.userId!;
+      const targetUserId = parseInt(req.params.userId);
+      const clientId = parseInt(req.params.clientId);
+      const user = await storage.getUser(currentUserId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Only administrators can manage user permissions" });
+      }
+      
+      const deleted = await storage.removeUserClientPermission(targetUserId, clientId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Permission not found" });
+      }
+      res.json({ message: "Permission removed successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to remove user permission" });
     }
   });
 

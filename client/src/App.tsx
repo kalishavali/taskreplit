@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
+import Clients from "@/pages/clients";
 import Projects from "@/pages/projects";
 import ProjectDetails from "@/pages/project-details";
 import Applications from "@/pages/applications";
@@ -40,6 +41,7 @@ function Router() {
       <div className="flex-1 flex flex-col overflow-auto">
         <Switch>
           <Route path="/" component={Dashboard} />
+          <Route path="/clients" component={Clients} />
           <Route path="/projects" component={Projects} />
           <Route path="/projects/:id" component={ProjectDetails} />
           <Route path="/applications" component={Applications} />
