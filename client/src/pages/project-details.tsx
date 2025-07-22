@@ -19,7 +19,7 @@ import {
   DollarSign,
   Settings,
   Plus,
-  MoreHorizontal,
+
   Layers,
   Target,
   Clock,
@@ -287,20 +287,29 @@ export default function ProjectDetails() {
                     <span>${project.budget.toLocaleString()}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
-                  <span>{project.teamMembers?.length || 0} members</span>
+                  <span>{project.teamMembers?.length || 0} members:</span>
+                  <div className="flex items-center gap-1">
+                    {project.teamMembers?.slice(0, 4).map((member, index) => (
+                      <div key={index} className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-xs font-medium text-purple-700">
+                        {member.split(' ').map(n => n[0]).join('').toUpperCase()}
+                      </div>
+                    ))}
+                    {(project.teamMembers?.length || 0) > 4 && (
+                      <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium text-gray-600">
+                        +{(project.teamMembers?.length || 0) - 4}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-            {/* Status and actions */}
+            {/* Status */}
             <div className="flex items-center gap-3">
               <Badge className={cn("px-3 py-1", getStatusColor(project.status))}>
                 {project.status}
               </Badge>
-              <Button variant="outline" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
             </div>
           </div>
 

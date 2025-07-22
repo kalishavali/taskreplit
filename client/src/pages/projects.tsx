@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, FolderOpen, Calendar, Users, Upload, X, Sidebar } from "lucide-react";
+import { Plus, FolderOpen, Calendar, Users, Upload, X, Sidebar, Layers } from "lucide-react";
 import { ApplicationsPanel } from "@/components/applications-panel";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,6 +41,32 @@ export default function Projects() {
 
   const { data: applications = [] } = useQuery<Application[]>({
     queryKey: ["/api/applications"],
+  });
+
+  // Fetch project applications data for all projects
+  const { data: allProjectApplications = {} } = useQuery({
+    queryKey: ["/api/projects-applications"],
+    queryFn: async () => {
+      const projectApplicationsMap: {[key: number]: Application[]} = {};
+      
+      // Fetch applications for each project
+      for (const project of projects) {
+        try {
+          const response = await fetch(`/api/projects/${project.id}/applications`);
+          if (response.ok) {
+            const applications = await response.json();
+            projectApplicationsMap[project.id] = applications;
+          } else {
+            projectApplicationsMap[project.id] = [];
+          }
+        } catch (error) {
+          projectApplicationsMap[project.id] = [];
+        }
+      }
+      
+      return projectApplicationsMap;
+    },
+    enabled: projects.length > 0,
   });
 
   const createProjectMutation = useMutation({
@@ -119,6 +145,12 @@ export default function Projects() {
       inProgress: projectTasks.filter(t => t.status === "inprogress").length,
       done: projectTasks.filter(t => t.status === "done").length,
     };
+  };
+
+  // Add function to get project application count
+  const getProjectApplicationCount = (projectId: number) => {
+    const projectApps = allProjectApplications[projectId] || [];
+    return projectApps.length;
   };
 
   if (isLoading) {
@@ -435,8 +467,8 @@ export default function Projects() {
                             {new Date(project.createdAt).toLocaleDateString()}
                           </div>
                           <div className="flex items-center">
-                            <Users className="w-4 h-4 mr-1" />
-                            {taskCounts.total} tasks
+                            <Layers className="w-4 h-4 mr-1" />
+                            {getProjectApplicationCount(project.id)} applications
                           </div>
                         </div>
                       </div>
