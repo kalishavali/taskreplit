@@ -1,4 +1,4 @@
-import { eq, like, and, desc, or, asc, sql, inArray } from "drizzle-orm";
+import { eq, like, ilike, and, desc, or, asc, sql, inArray } from "drizzle-orm";
 import { db } from "./db.js";
 import {
   clients,
@@ -457,9 +457,9 @@ export class DatabaseStorage implements IStorage {
       .from(tasks)
       .where(
         or(
-          like(tasks.title, searchPattern),
-          like(tasks.description, searchPattern),
-          like(tasks.assignee, searchPattern)
+          ilike(tasks.title, searchPattern),
+          ilike(tasks.description, searchPattern),
+          ilike(tasks.assignee, searchPattern)
         )
       );
 
