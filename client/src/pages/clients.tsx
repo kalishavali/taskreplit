@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, Eye, Building, Users, ArrowLeft, FolderOpen, Calendar, Layers, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import Header from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -202,6 +203,12 @@ export default function Clients() {
 
   const getProjectCount = (clientId: number) => {
     return (projects as any[]).filter((project: any) => project.clientId === clientId).length;
+  };
+
+  const getClientTaskCounts = (clientId: number) => {
+    const clientProjects = (projects as any[]).filter((project: any) => project.clientId === clientId);
+    const clientProjectIds = clientProjects.map(p => p.id);
+    return (tasks as any[]).filter((task: any) => clientProjectIds.includes(task.projectId)).length;
   };
 
   const getClientProjects = (clientId: number) => {
@@ -644,188 +651,151 @@ export default function Clients() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-              Client Management
-            </h1>
-            <p className="text-gray-600">
-              Manage client accounts and their associated projects
-            </p>
-          </div>
-
-          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Client
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Create New Client</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="client-name">Client Name</Label>
-                  <Input
-                    id="client-name"
-                    placeholder="Enter client name"
-                    value={newClient.name}
-                    onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="client-description">Description</Label>
-                  <Textarea
-                    id="client-description"
-                    placeholder="Enter client description"
-                    value={newClient.description}
-                    onChange={(e) => setNewClient({ ...newClient, description: e.target.value })}
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCreateModalOpen(false)}
-                >
-                  Cancel
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 relative">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-emerald-100 to-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '2s'}}></div>
+      
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header 
+          title="Clients" 
+          subtitle={`${(clients as Client[]).length} Active Clients`}
+          action={
+            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover-lift">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Client
                 </Button>
-                <Button
-                  onClick={handleCreateClient}
-                  disabled={!newClient.name.trim() || createMutation.isPending}
-                >
-                  {createMutation.isPending ? "Creating..." : "Create Client"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid gap-6 md:grid-cols-4">
-          <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow duration-200">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <Building className="w-8 h-8 text-blue-500" />
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{(clients as Client[]).length}</p>
-                  <p className="text-sm text-gray-600">Total Clients</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow duration-200">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <Users className="w-8 h-8 text-green-500" />
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{(projects as any[]).length}</p>
-                  <p className="text-sm text-gray-600">Total Projects</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Clients Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {(clients as Client[]).map((client: Client) => (
-            <Card
-              key={client.id}
-              className="group bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-              onClick={() => setViewingClient(client)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                      <Building className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg text-gray-900 group-hover:text-blue-600 transition-colors">
-                        {client.name}
-                      </CardTitle>
-                      <Badge variant="secondary" className="text-xs">
-                        {getProjectCount(client.id)} projects
-                      </Badge>
-                    </div>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Create New Client</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="client-name">Client Name</Label>
+                    <Input
+                      id="client-name"
+                      placeholder="Enter client name"
+                      value={newClient.name}
+                      onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+                    />
                   </div>
-                  
-                  <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditModal(client);
-                      }}
-                      className="h-8 w-8 p-0 hover:bg-blue-100"
-                    >
-                      <Pencil className="w-4 h-4 text-blue-600" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteClient(client);
-                      }}
-                      className="h-8 w-8 p-0 hover:bg-red-100"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-600" />
-                    </Button>
+                  <div>
+                    <Label htmlFor="client-description">Description</Label>
+                    <Textarea
+                      id="client-description"
+                      placeholder="Enter client description"
+                      value={newClient.description}
+                      onChange={(e) => setNewClient({ ...newClient, description: e.target.value })}
+                      rows={3}
+                    />
                   </div>
                 </div>
-              </CardHeader>
-              
-              <CardContent className="pt-0">
-                <CardDescription className="text-sm text-gray-600 line-clamp-2">
-                  {client.description || "No description provided"}
-                </CardDescription>
-                
-                <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
-                  <span>Created: {new Date(client.createdAt).toLocaleDateString()}</span>
+                <DialogFooter>
                   <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setViewingClient(client);
-                    }}
-                    className="text-blue-600 hover:text-blue-800"
+                    variant="outline"
+                    onClick={() => setIsCreateModalOpen(false)}
                   >
-                    <Eye className="w-4 h-4 mr-1" />
-                    View Projects
+                    Cancel
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  <Button
+                    onClick={handleCreateClient}
+                    disabled={!newClient.name.trim() || createMutation.isPending}
+                  >
+                    {createMutation.isPending ? "Creating..." : "Create Client"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          }
+        />
 
-        {(clients as Client[]).length === 0 && (
-          <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
-            <CardContent className="text-center py-12">
-              <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No clients found</h3>
-              <p className="text-gray-600 mb-4">Get started by creating your first client</p>
-              <Button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Client
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        <div className="flex flex-col flex-1">
+          <main className="flex-1 overflow-auto p-6">
+            {(clients as Client[]).length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                <Building className="w-16 h-16 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No clients yet</h3>
+                <p className="text-sm text-gray-500 mb-4">Create your first client to get started with project management.</p>
+                <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Client
+                    </Button>
+                  </DialogTrigger>
+                </Dialog>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {(clients as Client[]).map((client: Client) => (
+                  <Card key={client.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setViewingClient(client)}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">{client.name}</CardTitle>
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                          {getProjectCount(client.id)} projects
+                        </Badge>
+                      </div>
+                      
+                      {client.description && (
+                        <p className="text-sm text-muted-foreground">{client.description}</p>
+                      )}
+                    </CardHeader>
+                    
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4 text-center">
+                          <div>
+                            <div className="text-2xl font-bold text-blue-600">{getProjectCount(client.id)}</div>
+                            <div className="text-xs text-muted-foreground">Projects</div>
+                          </div>
+                          <div>
+                            <div className="text-2xl font-bold text-green-600">{getClientTaskCounts(client.id)}</div>
+                            <div className="text-xs text-muted-foreground">Tasks</div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <div className="flex items-center">
+                            <Calendar className="w-4 h-4 mr-1" />
+                            {new Date(client.createdAt).toLocaleDateString()}
+                          </div>
+                          <div className="flex space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditModal(client);
+                              }}
+                              className="h-8 w-8 p-0 hover:bg-blue-100"
+                            >
+                              <Pencil className="w-4 h-4 text-blue-600" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClient(client);
+                              }}
+                              className="h-8 w-8 p-0 hover:bg-red-100"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </main>
+        </div>
 
         {/* Edit Client Modal */}
         <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
@@ -877,7 +847,7 @@ export default function Clients() {
         <Dialog open={isCreateProjectModalOpen} onOpenChange={setIsCreateProjectModalOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Create New Project{viewingClient && viewingClient.name ? ` for ${viewingClient.name}` : ''}</DialogTitle>
+              <DialogTitle>Create New Project{viewingClient?.name ? ` for ${viewingClient?.name}` : ''}</DialogTitle>
               <DialogDescription>
                 Create a new project and assign it to this client.
               </DialogDescription>
