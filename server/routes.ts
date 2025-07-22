@@ -241,7 +241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid application IDs", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to update project applications", error: error.message });
+      res.status(500).json({ message: "Failed to update project applications", error: (error as Error).message });
     }
   });
 

@@ -86,12 +86,12 @@ export function TaskCreateModal({
       const taskData = {
         title: data.title,
         description: description,
-        status: data.status,
+        status: data.status === "todo" ? "Open" : data.status, // Fix status mapping
         priority: data.priority,
         projectId: data.projectId,
         applicationId: data.applicationId,
         assignee: data.assignee === "unassigned" ? null : data.assignee,
-        dueDate: dueDate?.toISOString() || null,
+        dueDate: dueDate?.toISOString() || null, // Send ISO string format
         progress: data.progress || 0,
       };
       console.log("Creating task with data:", taskData);
