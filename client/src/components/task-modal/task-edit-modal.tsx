@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { RichTextEditor, RichTextRenderer } from "@/components/rich-text-editor";
-import type { Task, Comment, Project, Application } from "@shared/schema";
+import type { Task, Comment, Project, Application, TeamMember } from "@shared/schema";
 
 interface TaskEditModalProps {
   task: Task;
@@ -61,6 +61,11 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
       return response.json();
     },
     enabled: !!selectedProjectId,
+  });
+
+  // Fetch team members for assignee dropdown
+  const { data: teamMembers = [] } = useQuery<TeamMember[]>({
+    queryKey: ["/api/team-members"]
   });
 
   // Reset form when task changes
@@ -207,12 +212,26 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
           {/* Assignee */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Assignee</label>
-            <Input
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-              placeholder="Enter assignee name"
-              className="w-full"
-            />
+            <Select value={assignee || ""} onValueChange={setAssignee}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select assignee..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Unassigned</SelectItem>
+                {teamMembers.map((member) => (
+                  <SelectItem key={member.id} value={member.name}>
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarFallback className="text-xs">
+                          {member.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      {member.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Description */}
