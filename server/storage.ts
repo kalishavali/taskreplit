@@ -209,13 +209,12 @@ export class DatabaseStorage implements IStorage {
         status: applications.status,
         createdAt: applications.createdAt,
         updatedAt: applications.updatedAt,
-        projectId: applications.projectId,
       })
       .from(projectApplications)
       .innerJoin(applications, eq(projectApplications.applicationId, applications.id))
       .where(eq(projectApplications.projectId, projectId));
 
-    return result;
+    return result as Application[];
   }
 
   async addProjectApplication(projectId: number, applicationId: number): Promise<boolean> {
