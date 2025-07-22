@@ -40,8 +40,7 @@ export default function Tasks() {
     enabled: searchQuery.trim().length > 0,
   });
 
-  // Get unique assignees
-  const assignees = Array.from(new Set(tasks.map(task => task.assignee).filter(Boolean)));
+
 
   // Filter tasks based on search and filters
   const filteredTasks = searchQuery.trim() 
@@ -71,8 +70,30 @@ export default function Tasks() {
 
   // Filter projects based on selected client
   const availableProjects = selectedClient === "all" 
-    ? projects 
+    ? []  // No projects shown until client is selected
     : projects.filter(project => project.clientId === parseInt(selectedClient));
+
+  // Get assignees based on selected project's tasks only
+  const availableAssignees = selectedProject === "all" || selectedClient === "all"
+    ? [] // No assignees shown until both client and project are selected
+    : Array.from(new Set(
+        tasks
+          .filter(task => task.projectId === parseInt(selectedProject))
+          .map(task => task.assignee)
+          .filter(Boolean)
+      ));
+
+  // Reset dependent filters when parent changes
+  const handleClientChange = (value: string) => {
+    setSelectedClient(value);
+    setSelectedProject("all"); // Reset project when client changes
+    setSelectedAssignee("all"); // Reset assignee when client changes
+  };
+
+  const handleProjectChange = (value: string) => {
+    setSelectedProject(value);
+    setSelectedAssignee("all"); // Reset assignee when project changes
+  };
 
   return (
     <>
@@ -98,7 +119,7 @@ export default function Tasks() {
               <span className="text-sm font-medium text-gray-700">Filters:</span>
             </div>
             
-            <Select value={selectedClient} onValueChange={setSelectedClient}>
+            <Select value={selectedClient} onValueChange={handleClientChange}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="All Clients" />
               </SelectTrigger>
@@ -112,9 +133,9 @@ export default function Tasks() {
               </SelectContent>
             </Select>
 
-            <Select value={selectedProject} onValueChange={setSelectedProject}>
+            <Select value={selectedProject} onValueChange={handleProjectChange} disabled={selectedClient === "all"}>
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="All Projects" />
+                <SelectValue placeholder={selectedClient === "all" ? "Select Client First" : "All Projects"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Projects</SelectItem>
@@ -151,13 +172,17 @@ export default function Tasks() {
               </SelectContent>
             </Select>
             
-            <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
+            <Select value={selectedAssignee} onValueChange={setSelectedAssignee} disabled={selectedProject === "all" || selectedClient === "all"}>
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="All Assignees" />
+                <SelectValue placeholder={
+                  selectedClient === "all" ? "Select Client First" :
+                  selectedProject === "all" ? "Select Project First" :
+                  "All Assignees"
+                } />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Assignees</SelectItem>
-                {assignees.map((assignee) => (
+                {availableAssignees.map((assignee) => (
                   <SelectItem key={assignee} value={assignee!}>
                     {assignee}
                   </SelectItem>
@@ -165,11 +190,12 @@ export default function Tasks() {
               </SelectContent>
             </Select>
 
-            {(selectedProject !== "all" || selectedStatus !== "all" || selectedPriority !== "all" || selectedAssignee !== "all") && (
+            {(selectedClient !== "all" || selectedProject !== "all" || selectedStatus !== "all" || selectedPriority !== "all" || selectedAssignee !== "all") && (
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => {
+                  setSelectedClient("all");
                   setSelectedProject("all");
                   setSelectedStatus("all");
                   setSelectedPriority("all");
