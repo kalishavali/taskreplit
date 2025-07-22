@@ -86,7 +86,23 @@ export function ProjectEditModal({ project, open, onOpenChange }: ProjectEditMod
       });
     },
     onSuccess: () => {
+      // Invalidate multiple related queries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project?.id, "applications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
+      
+      toast({ 
+        title: "Applications updated", 
+        description: "Project applications have been updated successfully" 
+      });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Failed to update applications", 
+        description: error.message,
+        variant: "destructive" 
+      });
     },
   });
 
@@ -128,8 +144,14 @@ export function ProjectEditModal({ project, open, onOpenChange }: ProjectEditMod
     };
 
     try {
+      // Update project first
       await updateProjectMutation.mutateAsync(updateData);
+      
+      // Then update applications
       await updateProjectApplicationsMutation.mutateAsync(selectedApplications);
+      
+      // Close modal on successful update
+      onOpenChange(false);
     } catch (error) {
       console.error('Update failed:', error);
     }

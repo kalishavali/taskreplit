@@ -1118,6 +1118,11 @@ export class DatabaseStorage implements IStorage {
       ));
   }
 
+  async updateProjectApplications(projectId: number, applicationIds: number[]): Promise<void> {
+    // This is the same as linkApplicationsToProject - remove and re-add all relationships
+    await this.linkApplicationsToProject(projectId, applicationIds);
+  }
+
   // Tasks
   async getTasks(projectId?: number): Promise<Task[]> {
     if (projectId) {
