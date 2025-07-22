@@ -72,12 +72,11 @@ export function TaskCreateModal({
     defaultValues: {
       title: "",
       description: "",
-      status: initialStatus,
+      status: initialStatus || "Open",
       priority: "medium",
       projectId: projectId || undefined,
       applicationId: applicationId || undefined,
       assignee: "",
-
       progress: 0,
     },
   });
@@ -85,11 +84,17 @@ export function TaskCreateModal({
   const createTaskMutation = useMutation({
     mutationFn: async (data: TaskFormData) => {
       const taskData = {
-        ...data,
+        title: data.title,
         description: description,
-        dueDate: dueDate?.toISOString(),
+        status: data.status,
+        priority: data.priority,
+        projectId: data.projectId,
+        applicationId: data.applicationId,
         assignee: data.assignee === "unassigned" ? null : data.assignee,
+        dueDate: dueDate?.toISOString() || null,
+        progress: data.progress || 0,
       };
+      console.log("Creating task with data:", taskData);
       return await apiRequest("/api/tasks", 'POST', taskData);
     },
     onSuccess: () => {
@@ -103,11 +108,12 @@ export function TaskCreateModal({
         description: "Your new task has been created successfully.",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Task creation error:", error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to create task. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to create task. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },

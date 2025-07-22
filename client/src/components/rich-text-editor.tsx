@@ -9,7 +9,8 @@ import {
   Link2, 
   Quote,
   Eye,
-  EyeOff
+  EyeOff,
+  ListOrdered
 } from 'lucide-react';
 
 interface RichTextEditorProps {
@@ -130,6 +131,17 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
           type="button"
           variant="ghost"
           size="sm"
+          onClick={() => insertText('1. ')}
+          title="Numbered List"
+          className="h-8 px-2"
+        >
+          <ListOrdered className="h-4 w-4" />
+        </Button>
+        
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
           onClick={() => insertText('> ')}
           title="Quote"
           className="h-8 px-2"
@@ -233,28 +245,61 @@ export function RichTextRenderer({ content }: { content: string }) {
       '<a href="$2" class="text-blue-600 underline hover:text-blue-800" target="_blank" rel="noopener noreferrer">$1</a>'
     );
     
-    // Handle bullet lists
+    // Handle bullet lists and numbered lists
     const lines = text.split('\n');
-    let inList = false;
+    let inBulletList = false;
+    let inNumberedList = false;
     const processedLines = lines.map(line => {
+      // Handle bullet lists
       if (line.match(/^- (.+)/)) {
         const content = line.replace(/^- (.+)/, '$1');
-        if (!inList) {
-          inList = true;
+        if (inNumberedList) {
+          inNumberedList = false;
+          const result = `</ol><ul class="list-disc list-inside ml-4 my-2"><li>${content}</li>`;
+          inBulletList = true;
+          return result;
+        }
+        if (!inBulletList) {
+          inBulletList = true;
           return `<ul class="list-disc list-inside ml-4 my-2"><li>${content}</li>`;
         }
         return `<li>${content}</li>`;
-      } else {
-        if (inList) {
-          inList = false;
-          return `</ul>${line}`;
+      }
+      // Handle numbered lists
+      else if (line.match(/^\d+\. (.+)/)) {
+        const content = line.replace(/^\d+\. (.+)/, '$1');
+        if (inBulletList) {
+          inBulletList = false;
+          const result = `</ul><ol class="list-decimal list-inside ml-4 my-2"><li>${content}</li>`;
+          inNumberedList = true;
+          return result;
         }
-        return line;
+        if (!inNumberedList) {
+          inNumberedList = true;
+          return `<ol class="list-decimal list-inside ml-4 my-2"><li>${content}</li>`;
+        }
+        return `<li>${content}</li>`;
+      }
+      // Handle regular lines
+      else {
+        let result = line;
+        if (inBulletList) {
+          inBulletList = false;
+          result = `</ul>${line}`;
+        } else if (inNumberedList) {
+          inNumberedList = false;
+          result = `</ol>${line}`;
+        }
+        return result;
       }
     });
     
-    if (inList) {
+    // Close any remaining lists
+    if (inBulletList) {
       processedLines.push('</ul>');
+    }
+    if (inNumberedList) {
+      processedLines.push('</ol>');
     }
     
     text = processedLines.join('\n');
