@@ -43,6 +43,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
           backgroundColor: 'white',
           border: '1px solid #e2e8f0',
           borderRadius: '0.375rem',
+          fontFamily: "'Quicksand', sans-serif",
         }}
       />
 
