@@ -128,7 +128,7 @@ export function TeamManagement() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{teamMembers.length}</div>
+            <div className="text-2xl font-bold">{Array.isArray(teamMembers) ? teamMembers.length : 0}</div>
           </CardContent>
         </Card>
         
@@ -139,7 +139,7 @@ export function TeamManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {teamMembers.filter(m => m.isActive).length}
+              {Array.isArray(teamMembers) ? teamMembers.filter(m => m.isActive).length : 0}
             </div>
           </CardContent>
         </Card>
@@ -151,7 +151,7 @@ export function TeamManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {teamMembers.filter(m => m.role === 'manager').length}
+              {Array.isArray(teamMembers) ? teamMembers.filter(m => m.role === 'manager').length : 0}
             </div>
           </CardContent>
         </Card>
@@ -163,7 +163,7 @@ export function TeamManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Set(teamMembers.map(m => m.department).filter(Boolean)).size}
+              {Array.isArray(teamMembers) ? new Set(teamMembers.map(m => m.department).filter(Boolean)).size : 0}
             </div>
           </CardContent>
         </Card>
@@ -172,13 +172,13 @@ export function TeamManagement() {
       {/* Team Members Grid */}
       {isLoading ? (
         <div className="text-center py-8">Loading team members...</div>
-      ) : teamMembers.length === 0 ? (
+      ) : !Array.isArray(teamMembers) || teamMembers.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           No team members yet. Add your first team member to get started.
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {teamMembers.map((member) => (
+          {Array.isArray(teamMembers) && teamMembers.map((member) => (
             <Card key={member.id} className={`${!member.isActive ? 'opacity-60' : ''}`}>
               <CardHeader>
                 <div className="flex items-center justify-between">

@@ -164,7 +164,8 @@ export class DatabaseStorage implements IStorage {
   // Applications
   async getApplications(projectId?: number): Promise<Application[]> {
     if (projectId) {
-      return await db.select().from(applications).where(eq(applications.projectId, projectId));
+      // Get applications that are linked to the specific project
+      return await this.getProjectApplications(projectId);
     }
     return await db.select().from(applications);
   }

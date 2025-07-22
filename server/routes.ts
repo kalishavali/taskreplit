@@ -89,6 +89,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const applications = await storage.getApplications(projectId);
       res.json(applications);
     } catch (error) {
+      console.error("Error fetching applications:", error);
       res.status(500).json({ message: "Failed to fetch applications" });
     }
   });
