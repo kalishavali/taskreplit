@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Project, Application, Task } from "@shared/schema";
+import React from "react";
 
 export default function ProjectDetails() {
   const params = useParams();
@@ -81,16 +82,27 @@ export default function ProjectDetails() {
       const response = await fetch(`/api/tasks?${params}`);
       if (!response.ok) throw new Error("Failed to fetch tasks");
       const result = await response.json();
+      console.log("Tasks API response:", result);
       return Array.isArray(result) ? result : [];
     },
     enabled: !!projectId,
   });
 
+  // Ensure allTasks is always an array with comprehensive safety checks
+  const safeAllTasks = React.useMemo(() => {
+    console.log("allTasks type check:", typeof allTasks, "isArray:", Array.isArray(allTasks), "value:", allTasks);
+    if (!allTasks) return [];
+    if (Array.isArray(allTasks)) return allTasks;
+    if (typeof allTasks === 'object' && allTasks.data && Array.isArray(allTasks.data)) return allTasks.data;
+    console.warn("Unexpected allTasks format:", allTasks);
+    return [];
+  }, [allTasks]);
+  
   // Get unique assignees for filter dropdown
-  const uniqueAssignees = [...new Set((allTasks || []).map(task => task.assignee).filter(Boolean))];
+  const uniqueAssignees = [...new Set(safeAllTasks.map(task => task.assignee).filter(Boolean))];
 
   // Filter tasks based on search and filters
-  const tasks = (allTasks || []).filter(task => {
+  const tasks = safeAllTasks.filter(task => {
     if (searchQuery.trim() && !task.title.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
