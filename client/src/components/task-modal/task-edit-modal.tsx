@@ -82,6 +82,9 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
       setDueDate(task.dueDate ? new Date(task.dueDate) : undefined);
       setSelectedProjectId(task.projectId || projectId);
       setSelectedApplicationId(task.applicationId || applicationId);
+      
+      // Debug log to check status values
+      console.log("Task status:", task.status, "Setting status to:", task.status || "Open");
     }
   }, [task, projectId, applicationId]);
 
@@ -187,7 +190,7 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
               <label className="text-sm font-medium text-gray-700">Status</label>
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select status..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Open">Open</SelectItem>
