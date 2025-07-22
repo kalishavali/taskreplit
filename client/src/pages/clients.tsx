@@ -264,8 +264,15 @@ export default function Clients() {
   const handleUnassignProject = (project: any) => {
     console.log("handleUnassignProject called with:", project);
     setProjectToUnassign(project);
+    
+    // Close manage projects modal first
     setIsAddProjectModalOpen(false);
-    setShowUnassignDialog(true);
+    
+    // Small delay to ensure modal closes then show unassign dialog
+    setTimeout(() => {
+      console.log("Opening unassign dialog for:", project.name);
+      setShowUnassignDialog(true);
+    }, 200);
   };
 
   const confirmUnassignProject = () => {
@@ -276,6 +283,22 @@ export default function Clients() {
       unassignProjectMutation.mutate({ 
         projectId: projectToUnassign.id, 
         updateData 
+      }, {
+        onSuccess: () => {
+          console.log("Unassignment successful");
+          toast({
+            title: "Success",
+            description: `${projectToUnassign.name} has been unassigned from ${viewingClient?.name}`,
+          });
+        },
+        onError: (error: Error) => {
+          console.error("Unassignment failed:", error);
+          toast({
+            title: "Error",
+            description: error.message || "Failed to unassign project",
+            variant: "destructive",
+          });
+        }
       });
       setShowUnassignDialog(false);
       setProjectToUnassign(null);
@@ -922,8 +945,17 @@ export default function Clients() {
       
       {/* Unassign Project Confirmation Dialog */}
       {showUnassignDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50"
+          onClick={() => {
+            setShowUnassignDialog(false);
+            setProjectToUnassign(null);
+          }}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Unassign Project</h3>
               <p className="text-sm text-gray-600 mt-1">
