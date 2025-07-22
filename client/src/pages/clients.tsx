@@ -18,6 +18,16 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -264,15 +274,8 @@ export default function Clients() {
   const handleUnassignProject = (project: any) => {
     console.log("handleUnassignProject called with:", project);
     setProjectToUnassign(project);
-    
-    // Close manage projects modal first
-    setIsAddProjectModalOpen(false);
-    
-    // Small delay to ensure modal closes then show unassign dialog
-    setTimeout(() => {
-      console.log("Opening unassign dialog for:", project.name);
-      setShowUnassignDialog(true);
-    }, 200);
+    setShowUnassignDialog(true);
+    console.log("Setting showUnassignDialog to true");
   };
 
   const confirmUnassignProject = () => {
@@ -944,56 +947,39 @@ export default function Clients() {
       </div>
       
       {/* Unassign Project Confirmation Dialog */}
-      {showUnassignDialog && (
-        <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50"
-          onClick={() => {
-            setShowUnassignDialog(false);
-            setProjectToUnassign(null);
-          }}
-        >
-          <div 
-            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Unassign Project</h3>
-              <p className="text-sm text-gray-600 mt-1">
-                Are you sure you want to unassign "{projectToUnassign?.name}" from {viewingClient?.name}?
-              </p>
-            </div>
-            
-            <div className="space-y-3 text-sm text-gray-600 mb-6">
-              <p>This action will:</p>
-              <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>Remove the project from this client</li>
-                <li>Keep the project and all its tasks</li>
-                <li>Make the project available for assignment to other clients</li>
-              </ul>
-              <p className="font-medium text-gray-700">No data will be deleted.</p>
-            </div>
-            
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setShowUnassignDialog(false);
-                  setProjectToUnassign(null);
-                }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmUnassignProject}
-                disabled={unassignProjectMutation.isPending}
-                className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-md hover:bg-orange-600 disabled:opacity-50"
-              >
-                {unassignProjectMutation.isPending ? "Unassigning..." : "Unassign Project"}
-              </button>
-            </div>
+      <AlertDialog open={showUnassignDialog} onOpenChange={setShowUnassignDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unassign Project</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to unassign "{projectToUnassign?.name}" from {viewingClient?.name}?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="space-y-3 text-sm text-gray-600">
+            <p>This action will:</p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li>Remove the project from this client</li>
+              <li>Keep the project and all its tasks</li>
+              <li>Make the project available for assignment to other clients</li>
+            </ul>
+            <p className="font-medium text-gray-700">No data will be deleted.</p>
           </div>
-        </div>
-      )}
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setProjectToUnassign(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmUnassignProject}
+              disabled={unassignProjectMutation.isPending}
+              className="bg-orange-500 hover:bg-orange-600"
+            >
+              {unassignProjectMutation.isPending ? "Unassigning..." : "Unassign Project"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
