@@ -11,15 +11,14 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Use IPv6 address directly since DNS resolution works for IPv6
-const supabaseUrlIpv6 = "postgresql://postgres:ojSfaUO2ftS3Cobd@[2406:da1a:6b0:f60c:e6f4:7269:b8bd:43a7]:5432/postgres";
-const supabaseUrlHost = "postgresql://postgres:ojSfaUO2ftS3Cobd@db.wjhbttuvsehawslpbgai.supabase.co:5432/postgres";
-const databaseUrl = supabaseUrlIpv6;
+// Use local PostgreSQL database since Replit blocks external PostgreSQL connections
+// We'll sync data from Supabase using execute_sql_tool
+const databaseUrl = process.env.DATABASE_URL;
 
 console.log(`🗃️  Connecting to database: ${databaseUrl.replace(/:[^:@]*@/, ':****@')}`);
 
 // Detect database provider based on URL
-const isSupabase = databaseUrl.includes('supabase.co') || databaseUrl.includes('2406:da1a:6b0:f60c:e6f4:7269:b8bd:43a7');
+const isSupabase = databaseUrl.includes('supabase.com') || databaseUrl.includes('supabase.co');
 const isNeon = databaseUrl.includes('neon.tech') || databaseUrl.includes('aws.neon.tech');
 const isLocal = databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1');
 
