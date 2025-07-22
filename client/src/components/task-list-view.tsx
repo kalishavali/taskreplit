@@ -144,7 +144,7 @@ export default function TaskListView({ tasks, projects = [], isLoading }: TaskLi
                   
                   <TableCell>
                     {project && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-xs whitespace-nowrap truncate max-w-32">
                         {project.name}
                       </Badge>
                     )}
