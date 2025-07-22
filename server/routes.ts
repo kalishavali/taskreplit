@@ -194,7 +194,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const projectId = parseInt(req.params.projectId);
       const { applicationIds } = z.object({ applicationIds: z.array(z.number()) }).parse(req.body);
-      await storage.linkApplicationsToProject(projectId, applicationIds);
+      
+      // Link each application to the project
+      for (const applicationId of applicationIds) {
+        await storage.addProjectApplication(projectId, applicationId);
+      }
+      
       res.status(201).json({ message: "Applications linked successfully" });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -209,7 +214,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const projectId = parseInt(req.params.projectId);
       const { applicationIds } = z.object({ applicationIds: z.array(z.number()) }).parse(req.body);
       console.log(`Updating project ${projectId} applications:`, applicationIds);
-      await storage.updateProjectApplications(projectId, applicationIds);
+      
+      // Get current project applications
+      const currentApps = await storage.getProjectApplications(projectId);
+      const currentAppIds = currentApps.map(app => app.id);
+      
+      // Remove applications that are no longer selected
+      for (const currentAppId of currentAppIds) {
+        if (!applicationIds.includes(currentAppId)) {
+          await storage.removeProjectApplication(projectId, currentAppId);
+        }
+      }
+      
+      // Add new applications
+      for (const applicationId of applicationIds) {
+        if (!currentAppIds.includes(applicationId)) {
+          await storage.addProjectApplication(projectId, applicationId);
+        }
+      }
+      
       res.json({ message: "Project applications updated successfully" });
     } catch (error) {
       console.error("Project applications update error:", error);
@@ -225,7 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const projectId = parseInt(req.params.projectId);
       const applicationId = parseInt(req.params.applicationId);
-      await storage.unlinkApplicationFromProject(projectId, applicationId);
+      await storage.removeProjectApplication(projectId, applicationId);
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to unlink application" });
@@ -235,8 +258,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Tasks routes
   app.get("/api/tasks", async (req, res) => {
     try {
-      const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
-      const tasks = await storage.getTasks(projectId);
+      const filters: any = {};
+      if (req.query.projectId) filters.projectId = parseInt(req.query.projectId as string);
+      if (req.query.applicationId) filters.applicationId = parseInt(req.query.applicationId as string);
+      if (req.query.status) filters.status = req.query.status as string;
+      if (req.query.assignee) filters.assignee = req.query.assignee as string;
+      if (req.query.priority) filters.priority = req.query.priority as string;
+      
+      const tasks = await storage.getTasks(Object.keys(filters).length > 0 ? filters : undefined);
       res.json(tasks);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch tasks" });
@@ -303,7 +332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const { status } = z.object({ status: z.string() }).parse(req.body);
-      const task = await storage.updateTaskStatus(id, status);
+      const task = await storage.updateTask(id, { status });
       if (!task) {
         return res.status(404).json({ message: "Task not found" });
       }
@@ -333,7 +362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tasks/:taskId/comments", async (req, res) => {
     try {
       const taskId = parseInt(req.params.taskId);
-      const comments = await storage.getTaskComments(taskId);
+      const comments = await storage.getComments(taskId);
       res.json(comments);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch comments" });
@@ -362,7 +391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const taskId = req.query.taskId ? parseInt(req.query.taskId as string) : undefined;
       if (taskId) {
-        const comments = await storage.getTaskComments(taskId);
+        const comments = await storage.getComments(taskId);
         res.json(comments);
       } else {
         res.status(400).json({ message: "taskId parameter is required" });
@@ -389,7 +418,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/activities", async (req, res) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
-      const activities = await storage.getActivities(limit);
+      const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
+      const taskId = req.query.taskId ? parseInt(req.query.taskId as string) : undefined;
+      
+      const filters: any = { limit };
+      if (projectId) filters.projectId = projectId;
+      if (taskId) filters.taskId = taskId;
+      
+      const activities = await storage.getActivities(filters);
       res.json(activities);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch activities" });
@@ -475,7 +511,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/notifications/:userId/unread", async (req, res) => {
     try {
       const { userId } = req.params;
-      const notifications = await storage.getUnreadNotifications(userId);
+      const allNotifications = await storage.getNotifications(userId);
+      const notifications = allNotifications.filter(n => !n.isRead);
       res.json(notifications);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch unread notifications" });
@@ -522,10 +559,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/time-entries", async (req, res) => {
     try {
       const { taskId, userId } = req.query;
-      const timeEntries = await storage.getTimeEntries(
-        taskId ? parseInt(taskId as string) : undefined,
-        userId as string
-      );
+      const filters: any = {};
+      if (taskId) filters.taskId = parseInt(taskId as string);
+      if (userId) filters.userId = userId as string;
+      
+      const timeEntries = await storage.getTimeEntries(Object.keys(filters).length > 0 ? filters : undefined);
       res.json(timeEntries);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch time entries" });
@@ -625,7 +663,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tasks/assignee/:assignee", async (req, res) => {
     try {
       const { assignee } = req.params;
-      const tasks = await storage.getTasksByAssignee(assignee);
+      const tasks = await storage.getTasks({ assignee });
       res.json(tasks);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch tasks by assignee" });
@@ -635,7 +673,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/activities/project/:projectId", async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const activities = await storage.getActivitiesByProject(projectId);
+      const activities = await storage.getActivities({ projectId });
       res.json(activities);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch project activities" });

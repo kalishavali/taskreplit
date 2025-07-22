@@ -107,7 +107,7 @@ export function ProjectEditModal({ project, open, onOpenChange }: ProjectEditMod
   });
 
   useEffect(() => {
-    if (project) {
+    if (project && open) {
       setFormData({
         name: project.name || "",
         description: project.description || "",
@@ -120,13 +120,13 @@ export function ProjectEditModal({ project, open, onOpenChange }: ProjectEditMod
         tags: project.tags || [],
       });
     }
-  }, [project]);
+  }, [project, open]);
 
   useEffect(() => {
-    if (project?.id && projectApplications) {
+    if (project?.id && projectApplications && open) {
       setSelectedApplications(projectApplications.map(pa => pa.applicationId));
     }
-  }, [project?.id, projectApplications]);
+  }, [project?.id, projectApplications, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
