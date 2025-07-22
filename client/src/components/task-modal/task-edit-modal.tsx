@@ -20,28 +20,53 @@ import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { RichTextEditor, RichTextRenderer } from "@/components/rich-text-editor";
-import type { Task, Comment } from "@shared/schema";
+import type { Task, Comment, Project, Application } from "@shared/schema";
 
 interface TaskEditModalProps {
   task: Task;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  projectId?: number;
+  applicationId?: number;
 }
 
-export function TaskEditModal({ task, open, onOpenChange }: TaskEditModalProps) {
+export function TaskEditModal({ task, open, onOpenChange, projectId, applicationId }: TaskEditModalProps) {
   if (!task) {
     return null;
   }
 
   const [title, setTitle] = useState(task.title || "");
   const [description, setDescription] = useState(task.description || "");
-  const [status, setStatus] = useState(task.status || "todo");
+  const [status, setStatus] = useState(task.status || "Open");
   const [priority, setPriority] = useState(task.priority || "medium");
   const [assignee, setAssignee] = useState(task.assignee || "");
-  const [progress, setProgress] = useState(task.progress || 0);
+  const [selectedProjectId, setSelectedProjectId] = useState(task.projectId || projectId);
+  const [selectedApplicationId, setSelectedApplicationId] = useState(task.applicationId || applicationId);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch projects and applications for dropdowns
+  const { data: projects = [] } = useQuery<Project[]>({
+    queryKey: ["/api/projects"]
+  });
+
+  const { data: applications = [] } = useQuery<Application[]>({
+    queryKey: ["/api/applications"]
+  });
+
+  // Reset form when task changes
+  useEffect(() => {
+    if (task) {
+      setTitle(task.title || "");
+      setDescription(task.description || "");
+      setStatus(task.status || "Open");
+      setPriority(task.priority || "medium");
+      setAssignee(task.assignee || "");
+      setSelectedProjectId(task.projectId || projectId);
+      setSelectedApplicationId(task.applicationId || applicationId);
+    }
+  }, [task, projectId, applicationId]);
 
   const updateTaskMutation = useMutation({
     mutationFn: async (updates: Partial<Task>) => {
@@ -68,7 +93,8 @@ export function TaskEditModal({ task, open, onOpenChange }: TaskEditModalProps) 
       status,
       priority,
       assignee,
-      progress
+      projectId: selectedProjectId,
+      applicationId: selectedApplicationId
     });
   };
 
@@ -96,6 +122,41 @@ export function TaskEditModal({ task, open, onOpenChange }: TaskEditModalProps) 
             />
           </div>
 
+          {/* Project and Application Row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Project</label>
+              <Select value={selectedProjectId?.toString()} onValueChange={(value) => setSelectedProjectId(Number(value))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select project..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id.toString()}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Application</label>
+              <Select value={selectedApplicationId?.toString()} onValueChange={(value) => setSelectedApplicationId(Number(value))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select application..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {applications.map((app) => (
+                    <SelectItem key={app.id} value={app.id.toString()}>
+                      {app.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {/* Status and Priority Row */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -105,10 +166,10 @@ export function TaskEditModal({ task, open, onOpenChange }: TaskEditModalProps) 
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todo">Open</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="blocked">Blocked</SelectItem>
-                  <SelectItem value="done">Completed</SelectItem>
+                  <SelectItem value="Open">Open</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="Blocked">Blocked</SelectItem>
+                  <SelectItem value="Closed">Closed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -123,6 +184,7 @@ export function TaskEditModal({ task, open, onOpenChange }: TaskEditModalProps) 
                   <SelectItem value="low">Low</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -137,22 +199,6 @@ export function TaskEditModal({ task, open, onOpenChange }: TaskEditModalProps) 
               placeholder="Enter assignee name"
               className="w-full"
             />
-          </div>
-
-          {/* Progress */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Progress ({progress}%)</label>
-            <div className="space-y-2">
-              <Progress value={progress} className="w-full" />
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={progress}
-                onChange={(e) => setProgress(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
           </div>
 
           {/* Description */}
