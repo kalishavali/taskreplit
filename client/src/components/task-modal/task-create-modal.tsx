@@ -51,17 +51,6 @@ export function TaskCreateModal({
     queryKey: ["/api/projects"]
   });
 
-  const { data: applications = [] } = useQuery<Application[]>({
-    queryKey: ["/api/projects", projectId, "applications"],
-    queryFn: async () => {
-      if (!projectId) return [];
-      const response = await fetch(`/api/projects/${projectId}/applications`);
-      if (!response.ok) throw new Error("Failed to fetch project applications");
-      return response.json();
-    },
-    enabled: !!projectId
-  });
-
   // Fetch team members for assignee dropdown
   const { data: teamMembers = [] } = useQuery<TeamMember[]>({
     queryKey: ["/api/team-members"]
@@ -124,6 +113,17 @@ export function TaskCreateModal({
   };
 
   const selectedProject = form.watch("projectId");
+
+  const { data: applications = [] } = useQuery<Application[]>({
+    queryKey: ["/api/projects", selectedProject, "applications"],
+    queryFn: async () => {
+      if (!selectedProject) return [];
+      const response = await fetch(`/api/projects/${selectedProject}/applications`);
+      if (!response.ok) throw new Error("Failed to fetch project applications");
+      return response.json();
+    },
+    enabled: !!selectedProject
+  });
 
   // Clear application selection when project changes
   useEffect(() => {
