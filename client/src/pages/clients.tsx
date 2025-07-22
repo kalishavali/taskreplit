@@ -264,6 +264,10 @@ export default function Clients() {
     console.log("Current unassignProject state:", unassignProject);
     setUnassignProject(project);
     console.log("After setUnassignProject, should open dialog");
+    // Force a re-render to make sure dialog state is updated
+    setTimeout(() => {
+      console.log("Timeout check - unassignProject state should be updated:", project);
+    }, 100);
   };
 
   const confirmUnassignProject = () => {
@@ -911,42 +915,51 @@ export default function Clients() {
           </DialogContent>
         </Dialog>
 
-        {/* Unassign Project Confirmation Dialog */}
-        <Dialog open={!!unassignProject} onOpenChange={() => setUnassignProject(null)}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Unassign Project</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to unassign "{unassignProject?.name}" from {viewingClient?.name}?
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3 text-sm text-gray-600">
-              <p>This action will:</p>
-              <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>Remove the project from this client</li>
-                <li>Keep the project and all its tasks</li>
-                <li>Make the project available for assignment to other clients</li>
-              </ul>
-              <p className="font-medium text-gray-700">No data will be deleted.</p>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setUnassignProject(null)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={confirmUnassignProject}
-                disabled={unassignProjectMutation.isPending}
-                className="bg-orange-500 hover:bg-orange-600 text-white"
-              >
-                {unassignProjectMutation.isPending ? "Unassigning..." : "Unassign Project"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
+      
+      {/* Unassign Project Confirmation Dialog - Separate from other modals */}
+      <Dialog 
+        open={unassignProject !== null} 
+        onOpenChange={(open) => {
+          console.log("Dialog onOpenChange called with:", open, "current unassignProject:", unassignProject);
+          if (!open) {
+            setUnassignProject(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Unassign Project</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to unassign "{unassignProject?.name}" from {viewingClient?.name}?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-gray-600">
+            <p>This action will:</p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li>Remove the project from this client</li>
+              <li>Keep the project and all its tasks</li>
+              <li>Make the project available for assignment to other clients</li>
+            </ul>
+            <p className="font-medium text-gray-700">No data will be deleted.</p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setUnassignProject(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmUnassignProject}
+              disabled={unassignProjectMutation.isPending}
+              className="bg-orange-500 hover:bg-orange-600 text-white"
+            >
+              {unassignProjectMutation.isPending ? "Unassigning..." : "Unassign Project"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
