@@ -212,12 +212,12 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
           {/* Assignee */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Assignee</label>
-            <Select value={assignee || ""} onValueChange={setAssignee}>
+            <Select value={assignee || "unassigned"} onValueChange={(value) => setAssignee(value === "unassigned" ? "" : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select assignee..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Unassigned</SelectItem>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
                 {teamMembers.map((member) => (
                   <SelectItem key={member.id} value={member.name}>
                     <div className="flex items-center gap-2">
