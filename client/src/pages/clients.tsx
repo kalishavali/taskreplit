@@ -258,30 +258,17 @@ export default function Clients() {
   };
 
   const [unassignProject, setUnassignProject] = useState<any>(null);
-  const [showTestDialog, setShowTestDialog] = useState(false);
+  const [showUnassignDialog, setShowUnassignDialog] = useState(false);
+  const [projectToUnassign, setProjectToUnassign] = useState<any>(null);
 
   const handleUnassignProject = (project: any) => {
     console.log("handleUnassignProject called with:", project);
-    
-    // Use browser confirm for now to test functionality
-    const confirmed = window.confirm(
-      `Are you sure you want to unassign "${project.name}" from ${viewingClient?.name}?\n\n` +
-      `This will:\n` +
-      `• Remove the project from this client\n` +
-      `• Keep the project and all its tasks\n` +
-      `• Make the project available for other clients\n\n` +
-      `No data will be deleted.`
-    );
-    
-    if (confirmed) {
-      console.log("User confirmed unassignment");
-      setIsAddProjectModalOpen(false);
-      confirmUnassignProject(project);
-    }
+    setProjectToUnassign(project);
+    setIsAddProjectModalOpen(false);
+    setShowUnassignDialog(true);
   };
 
-  const confirmUnassignProject = (project?: any) => {
-    const projectToUnassign = project || unassignProject;
+  const confirmUnassignProject = () => {
     if (projectToUnassign) {
       console.log("Executing unassignment for project:", projectToUnassign.id);
       // Update project to remove client assignment (set clientId to null)
@@ -290,7 +277,8 @@ export default function Clients() {
         projectId: projectToUnassign.id, 
         updateData 
       });
-      setUnassignProject(null);
+      setShowUnassignDialog(false);
+      setProjectToUnassign(null);
     }
   };
 
@@ -932,62 +920,48 @@ export default function Clients() {
 
       </div>
       
-      {/* Test Dialog */}
-      <Dialog open={showTestDialog} onOpenChange={setShowTestDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Test Dialog</DialogTitle>
-            <DialogDescription>This is a test to see if dialogs work at all.</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setShowTestDialog(false)}>Close Test</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Unassign Project Confirmation Dialog - Separate from other modals */}
-      <Dialog 
-        open={unassignProject !== null} 
-        onOpenChange={(open) => {
-          console.log("Unassign Dialog onOpenChange called with:", open, "current unassignProject:", unassignProject);
-          if (!open) {
-            setUnassignProject(null);
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Unassign Project</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to unassign "{unassignProject?.name}" from {viewingClient?.name}?
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 text-sm text-gray-600">
-            <p>This action will:</p>
-            <ul className="list-disc list-inside space-y-1 ml-2">
-              <li>Remove the project from this client</li>
-              <li>Keep the project and all its tasks</li>
-              <li>Make the project available for assignment to other clients</li>
-            </ul>
-            <p className="font-medium text-gray-700">No data will be deleted.</p>
+      {/* Unassign Project Confirmation Dialog */}
+      {showUnassignDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Unassign Project</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Are you sure you want to unassign "{projectToUnassign?.name}" from {viewingClient?.name}?
+              </p>
+            </div>
+            
+            <div className="space-y-3 text-sm text-gray-600 mb-6">
+              <p>This action will:</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>Remove the project from this client</li>
+                <li>Keep the project and all its tasks</li>
+                <li>Make the project available for assignment to other clients</li>
+              </ul>
+              <p className="font-medium text-gray-700">No data will be deleted.</p>
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowUnassignDialog(false);
+                  setProjectToUnassign(null);
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmUnassignProject}
+                disabled={unassignProjectMutation.isPending}
+                className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-md hover:bg-orange-600 disabled:opacity-50"
+              >
+                {unassignProjectMutation.isPending ? "Unassigning..." : "Unassign Project"}
+              </button>
+            </div>
           </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setUnassignProject(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={confirmUnassignProject}
-              disabled={unassignProjectMutation.isPending}
-              className="bg-orange-500 hover:bg-orange-600 text-white"
-            >
-              {unassignProjectMutation.isPending ? "Unassigning..." : "Unassign Project"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 }
