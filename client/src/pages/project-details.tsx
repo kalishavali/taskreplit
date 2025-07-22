@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Project, Application, Task } from "@shared/schema";
-import React from "react";
+
 
 export default function ProjectDetails() {
   const params = useParams();
@@ -89,20 +89,20 @@ export default function ProjectDetails() {
   });
 
   // Ensure allTasks is always an array with comprehensive safety checks
-  const safeAllTasks = React.useMemo(() => {
-    console.log("allTasks type check:", typeof allTasks, "isArray:", Array.isArray(allTasks), "value:", allTasks);
+  const safeAllTasks = useMemo(() => {
     if (!allTasks) return [];
     if (Array.isArray(allTasks)) return allTasks;
-    if (typeof allTasks === 'object' && allTasks.data && Array.isArray(allTasks.data)) return allTasks.data;
-    console.warn("Unexpected allTasks format:", allTasks);
+    // If it's a single task object, wrap it in an array
+    if (typeof allTasks === 'object' && 'id' in allTasks) return [allTasks as Task];
+    if (typeof allTasks === 'object' && 'data' in allTasks && Array.isArray((allTasks as any).data)) return (allTasks as any).data;
     return [];
   }, [allTasks]);
   
   // Get unique assignees for filter dropdown
-  const uniqueAssignees = [...new Set(safeAllTasks.map(task => task.assignee).filter(Boolean))];
+  const uniqueAssignees = Array.from(new Set(safeAllTasks.map((task: Task) => task.assignee).filter(Boolean)));
 
   // Filter tasks based on search and filters
-  const tasks = safeAllTasks.filter(task => {
+  const tasks = safeAllTasks.filter((task: Task) => {
     if (searchQuery.trim() && !task.title.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
@@ -149,9 +149,9 @@ export default function ProjectDetails() {
 
   const projectStats = {
     totalTasks: tasks.length,
-    completedTasks: tasks.filter(t => t.status === 'done').length,
-    inProgressTasks: tasks.filter(t => t.status === 'inprogress').length,
-    todoTasks: tasks.filter(t => t.status === 'todo').length,
+    completedTasks: tasks.filter((t: Task) => t.status === 'done').length,
+    inProgressTasks: tasks.filter((t: Task) => t.status === 'inprogress').length,
+    todoTasks: tasks.filter((t: Task) => t.status === 'todo').length,
   };
 
   const completionPercentage = projectStats.totalTasks > 0 
@@ -293,12 +293,7 @@ export default function ProjectDetails() {
                     {project.endDate ? new Date(project.endDate).toLocaleDateString() : 'No end date'}
                   </span>
                 </div>
-                {project.budget && (
-                  <div className="flex items-center gap-1">
-                    <DollarSign className="h-4 w-4" />
-                    <span>${project.budget.toLocaleString()}</span>
-                  </div>
-                )}
+
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   <span>{project.teamMembers?.length || 0} members:</span>
@@ -549,7 +544,7 @@ export default function ProjectDetails() {
                       </tr>
                     </thead>
                     <tbody>
-                      {tasks.map((task) => (
+                      {tasks.map((task: Task) => (
                         <tr key={task.id} className="border-b hover:bg-gray-50 cursor-pointer">
                           <td className="py-3 px-4 font-medium">{task.title}</td>
                           <td className="py-3 px-4">
