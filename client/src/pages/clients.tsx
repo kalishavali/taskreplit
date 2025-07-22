@@ -258,16 +258,25 @@ export default function Clients() {
   };
 
   const [unassignProject, setUnassignProject] = useState<any>(null);
+  const [showTestDialog, setShowTestDialog] = useState(false);
 
   const handleUnassignProject = (project: any) => {
     console.log("handleUnassignProject called with:", project);
     console.log("Current unassignProject state:", unassignProject);
-    setUnassignProject(project);
-    console.log("After setUnassignProject, should open dialog");
-    // Force a re-render to make sure dialog state is updated
+    
+    // First close the manage projects modal
+    setIsAddProjectModalOpen(false);
+    
+    // Then show test dialog first
+    setShowTestDialog(true);
+    console.log("Test dialog should be open now");
+    
+    // Then set the unassign project after a delay
     setTimeout(() => {
-      console.log("Timeout check - unassignProject state should be updated:", project);
-    }, 100);
+      setShowTestDialog(false);
+      setUnassignProject(project);
+      console.log("Unassign dialog should be open now");
+    }, 1000);
   };
 
   const confirmUnassignProject = () => {
@@ -917,11 +926,24 @@ export default function Clients() {
 
       </div>
       
+      {/* Test Dialog */}
+      <Dialog open={showTestDialog} onOpenChange={setShowTestDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Test Dialog</DialogTitle>
+            <DialogDescription>This is a test to see if dialogs work at all.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowTestDialog(false)}>Close Test</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Unassign Project Confirmation Dialog - Separate from other modals */}
       <Dialog 
         open={unassignProject !== null} 
         onOpenChange={(open) => {
-          console.log("Dialog onOpenChange called with:", open, "current unassignProject:", unassignProject);
+          console.log("Unassign Dialog onOpenChange called with:", open, "current unassignProject:", unassignProject);
           if (!open) {
             setUnassignProject(null);
           }
