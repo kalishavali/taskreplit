@@ -267,58 +267,36 @@ export default function Clients() {
     }
   };
 
-  const [unassignProject, setUnassignProject] = useState<any>(null);
-  const [showUnassignDialog, setShowUnassignDialog] = useState(false);
-  const [projectToUnassign, setProjectToUnassign] = useState<any>(null);
+
 
   const handleUnassignProject = (project: any) => {
-    console.log("handleUnassignProject called with:", project);
+    console.log("Directly unassigning project:", project.name);
     
-    // Prevent event bubbling to avoid closing other modals
-    event?.preventDefault?.();
-    event?.stopPropagation?.();
-    
-    setProjectToUnassign(project);
-    
-    // Close the manage projects modal FIRST
-    setIsAddProjectModalOpen(false);
-    
-    // Then open unassign dialog after a short delay
-    setTimeout(() => {
-      console.log("Opening unassign dialog after delay");
-      setShowUnassignDialog(true);
-    }, 100);
+    // Directly unassign without confirmation
+    const updateData = { clientId: null };
+    unassignProjectMutation.mutate({ 
+      projectId: project.id, 
+      updateData 
+    }, {
+      onSuccess: () => {
+        console.log("Project unassigned successfully");
+        toast({
+          title: "Success",
+          description: `${project.name} has been unassigned from ${viewingClient?.name}`,
+        });
+      },
+      onError: (error: Error) => {
+        console.error("Unassignment failed:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to unassign project",
+          variant: "destructive",
+        });
+      }
+    });
   };
 
-  const confirmUnassignProject = () => {
-    if (projectToUnassign) {
-      console.log("Executing unassignment for project:", projectToUnassign.id);
-      // Update project to remove client assignment (set clientId to null)
-      const updateData = { clientId: null };
-      unassignProjectMutation.mutate({ 
-        projectId: projectToUnassign.id, 
-        updateData 
-      }, {
-        onSuccess: () => {
-          console.log("Unassignment successful");
-          toast({
-            title: "Success",
-            description: `${projectToUnassign.name} has been unassigned from ${viewingClient?.name}`,
-          });
-        },
-        onError: (error: Error) => {
-          console.error("Unassignment failed:", error);
-          toast({
-            title: "Error",
-            description: error.message || "Failed to unassign project",
-            variant: "destructive",
-          });
-        }
-      });
-      setShowUnassignDialog(false);
-      setProjectToUnassign(null);
-    }
-  };
+
 
   if (isLoading) {
     return (
@@ -959,46 +937,7 @@ export default function Clients() {
 
       </div>
       
-      {/* Unassign Project Confirmation Dialog - Using a separate Dialog */}
-      <Dialog open={showUnassignDialog} onOpenChange={setShowUnassignDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Unassign Project</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to unassign "{projectToUnassign?.name}" from {viewingClient?.name}?
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-3 text-sm text-gray-600">
-            <p>This action will:</p>
-            <ul className="list-disc list-inside space-y-1 ml-2">
-              <li>Remove the project from this client</li>
-              <li>Keep the project and all its tasks</li>
-              <li>Make the project available for assignment to other clients</li>
-            </ul>
-            <p className="font-medium text-gray-700">No data will be deleted.</p>
-          </div>
-          
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowUnassignDialog(false);
-                setProjectToUnassign(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={confirmUnassignProject}
-              disabled={unassignProjectMutation.isPending}
-              className="bg-orange-500 hover:bg-orange-600 text-white"
-            >
-              {unassignProjectMutation.isPending ? "Unassigning..." : "Unassign Project"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
     </div>
   );
 }
