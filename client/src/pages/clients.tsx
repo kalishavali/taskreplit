@@ -14,6 +14,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -210,10 +211,13 @@ export default function Clients() {
 
   const handleCreateProject = () => {
     if (viewingClient && newProject.name.trim()) {
+      console.log("Creating project:", { ...newProject, clientId: viewingClient.id });
       createProjectMutation.mutate({
         ...newProject,
         clientId: viewingClient.id,
       });
+    } else {
+      console.log("Cannot create project:", { viewingClient, newProjectName: newProject.name.trim() });
     }
   };
 
@@ -624,6 +628,9 @@ export default function Clients() {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Create New Project{viewingClient ? ` for ${viewingClient.name}` : ''}</DialogTitle>
+              <DialogDescription>
+                Add a new project to this client. All fields are required.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
