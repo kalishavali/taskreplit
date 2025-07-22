@@ -555,7 +555,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(comments)
       .where(eq(comments.taskId, taskId))
-      .orderBy(asc(comments.createdAt));
+      .orderBy(desc(comments.createdAt));
   }
 
   async createComment(insertComment: InsertComment): Promise<Comment> {

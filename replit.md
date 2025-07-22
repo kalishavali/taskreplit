@@ -145,6 +145,12 @@ The architecture prioritizes developer experience with hot reloading, type safet
 - Removed estimated hours fields from all task forms and displays
 - Simplified project statistics to focus on task completion metrics
 
+### Bug Fixes (July 2025)
+- Fixed status inconsistency by standardizing on "In Progress" (with space) across all components
+- Fixed task status display in task list view showing proper colored badges
+- Fixed task edit modal status selection to display current status correctly
+- Updated comment ordering to show latest comments first (DESC order)
+
 ### Local PostgreSQL Support (July 2025)
 - Added automatic database provider detection (local PostgreSQL vs Neon)
 - Enhanced database configuration to support both local and cloud databases
