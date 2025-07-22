@@ -273,9 +273,21 @@ export default function Clients() {
 
   const handleUnassignProject = (project: any) => {
     console.log("handleUnassignProject called with:", project);
+    
+    // Prevent event bubbling to avoid closing other modals
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+    
     setProjectToUnassign(project);
-    setShowUnassignDialog(true);
-    console.log("Setting showUnassignDialog to true");
+    
+    // Close the manage projects modal FIRST
+    setIsAddProjectModalOpen(false);
+    
+    // Then open unassign dialog after a short delay
+    setTimeout(() => {
+      console.log("Opening unassign dialog after delay");
+      setShowUnassignDialog(true);
+    }, 100);
   };
 
   const confirmUnassignProject = () => {
@@ -503,6 +515,7 @@ export default function Clients() {
                           variant="outline"
                           size="sm"
                           onClick={(e) => {
+                            e.preventDefault();
                             e.stopPropagation();
                             console.log("Unassign button clicked for project:", project);
                             handleUnassignProject(project);
