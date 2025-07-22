@@ -6,11 +6,13 @@ import {
   CheckSquare, 
   BarChart3,
   Users,
+  Grid3X3,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: Home },
   { name: "Projects", href: "/projects", icon: Folder },
+  { name: "Applications", href: "/applications", icon: Grid3X3 },
   { name: "My Tasks", href: "/tasks", icon: CheckSquare },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Team", href: "/team", icon: Users },
