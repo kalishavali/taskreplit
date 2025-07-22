@@ -91,7 +91,7 @@ export default function Dashboard() {
       });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 relative overflow-hidden custom-scrollbar">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 relative">
       {/* Background decoration */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-emerald-100 to-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '2s'}}></div>
@@ -104,7 +104,7 @@ export default function Dashboard() {
           onSearchChange={setSearchQuery}
         />
         
-        <main className="flex-1 overflow-auto custom-scrollbar">
+        <main className="flex-1">
           {/* Stats Dashboard Section */}
           <div className="px-6 py-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
