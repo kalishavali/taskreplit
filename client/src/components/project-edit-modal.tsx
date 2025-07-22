@@ -116,9 +116,15 @@ export function ProjectEditModal({ project, open, onOpenChange }: ProjectEditMod
     e.preventDefault();
     
     const updateData = {
-      ...formData,
+      name: formData.name,
+      description: formData.description || null,
+      color: formData.color,
+      status: formData.status,
       startDate: formData.startDate ? new Date(formData.startDate) : null,
       endDate: formData.endDate ? new Date(formData.endDate) : null,
+      assignees: formData.assignees.length > 0 ? formData.assignees : null,
+      teamMembers: formData.teamMembers.length > 0 ? formData.teamMembers : null,
+      tags: formData.tags.length > 0 ? formData.tags : null,
     };
 
     try {
