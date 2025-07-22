@@ -198,8 +198,8 @@ export default function Clients() {
 
   const getAvailableProjects = () => {
     if (!viewingClient) return [];
-    // Get all projects not assigned to this client
-    return (projects as any[]).filter((project: any) => project.clientId !== viewingClient.id);
+    // Get all projects that are unassigned (clientId is null or undefined)
+    return (projects as any[]).filter((project: any) => project.clientId === null || project.clientId === undefined);
   };
 
   const handleAssignProjects = async () => {
@@ -310,8 +310,10 @@ export default function Clients() {
               onClick={() => {
                 console.log("Manage Projects clicked, viewingClient:", viewingClient);
                 console.log("isAddProjectModalOpen before:", isAddProjectModalOpen);
+                console.log("Available projects:", getAvailableProjects());
+                console.log("Client projects:", getClientProjects(viewingClient.id));
                 setIsAddProjectModalOpen(true);
-                console.log("isAddProjectModalOpen after:", true);
+                console.log("Setting modal to true, should open now");
               }}
               className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
             >
@@ -431,7 +433,10 @@ export default function Clients() {
         </div>
 
         {/* Manage Projects Modal */}
-        <Dialog open={isAddProjectModalOpen} onOpenChange={setIsAddProjectModalOpen}>
+        <Dialog open={isAddProjectModalOpen} onOpenChange={(open) => {
+          console.log("Modal onOpenChange called with:", open);
+          setIsAddProjectModalOpen(open);
+        }}>
           <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Manage Projects for {viewingClient?.name}</DialogTitle>
