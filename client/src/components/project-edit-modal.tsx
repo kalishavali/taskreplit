@@ -41,11 +41,11 @@ export function ProjectEditModal({ project, open, onOpenChange }: ProjectEditMod
     endDate: "",
     assignees: [] as string[],
     teamMembers: [] as string[],
-    tags: [] as string[],
+
   });
   const [selectedApplications, setSelectedApplications] = useState<number[]>([]);
   const [newAssignee, setNewAssignee] = useState("");
-  const [newTag, setNewTag] = useState("");
+
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -117,14 +117,16 @@ export function ProjectEditModal({ project, open, onOpenChange }: ProjectEditMod
         endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : "",
         assignees: project.assignees || [],
         teamMembers: project.teamMembers || [],
-        tags: project.tags || [],
+
       });
     }
   }, [project, open]);
 
   useEffect(() => {
     if (project?.id && projectApplications && open) {
-      setSelectedApplications(projectApplications.map(pa => pa.applicationId));
+      console.log("Project applications:", projectApplications);
+      console.log("Selected application IDs:", projectApplications.map(pa => pa.id));
+      setSelectedApplications(projectApplications.map(pa => pa.id));
     }
   }, [project?.id, projectApplications, open]);
 
@@ -140,7 +142,7 @@ export function ProjectEditModal({ project, open, onOpenChange }: ProjectEditMod
       endDate: formData.endDate ? formData.endDate : null,
       assignees: formData.assignees.length > 0 ? formData.assignees : null,
       teamMembers: formData.teamMembers.length > 0 ? formData.teamMembers : null,
-      tags: formData.tags.length > 0 ? formData.tags : null,
+
     };
 
     try {
@@ -174,22 +176,7 @@ export function ProjectEditModal({ project, open, onOpenChange }: ProjectEditMod
     }));
   };
 
-  const addTag = () => {
-    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, newTag.trim()]
-      }));
-      setNewTag("");
-    }
-  };
 
-  const removeTag = (tag: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(t => t !== tag)
-    }));
-  };
 
   const toggleApplication = (applicationId: number) => {
     setSelectedApplications(prev => 
@@ -364,35 +351,7 @@ export function ProjectEditModal({ project, open, onOpenChange }: ProjectEditMod
                 </div>
               </div>
 
-              {/* Tags */}
-              <div>
-                <Label>Tags</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    placeholder="Add tag"
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                  />
-                  <Button type="button" onClick={addTag} size="sm">
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {formData.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="gap-1">
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => removeTag(tag)}
-                        className="ml-1 hover:bg-gray-200 rounded-full p-0.5"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              </div>
+
             </div>
           </div>
 
