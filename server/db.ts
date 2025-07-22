@@ -5,45 +5,59 @@ import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import ws from "ws";
 import * as schema from "@shared/schema";
 
-// Default to local PostgreSQL for development
-const defaultDatabaseUrl = "postgresql://postgres:postgres@localhost:5432/projectmanager";
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Please set your Supabase database connection string.",
+  );
+}
 
-const databaseUrl = process.env.DATABASE_URL || defaultDatabaseUrl;
+const databaseUrl = process.env.DATABASE_URL;
 
 console.log(`🗃️  Connecting to database: ${databaseUrl.replace(/:[^:@]*@/, ':****@')}`);
 
-// Check if using Neon database (serverless)
-const isNeonDatabase = databaseUrl.includes('neon.db') || databaseUrl.includes('neon.tech');
+// Detect database provider based on URL
+const isSupabase = databaseUrl.includes('supabase.co');
+const isNeon = databaseUrl.includes('neon.tech') || databaseUrl.includes('aws.neon.tech');
+const isLocal = databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1');
 
 let db: ReturnType<typeof drizzle> | ReturnType<typeof drizzlePg>;
+let pool: NeonPool | PgPool;
 
-if (isNeonDatabase) {
-  // Use Neon serverless configuration
-  neonConfig.webSocketConstructor = ws;
-  const pool = new NeonPool({ connectionString: databaseUrl });
-  db = drizzle({ client: pool, schema });
-  console.log('📡 Using Neon serverless database');
-} else {
-  // Use standard PostgreSQL configuration for local database
-  const pool = new PgPool({ 
+if (isSupabase) {
+  console.log('🟢 Using Supabase PostgreSQL database');
+  // Use standard PostgreSQL driver for Supabase
+  pool = new PgPool({ 
     connectionString: databaseUrl,
-    // Additional local PostgreSQL configuration
+    ssl: { rejectUnauthorized: false }, // Supabase requires SSL
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  });
+  db = drizzlePg({ client: pool, schema });
+} else if (isNeon) {
+  console.log('📡 Using Neon serverless database');
+  neonConfig.webSocketConstructor = ws;
+  pool = new NeonPool({ connectionString: databaseUrl });
+  db = drizzle({ client: pool, schema });
+} else if (isLocal) {
+  console.log('🐘 Using local PostgreSQL database');
+  pool = new PgPool({ 
+    connectionString: databaseUrl,
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,
   });
-  
-  // Test the connection
-  pool.on('connect', () => {
-    console.log('🔗 Connected to local PostgreSQL database');
-  });
-  
-  pool.on('error', (err) => {
-    console.error('💥 PostgreSQL pool error:', err);
-  });
-  
   db = drizzlePg({ client: pool, schema });
-  console.log('🐘 Using local PostgreSQL database');
+} else {
+  console.log('🗃️  Using standard PostgreSQL database');
+  pool = new PgPool({ 
+    connectionString: databaseUrl,
+    ssl: databaseUrl.includes('ssl=true') ? { rejectUnauthorized: false } : false,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+  });
+  db = drizzlePg({ client: pool, schema });
 }
 
-export { db };
+export { db, pool };
