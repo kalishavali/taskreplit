@@ -54,7 +54,7 @@ export default function Applications() {
         icon: editingApplication.icon || "",
         type: editingApplication.type,
         color: editingApplication.color || "#3b82f6",
-        status: editingApplication.status,
+        status: editingApplication.status || "active",
       });
     } else {
       form.reset({
