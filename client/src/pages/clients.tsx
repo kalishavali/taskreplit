@@ -306,14 +306,16 @@ export default function Clients() {
               </div>
             </div>
 
-            <Dialog open={isAddProjectModalOpen} onOpenChange={setIsAddProjectModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Manage Projects
-                </Button>
-              </DialogTrigger>
-            </Dialog>
+            <Button 
+              onClick={() => {
+                console.log("Manage Projects clicked, viewingClient:", viewingClient);
+                setIsAddProjectModalOpen(true);
+              }}
+              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Manage Projects
+            </Button>
           </div>
 
           {/* Projects Grid */}
