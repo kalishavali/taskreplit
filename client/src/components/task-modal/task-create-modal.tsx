@@ -19,9 +19,10 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTaskSchema, type Project, type Application } from "@shared/schema";
+import { insertTaskSchema, type Project, type Application, type TeamMember } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { RichTextEditor } from "@/components/rich-text-editor";
 import type { z } from "zod";
 
 type TaskFormData = z.infer<typeof insertTaskSchema>;
@@ -42,6 +43,7 @@ export function TaskCreateModal({
   initialStatus = "todo" 
 }: TaskCreateModalProps) {
   const [dueDate, setDueDate] = useState<Date>();
+  const [description, setDescription] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -58,6 +60,11 @@ export function TaskCreateModal({
       return response.json();
     },
     enabled: !!projectId
+  });
+
+  // Fetch team members for assignee dropdown
+  const { data: teamMembers = [] } = useQuery<TeamMember[]>({
+    queryKey: ["/api/team-members"]
   });
 
   const form = useForm<TaskFormData>({
@@ -79,6 +86,7 @@ export function TaskCreateModal({
     mutationFn: async (data: TaskFormData) => {
       const taskData = {
         ...data,
+        description: description,
         dueDate: dueDate?.toISOString(),
         assignee: data.assignee || null,
       };
@@ -89,6 +97,7 @@ export function TaskCreateModal({
       onOpenChange(false);
       form.reset();
       setDueDate(undefined);
+      setDescription("");
       toast({
         title: "Task Created",
         description: "Your new task has been created successfully.",
@@ -121,12 +130,7 @@ export function TaskCreateModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>Create New Task</DialogTitle>
-            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle>Create New Task</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -151,24 +155,14 @@ export function TaskCreateModal({
             />
 
             {/* Task Description */}
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe the task in detail..."
-                      className="min-h-[100px] resize-none"
-                      {...field}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <RichTextEditor
+                content={description}
+                onChange={setDescription}
+                placeholder="Describe the task in detail..."
+              />
+            </div>
 
             {/* Row 1: Project, Application, Status */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -327,15 +321,22 @@ export function TaskCreateModal({
                   <FormItem>
                     <FormLabel>Assignee</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          placeholder="Assign to..."
-                          className="pl-10"
-                          {...field}
-                          value={field.value || ""}
-                        />
-                      </div>
+                      <Select value={field.value || ""} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select assignee..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Unassigned</SelectItem>
+                          {teamMembers.map((member) => (
+                            <SelectItem key={member.id} value={member.name}>
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4" />
+                                {member.name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
