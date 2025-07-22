@@ -49,9 +49,10 @@ export interface IStorage {
   deleteApplication(id: number): Promise<boolean>;
   
   // Project-Application relationships
-  getProjectApplications(projectId: number): Promise<Application[]>;
+  getProjectApplications(projectId: number): Promise<{applicationId: number}[]>;
   linkApplicationsToProject(projectId: number, applicationIds: number[]): Promise<void>;
   unlinkApplicationFromProject(projectId: number, applicationId: number): Promise<void>;
+  updateProjectApplications(projectId: number, applicationIds: number[]): Promise<void>;
 
   // Tasks
   getTasks(projectId?: number): Promise<Task[]>;
@@ -291,8 +292,7 @@ export class MemStorage implements IStorage {
         assignee: "Sarah Miller",
         dueDate: new Date("2024-12-15"),
         progress: 0,
-        estimatedHours: 16,
-        actualHours: null,
+
         applicationId: null,
         tags: ["design", "ui", "homepage"],
         dependencies: null,
@@ -310,8 +310,7 @@ export class MemStorage implements IStorage {
         assignee: "John Doe",
         dueDate: new Date("2024-12-20"),
         progress: 0,
-        estimatedHours: 12,
-        actualHours: null,
+
         applicationId: null,
         tags: ["design", "authentication", "ux"],
         dependencies: null,
@@ -329,8 +328,7 @@ export class MemStorage implements IStorage {
         assignee: "Alex Johnson",
         dueDate: new Date("2024-12-18"),
         progress: 60,
-        estimatedHours: 8,
-        actualHours: 5,
+
         applicationId: null,
         tags: ["content", "social-media", "marketing"],
         dependencies: null,
@@ -348,8 +346,7 @@ export class MemStorage implements IStorage {
         assignee: "Sarah Miller",
         dueDate: new Date("2024-12-10"),
         progress: 100,
-        estimatedHours: 6,
-        actualHours: 7,
+
         applicationId: null,
         tags: ["research", "analysis", "competitors"],
         dependencies: null,
@@ -512,11 +509,7 @@ export class MemStorage implements IStorage {
 
   // Applications
   async getApplications(projectId?: number): Promise<Application[]> {
-    let applications = Array.from(this.applications.values());
-    if (projectId) {
-      applications = applications.filter(app => app.projectId === projectId);
-    }
-    return applications.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return Array.from(this.applications.values()).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
   async getApplication(id: number): Promise<Application | undefined> {
@@ -552,6 +545,31 @@ export class MemStorage implements IStorage {
 
   async deleteApplication(id: number): Promise<boolean> {
     return this.applications.delete(id);
+  }
+
+  // Project-Application relationships (for MemStorage, we'll use a simple mapping)
+  private projectApplicationMap: Map<number, Set<number>> = new Map();
+
+  async getProjectApplications(projectId: number): Promise<{applicationId: number}[]> {
+    const applicationIds = this.projectApplicationMap.get(projectId) || new Set();
+    return Array.from(applicationIds).map(id => ({ applicationId: id }));
+  }
+
+  async linkApplicationsToProject(projectId: number, applicationIds: number[]): Promise<void> {
+    const currentApplications = this.projectApplicationMap.get(projectId) || new Set();
+    applicationIds.forEach(id => currentApplications.add(id));
+    this.projectApplicationMap.set(projectId, currentApplications);
+  }
+
+  async unlinkApplicationFromProject(projectId: number, applicationId: number): Promise<void> {
+    const applications = this.projectApplicationMap.get(projectId);
+    if (applications) {
+      applications.delete(applicationId);
+    }
+  }
+
+  async updateProjectApplications(projectId: number, applicationIds: number[]): Promise<void> {
+    this.projectApplicationMap.set(projectId, new Set(applicationIds));
   }
 
   // Tasks

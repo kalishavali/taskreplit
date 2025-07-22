@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ModernKanbanBoard } from "@/components/modern-kanban/modern-kanban-board";
 import TaskListView from "@/components/task-list-view";
 import TimelineView from "@/components/timeline-view";
+import { ProjectEditModal } from "@/components/project-edit-modal";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -44,6 +45,7 @@ export default function ProjectDetails() {
   const [selectedAssignee, setSelectedAssignee] = useState<string>("all");
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [projectEditModalOpen, setProjectEditModalOpen] = useState(false);
 
   const { data: project, isLoading: projectLoading } = useQuery<Project>({
     queryKey: ["/api/projects", projectId],
@@ -189,7 +191,11 @@ export default function ProjectDetails() {
                 <Users className="h-4 w-4" />
                 Invite
               </Button>
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setProjectEditModalOpen(true)}
+              >
                 <Settings className="h-4 w-4" />
               </Button>
             </div>
@@ -618,6 +624,13 @@ export default function ProjectDetails() {
           </Tabs>
         </div>
       </div>
+
+      {/* Project Edit Modal */}
+      <ProjectEditModal
+        project={project}
+        open={projectEditModalOpen}
+        onOpenChange={setProjectEditModalOpen}
+      />
     </div>
   );
 }

@@ -204,6 +204,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/projects/:projectId/applications", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { applicationIds } = z.object({ applicationIds: z.array(z.number()) }).parse(req.body);
+      await storage.updateProjectApplications(projectId, applicationIds);
+      res.json({ message: "Project applications updated successfully" });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid application IDs", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update project applications" });
+    }
+  });
+
   app.delete("/api/projects/:projectId/applications/:applicationId", async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
