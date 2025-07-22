@@ -126,19 +126,14 @@ function TaskCard({ task, index, onTaskClick }: { task: Task; index: number; onT
             {/* Task metadata */}
             <div className="flex items-center justify-between text-xs text-gray-500">
               <div className="flex items-center gap-3">
-                {task.estimatedHours && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>{task.estimatedHours}h</span>
-                  </div>
-                )}
+
                 <div className="flex items-center gap-1">
                   <MessageCircle className="h-3 w-3" />
                   <span>0</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Archive className="h-3 w-3" />
-                  <span>{task.progress || 0}/{task.estimatedHours || 0}</span>
+                  <span>{task.progress || 0}%</span>
                 </div>
               </div>
 
@@ -243,6 +238,8 @@ function KanbanColumn({
 
 export function ModernKanbanBoard({ projectId, applicationId }: ModernKanbanBoardProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPriority, setSelectedPriority] = useState<string>("all");
+  const [selectedAssignee, setSelectedAssignee] = useState<string>("all");
   const [selectedProject, setSelectedProject] = useState<number | null>(projectId || null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
@@ -291,12 +288,24 @@ export function ModernKanbanBoard({ projectId, applicationId }: ModernKanbanBoar
     setTaskModalOpen(true);
   };
 
-  const filteredTasks = searchQuery 
-    ? tasks.filter(task => 
-        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : tasks;
+  // Get unique assignees for filter dropdown
+  const uniqueAssignees = [...new Set(tasks.map(task => task.assignee).filter(Boolean))];
+
+  const filteredTasks = tasks.filter(task => {
+    if (searchQuery && !(
+      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    )) {
+      return false;
+    }
+    if (selectedPriority !== "all" && task.priority !== selectedPriority) {
+      return false;
+    }
+    if (selectedAssignee !== "all" && task.assignee !== selectedAssignee) {
+      return false;
+    }
+    return true;
+  });
 
   if (isLoading) {
     return (
@@ -321,10 +330,31 @@ export function ModernKanbanBoard({ projectId, applicationId }: ModernKanbanBoar
               className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
+          
+          <select
+            value={selectedPriority}
+            onChange={(e) => setSelectedPriority(e.target.value)}
+            className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="all">All Priority</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+
+          <select
+            value={selectedAssignee}
+            onChange={(e) => setSelectedAssignee(e.target.value)}
+            className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="all">All Assignees</option>
+            {uniqueAssignees.map((assignee) => (
+              <option key={assignee} value={assignee}>
+                {assignee}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="flex items-center gap-2">
@@ -332,7 +362,7 @@ export function ModernKanbanBoard({ projectId, applicationId }: ModernKanbanBoar
             <Users className="h-4 w-4 mr-2" />
             Invite
           </Button>
-          <Button size="sm" onClick={() => handleAddTask("todo")}>
+          <Button size="sm" onClick={() => handleAddTask("Open")}>
             <Plus className="h-4 w-4 mr-2" />
             New Task
           </Button>
@@ -360,7 +390,7 @@ export function ModernKanbanBoard({ projectId, applicationId }: ModernKanbanBoar
       </div>
 
       <TaskEditModal
-        task={selectedTask}
+        task={selectedTask || undefined}
         open={taskModalOpen}
         onOpenChange={setTaskModalOpen}
         projectId={selectedProject || undefined}

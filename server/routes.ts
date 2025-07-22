@@ -119,19 +119,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/applications/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const application = await storage.getApplication(id);
-      if (!application) {
-        return res.status(404).json({ message: "Application not found" });
-      }
-      res.json(application);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch application" });
-    }
-  });
-
   app.put("/api/applications/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);

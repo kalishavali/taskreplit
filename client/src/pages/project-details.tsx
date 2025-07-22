@@ -41,6 +41,7 @@ export default function ProjectDetails() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
+  const [selectedAssignee, setSelectedAssignee] = useState<string>("all");
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
 
@@ -57,9 +58,19 @@ export default function ProjectDetails() {
   const { data: applications = [] } = useQuery<Application[]>({
     queryKey: ["/api/applications", projectId],
     queryFn: async () => {
-      const response = await fetch(`/api/applications?projectId=${projectId}`);
-      if (!response.ok) throw new Error("Failed to fetch applications");
-      return response.json();
+      try {
+        const response = await fetch(`/api/applications?projectId=${projectId}`);
+        if (!response.ok) {
+          // Fallback to all applications if project-specific query fails
+          const allAppsResponse = await fetch('/api/applications');
+          if (!allAppsResponse.ok) throw new Error("Failed to fetch applications");
+          return allAppsResponse.json();
+        }
+        return response.json();
+      } catch (error) {
+        console.error('Applications fetch error:', error);
+        return [];
+      }
     },
     enabled: !!projectId,
   });
@@ -79,6 +90,9 @@ export default function ProjectDetails() {
     enabled: !!projectId,
   });
 
+  // Get unique assignees for filter dropdown
+  const uniqueAssignees = [...new Set(allTasks.map(task => task.assignee).filter(Boolean))];
+
   // Filter tasks based on search and filters
   const tasks = allTasks.filter(task => {
     if (searchQuery.trim() && !task.title.toLowerCase().includes(searchQuery.toLowerCase())) {
@@ -88,6 +102,9 @@ export default function ProjectDetails() {
       return false;
     }
     if (selectedPriority !== "all" && task.priority !== selectedPriority) {
+      return false;
+    }
+    if (selectedAssignee !== "all" && task.assignee !== selectedAssignee) {
       return false;
     }
     if (selectedApplication && task.applicationId !== selectedApplication) {
@@ -100,6 +117,7 @@ export default function ProjectDetails() {
     setSearchQuery("");
     setSelectedStatus("all");
     setSelectedPriority("all");
+    setSelectedAssignee("all");
     setSelectedApplication(null);
   };
 
@@ -461,6 +479,20 @@ export default function ProjectDetails() {
                       </SelectContent>
                     </Select>
 
+                    <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="All Assignees" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Assignees</SelectItem>
+                        {uniqueAssignees.map((assignee) => (
+                          <SelectItem key={assignee} value={assignee}>
+                            {assignee}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
                     <Button variant="outline" size="sm" onClick={handleClearFilters}>
                       <Filter className="w-4 h-4 mr-2" />
                       Clear Filters
@@ -509,6 +541,65 @@ export default function ProjectDetails() {
 
             <TabsContent value="list" className="animate-fade-scale">
               <div className="glass rounded-xl shadow-lg p-6">
+                {/* List View Filters */}
+                <div className="mb-6 flex items-center gap-4 flex-wrap">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="Search tasks..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 w-64"
+                    />
+                  </div>
+                  
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="Open">Open</SelectItem>
+                      <SelectItem value="InProgress">In Progress</SelectItem>
+                      <SelectItem value="Blocked">Blocked</SelectItem>
+                      <SelectItem value="Closed">Closed</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={selectedPriority} onValueChange={setSelectedPriority}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="All Priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Priority</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="All Assignees" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Assignees</SelectItem>
+                      {uniqueAssignees.map((assignee) => (
+                        <SelectItem key={assignee} value={assignee}>
+                          {assignee}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Button variant="outline" size="sm" onClick={handleClearFilters}>
+                    <Filter className="w-4 h-4 mr-2" />
+                    Clear Filters
+                  </Button>
+                </div>
+                
                 <TaskListView 
                   tasks={tasks} 
                   projects={[project]} 
