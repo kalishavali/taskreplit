@@ -103,12 +103,12 @@ export default function TaskListView({ tasks, projects = [], isLoading }: TaskLi
             <TableHeader className="sticky top-0 bg-white z-10">
               <TableRow>
                 <TableHead className="w-8"></TableHead>
-                <TableHead>Task</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Assignee</TableHead>
-                <TableHead>Due Date</TableHead>
+                <TableHead className="w-80">Task</TableHead>
+                <TableHead className="w-32">Project</TableHead>
+                <TableHead className="w-24">Status</TableHead>
+                <TableHead className="w-20">Priority</TableHead>
+                <TableHead className="w-24">Assignee</TableHead>
+                <TableHead className="w-28">Due Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -132,10 +132,10 @@ export default function TaskListView({ tasks, projects = [], isLoading }: TaskLi
                   </TableCell>
                   
                   <TableCell>
-                    <div>
-                      <div className="font-medium text-gray-900">{task.title}</div>
+                    <div className="max-w-80">
+                      <div className="font-medium text-gray-900 break-words">{task.title}</div>
                       {task.description && (
-                        <div className="text-sm text-gray-500 truncate max-w-xs overflow-hidden whitespace-nowrap text-ellipsis">
+                        <div className="text-sm text-gray-500 truncate max-w-80 overflow-hidden whitespace-nowrap text-ellipsis">
                           {task.description.replace(/<[^>]*>/g, '').trim()}
                         </div>
                       )}
