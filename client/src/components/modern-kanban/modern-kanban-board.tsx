@@ -249,6 +249,16 @@ export function ModernKanbanBoard({ projectId, applicationId }: ModernKanbanBoar
 
   const { data: tasks = [], isLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks", selectedProject, applicationId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedProject) params.append('projectId', selectedProject.toString());
+      if (applicationId) params.append('applicationId', applicationId.toString());
+      
+      const response = await fetch(`/api/tasks?${params}`);
+      if (!response.ok) throw new Error("Failed to fetch tasks");
+      const result = await response.json();
+      return Array.isArray(result) ? result : [];
+    },
   });
 
   const { data: projects = [] } = useQuery<Project[]>({
@@ -288,10 +298,11 @@ export function ModernKanbanBoard({ projectId, applicationId }: ModernKanbanBoar
     setTaskModalOpen(true);
   };
 
-  // Get unique assignees for filter dropdown
-  const uniqueAssignees = [...new Set(tasks.map(task => task.assignee).filter(Boolean))];
+  // Ensure tasks is always an array and get unique assignees
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
+  const uniqueAssignees = Array.from(new Set(safeTasks.map((task: Task) => task.assignee).filter(Boolean)));
 
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = safeTasks.filter((task: Task) => {
     if (searchQuery && !(
       task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       task.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -389,13 +400,15 @@ export function ModernKanbanBoard({ projectId, applicationId }: ModernKanbanBoar
         </DragDropContext>
       </div>
 
-      <TaskEditModal
-        task={selectedTask || undefined}
-        open={taskModalOpen}
-        onOpenChange={setTaskModalOpen}
-        projectId={selectedProject || undefined}
-        applicationId={applicationId}
-      />
+      {selectedTask && (
+        <TaskEditModal
+          task={selectedTask}
+          open={taskModalOpen}
+          onOpenChange={setTaskModalOpen}
+          projectId={selectedProject || undefined}
+          applicationId={applicationId}
+        />
+      )}
 
       <TaskCreateModal
         open={createTaskModalOpen}
