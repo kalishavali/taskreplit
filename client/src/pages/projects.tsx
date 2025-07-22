@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, FolderOpen, Calendar, Users, Upload, X, Sidebar, Layers, Filter } from "lucide-react";
+import { Plus, FolderOpen, Calendar, Users, Upload, X, Sidebar, Layers, Filter, Trash2 } from "lucide-react";
 import { ApplicationsPanel } from "@/components/applications-panel";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -92,6 +92,28 @@ export default function Projects() {
       toast({
         title: "Error",
         description: "Failed to create project.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: async (projectId: number) => {
+      await apiRequest(`/api/projects/${projectId}`, "DELETE");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects-applications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      toast({
+        title: "Success",
+        description: "Project deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -482,11 +504,13 @@ export default function Projects() {
               const taskCounts = getProjectTaskCounts(project.id);
               
               return (
-                <Link key={project.id} href={`/projects/${project.id}`}>
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">{project.name}</CardTitle>
+                <Card key={project.id} className="hover:shadow-md transition-shadow group relative">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <Link href={`/projects/${project.id}`} className="cursor-pointer flex-1">
+                        <CardTitle className="text-lg hover:text-blue-600 transition-colors">{project.name}</CardTitle>
+                      </Link>
+                      <div className="flex items-center space-x-2">
                         <Badge 
                           variant="secondary" 
                           className={`${
@@ -499,7 +523,21 @@ export default function Projects() {
                         >
                           {project.color}
                         </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            deleteProjectMutation.mutate(project.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
+                          disabled={deleteProjectMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
+                    </div>
                       
                       {/* Show client name */}
                       {project.clientId && (
@@ -515,45 +553,46 @@ export default function Projects() {
                       )}
                     </CardHeader>
                     
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span className="text-muted-foreground">Progress</span>
-                            <span className="font-medium">{progress}%</span>
-                          </div>
-                          <Progress value={progress} className="h-2" />
-                        </div>
-                        
-                        <div className="grid grid-cols-3 gap-4 text-center">
+                    <Link href={`/projects/${project.id}`} className="cursor-pointer block">
+                      <CardContent>
+                        <div className="space-y-4">
                           <div>
-                            <div className="text-2xl font-bold text-gray-600">{taskCounts.todo}</div>
-                            <div className="text-xs text-muted-foreground">To Do</div>
+                            <div className="flex justify-between text-sm mb-1">
+                              <span className="text-muted-foreground">Progress</span>
+                              <span className="font-medium">{progress}%</span>
+                            </div>
+                            <Progress value={progress} className="h-2" />
                           </div>
-                          <div>
-                            <div className="text-2xl font-bold text-yellow-600">{taskCounts.inProgress}</div>
-                            <div className="text-xs text-muted-foreground">In Progress</div>
+                          
+                          <div className="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                              <div className="text-2xl font-bold text-gray-600">{taskCounts.todo}</div>
+                              <div className="text-xs text-muted-foreground">To Do</div>
+                            </div>
+                            <div>
+                              <div className="text-2xl font-bold text-yellow-600">{taskCounts.inProgress}</div>
+                              <div className="text-xs text-muted-foreground">In Progress</div>
+                            </div>
+                            <div>
+                              <div className="text-2xl font-bold text-green-600">{taskCounts.done}</div>
+                              <div className="text-xs text-muted-foreground">Done</div>
+                            </div>
                           </div>
-                          <div>
-                            <div className="text-2xl font-bold text-green-600">{taskCounts.done}</div>
-                            <div className="text-xs text-muted-foreground">Done</div>
+                          
+                          <div className="flex items-center justify-between text-sm text-muted-foreground">
+                            <div className="flex items-center">
+                              <Calendar className="w-4 h-4 mr-1" />
+                              {new Date(project.createdAt).toLocaleDateString()}
+                            </div>
+                            <div className="flex items-center">
+                              <Layers className="w-4 h-4 mr-1" />
+                              {getProjectApplicationCount(project.id)} applications
+                            </div>
                           </div>
                         </div>
-                        
-                        <div className="flex items-center justify-between text-sm text-muted-foreground">
-                          <div className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-1" />
-                            {new Date(project.createdAt).toLocaleDateString()}
-                          </div>
-                          <div className="flex items-center">
-                            <Layers className="w-4 h-4 mr-1" />
-                            {getProjectApplicationCount(project.id)} applications
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
+                      </CardContent>
+                    </Link>
                   </Card>
-                </Link>
               );
             })}
           </div>
