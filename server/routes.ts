@@ -177,10 +177,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId!;
       const projectData = insertProjectSchema.parse(req.body);
       
-      // Check if user has permission to manage projects for this client
-      const hasPermission = await storage.checkUserClientPermission(userId, projectData.clientId, 'manage');
-      if (!hasPermission) {
-        return res.status(403).json({ message: "You don't have permission to create projects for this client" });
+      // Check if user has permission to manage projects for this client (if client is assigned)
+      if (projectData.clientId) {
+        const hasPermission = await storage.checkUserClientPermission(userId, projectData.clientId, 'manage');
+        if (!hasPermission) {
+          return res.status(403).json({ message: "You don't have permission to create projects for this client" });
+        }
       }
       
       const project = await storage.createProject(projectData);
@@ -230,10 +232,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Project not found" });
       }
       
-      // Check if user has permission to delete projects for this client
-      const hasPermission = await storage.checkUserClientPermission(userId, project.clientId, 'delete');
-      if (!hasPermission) {
-        return res.status(403).json({ message: "You don't have permission to delete projects for this client" });
+      // Check if user has permission to delete projects for this client (if client is assigned)
+      if (project.clientId) {
+        const hasPermission = await storage.checkUserClientPermission(userId, project.clientId, 'delete');
+        if (!hasPermission) {
+          return res.status(403).json({ message: "You don't have permission to delete projects for this client" });
+        }
       }
       
       const deleted = await storage.deleteProject(id);
@@ -352,6 +356,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete application" });
+    }
+  });
+
+  // Get projects associated with an application
+  app.get("/api/applications/:id/projects", requireAuth, async (req, res) => {
+    try {
+      const applicationId = parseInt(req.params.id);
+      const projects = await storage.getApplicationProjects(applicationId);
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching application projects:", error);
+      res.status(500).json({ message: "Failed to fetch application projects" });
     }
   });
 

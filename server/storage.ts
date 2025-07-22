@@ -76,6 +76,7 @@ export interface IStorage {
 
   // Project-Application relationships
   getProjectApplications(projectId: number): Promise<Application[]>;
+  getApplicationProjects(applicationId: number): Promise<Project[]>;
   addProjectApplication(projectId: number, applicationId: number): Promise<boolean>;
   removeProjectApplication(projectId: number, applicationId: number): Promise<boolean>;
 
@@ -333,6 +334,30 @@ export class DatabaseStorage implements IStorage {
       .where(eq(projectApplications.projectId, projectId));
 
     return result as Application[];
+  }
+
+  async getApplicationProjects(applicationId: number): Promise<Project[]> {
+    const result = await db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        description: projects.description,
+        clientId: projects.clientId,
+        color: projects.color,
+        status: projects.status,
+        startDate: projects.startDate,
+        endDate: projects.endDate,
+        assignees: projects.assignees,
+        teamMembers: projects.teamMembers,
+        tags: projects.tags,
+        createdAt: projects.createdAt,
+        updatedAt: projects.updatedAt,
+      })
+      .from(projectApplications)
+      .innerJoin(projects, eq(projectApplications.projectId, projects.id))
+      .where(eq(projectApplications.applicationId, applicationId));
+
+    return result as Project[];
   }
 
   async addProjectApplication(projectId: number, applicationId: number): Promise<boolean> {
