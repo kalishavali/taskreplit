@@ -267,6 +267,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProject(id: number): Promise<boolean> {
+    // First delete all tasks associated with this project
+    await db.delete(tasks).where(eq(tasks.projectId, id));
+    
+    // Delete all project-application relationships
+    await db.delete(projectApplications).where(eq(projectApplications.projectId, id));
+    
+    // Then delete the project itself
     const result = await db.delete(projects).where(eq(projects.id, id));
     return (result.rowCount ?? 0) > 0;
   }
@@ -861,31 +868,7 @@ export class DatabaseStorage implements IStorage {
     return (deleted.rowCount ?? 0) > 0;
   }
 
-  async getUserAccessibleClients(userId: number): Promise<Client[]> {
-    // Admin can access all clients
-    const user = await this.getUser(userId);
-    if (user?.role === 'admin') {
-      return await this.getClients();
-    }
 
-    // Regular users can only access clients they have permissions for
-    const clientIds = await db.select({ clientId: userClientPermissions.clientId })
-      .from(userClientPermissions)
-      .where(
-        and(
-          eq(userClientPermissions.userId, userId),
-          eq(userClientPermissions.canView, true)
-        )
-      );
-
-    if (clientIds.length === 0) {
-      return [];
-    }
-
-    return await db.select()
-      .from(clients)
-      .where(inArray(clients.id, clientIds.map(c => c.clientId)));
-  }
 
   async getUserAccessibleProjects(userId: number): Promise<Project[]> {
     // Admin can access all projects
@@ -906,32 +889,7 @@ export class DatabaseStorage implements IStorage {
       .where(inArray(projects.clientId, accessibleClients.map(c => c.id)));
   }
 
-  async checkUserClientPermission(userId: number, clientId: number, permission: 'view' | 'edit' | 'delete' | 'manage'): Promise<boolean> {
-    // Admin has all permissions
-    const user = await this.getUser(userId);
-    if (user?.role === 'admin') {
-      return true;
-    }
 
-    const userPermission = await this.getUserPermissionsForClient(userId, clientId);
-
-    if (!userPermission) {
-      return false;
-    }
-
-    switch (permission) {
-      case 'view':
-        return userPermission.canView;
-      case 'edit':
-        return userPermission.canEdit;
-      case 'delete':
-        return userPermission.canDelete;
-      case 'manage':
-        return userPermission.canManage;
-      default:
-        return false;
-    }
-  }
 
   async checkUserProjectPermission(userId: number, projectId: number, permission: 'view' | 'edit' | 'delete' | 'manage'): Promise<boolean> {
     // Admin has all permissions

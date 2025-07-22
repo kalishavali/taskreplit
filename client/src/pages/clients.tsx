@@ -623,7 +623,7 @@ export default function Clients() {
         <Dialog open={isCreateProjectModalOpen} onOpenChange={setIsCreateProjectModalOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Create New Project for {viewingClient?.name}</DialogTitle>
+              <DialogTitle>Create New Project{viewingClient ? ` for ${viewingClient.name}` : ''}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>

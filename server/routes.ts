@@ -175,20 +175,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects", requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId!;
-      const user = await storage.getUser(userId);
+      const projectData = insertProjectSchema.parse(req.body);
       
-      // Only admins can create projects
-      if (user?.role !== 'admin') {
-        return res.status(403).json({ message: "Only administrators can create projects" });
+      // Check if user has permission to manage projects for this client
+      const hasPermission = await storage.checkUserClientPermission(userId, projectData.clientId, 'manage');
+      if (!hasPermission) {
+        return res.status(403).json({ message: "You don't have permission to create projects for this client" });
       }
       
-      const projectData = insertProjectSchema.parse(req.body);
       const project = await storage.createProject(projectData);
       res.status(201).json(project);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid project data", errors: error.errors });
       }
+      console.error("Error creating project:", error);
       res.status(500).json({ message: "Failed to create project" });
     }
   });
@@ -223,10 +224,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const userId = req.session.userId!;
       
-      // Check if user has permission to delete this project
-      const hasPermission = await storage.checkUserProjectPermission(userId, id, 'delete');
+      // Get project to find its client
+      const project = await storage.getProject(id);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Check if user has permission to delete projects for this client
+      const hasPermission = await storage.checkUserClientPermission(userId, project.clientId, 'delete');
       if (!hasPermission) {
-        return res.status(403).json({ message: "You don't have permission to delete this project" });
+        return res.status(403).json({ message: "You don't have permission to delete projects for this client" });
       }
       
       const deleted = await storage.deleteProject(id);
@@ -235,6 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(204).send();
     } catch (error) {
+      console.error("Error deleting project:", error);
       res.status(500).json({ message: "Failed to delete project" });
     }
   });
