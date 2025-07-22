@@ -50,11 +50,11 @@ export function TaskCreateModal({
   });
 
   const { data: applications = [] } = useQuery<Application[]>({
-    queryKey: ["/api/applications", projectId],
+    queryKey: ["/api/projects", projectId, "applications"],
     queryFn: async () => {
       if (!projectId) return [];
-      const response = await fetch(`/api/applications?projectId=${projectId}`);
-      if (!response.ok) throw new Error("Failed to fetch applications");
+      const response = await fetch(`/api/projects/${projectId}/applications`);
+      if (!response.ok) throw new Error("Failed to fetch project applications");
       return response.json();
     },
     enabled: !!projectId
@@ -109,6 +109,13 @@ export function TaskCreateModal({
   };
 
   const selectedProject = form.watch("projectId");
+
+  // Clear application selection when project changes
+  useEffect(() => {
+    if (selectedProject) {
+      form.setValue("applicationId", undefined);
+    }
+  }, [selectedProject, form]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

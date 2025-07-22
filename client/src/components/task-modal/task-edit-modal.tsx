@@ -46,13 +46,21 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch projects and applications for dropdowns
+  // Fetch projects for dropdown
   const { data: projects = [] } = useQuery<Project[]>({
     queryKey: ["/api/projects"]
   });
 
-  const { data: applications = [] } = useQuery<Application[]>({
-    queryKey: ["/api/applications"]
+  // Fetch project-specific applications when project is selected
+  const { data: projectApplications = [] } = useQuery<Application[]>({
+    queryKey: ["/api/projects", selectedProjectId, "applications"],
+    queryFn: async () => {
+      if (!selectedProjectId) return [];
+      const response = await fetch(`/api/projects/${selectedProjectId}/applications`);
+      if (!response.ok) throw new Error("Failed to fetch project applications");
+      return response.json();
+    },
+    enabled: !!selectedProjectId,
   });
 
   // Reset form when task changes
@@ -67,6 +75,13 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
       setSelectedApplicationId(task.applicationId || applicationId);
     }
   }, [task, projectId, applicationId]);
+
+  // Clear application selection when project changes
+  useEffect(() => {
+    if (selectedProjectId !== task?.projectId) {
+      setSelectedApplicationId(undefined);
+    }
+  }, [selectedProjectId, task?.projectId]);
 
   const updateTaskMutation = useMutation({
     mutationFn: async (updates: Partial<Task>) => {
@@ -137,12 +152,16 @@ export function TaskEditModal({ task, open, onOpenChange, projectId, application
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Application</label>
-              <Select value={selectedApplicationId?.toString()} onValueChange={(value) => setSelectedApplicationId(Number(value))}>
+              <Select 
+                value={selectedApplicationId?.toString()} 
+                onValueChange={(value) => setSelectedApplicationId(Number(value))}
+                disabled={!selectedProjectId}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select application..." />
+                  <SelectValue placeholder={selectedProjectId ? "Select application..." : "Select project first"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {applications.map((app) => (
+                  {projectApplications.map((app) => (
                     <SelectItem key={app.id} value={app.id.toString()}>
                       {app.name}
                     </SelectItem>
