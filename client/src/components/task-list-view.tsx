@@ -104,7 +104,7 @@ export default function TaskListView({ tasks, projects = [], isLoading }: TaskLi
               <TableRow>
                 <TableHead className="w-8"></TableHead>
                 <TableHead className="w-80">Task</TableHead>
-                <TableHead className="w-32">Project</TableHead>
+                <TableHead className="w-40">Project</TableHead>
                 <TableHead className="w-24">Status</TableHead>
                 <TableHead className="w-20">Priority</TableHead>
                 <TableHead className="w-24">Assignee</TableHead>
@@ -144,7 +144,7 @@ export default function TaskListView({ tasks, projects = [], isLoading }: TaskLi
                   
                   <TableCell>
                     {project && (
-                      <Badge variant="outline" className="text-xs whitespace-nowrap truncate max-w-32">
+                      <Badge variant="outline" className="text-xs whitespace-nowrap">
                         {project.name}
                       </Badge>
                     )}
