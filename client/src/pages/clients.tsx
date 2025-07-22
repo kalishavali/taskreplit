@@ -262,28 +262,34 @@ export default function Clients() {
 
   const handleUnassignProject = (project: any) => {
     console.log("handleUnassignProject called with:", project);
-    console.log("Current unassignProject state:", unassignProject);
     
-    // First close the manage projects modal
-    setIsAddProjectModalOpen(false);
+    // Use browser confirm for now to test functionality
+    const confirmed = window.confirm(
+      `Are you sure you want to unassign "${project.name}" from ${viewingClient?.name}?\n\n` +
+      `This will:\n` +
+      `• Remove the project from this client\n` +
+      `• Keep the project and all its tasks\n` +
+      `• Make the project available for other clients\n\n` +
+      `No data will be deleted.`
+    );
     
-    // Then show test dialog first
-    setShowTestDialog(true);
-    console.log("Test dialog should be open now");
-    
-    // Then set the unassign project after a delay
-    setTimeout(() => {
-      setShowTestDialog(false);
-      setUnassignProject(project);
-      console.log("Unassign dialog should be open now");
-    }, 1000);
+    if (confirmed) {
+      console.log("User confirmed unassignment");
+      setIsAddProjectModalOpen(false);
+      confirmUnassignProject(project);
+    }
   };
 
-  const confirmUnassignProject = () => {
-    if (unassignProject) {
+  const confirmUnassignProject = (project?: any) => {
+    const projectToUnassign = project || unassignProject;
+    if (projectToUnassign) {
+      console.log("Executing unassignment for project:", projectToUnassign.id);
       // Update project to remove client assignment (set clientId to null)
       const updateData = { clientId: null };
-      unassignProjectMutation.mutate({ projectId: unassignProject.id, updateData });
+      unassignProjectMutation.mutate({ 
+        projectId: projectToUnassign.id, 
+        updateData 
+      });
       setUnassignProject(null);
     }
   };
