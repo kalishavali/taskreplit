@@ -58,19 +58,15 @@ export default function ProjectDetails() {
     enabled: !!projectId,
   });
 
-  const { data: allApplications = [] } = useQuery<Application[]>({
-    queryKey: ["/api/applications"],
-  });
-
-  const { data: projectApplications = [] } = useQuery<{applicationId: number}[]>({
+  const { data: applications = [] } = useQuery<Application[]>({
     queryKey: ["/api/projects", projectId, "applications"],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects/${projectId}/applications`);
+      if (!response.ok) throw new Error("Failed to fetch project applications");
+      return response.json();
+    },
     enabled: !!projectId,
   });
-
-  // Get only applications configured for this project
-  const applications = allApplications.filter(app => 
-    projectApplications.some(pa => pa.applicationId === app.id)
-  );
 
   const { data: allTasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks", projectId, selectedApplication],
