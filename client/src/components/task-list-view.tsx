@@ -136,7 +136,7 @@ export default function TaskListView({ tasks, projects = [], isLoading }: TaskLi
                       <div className="font-medium text-gray-900">{task.title}</div>
                       {task.description && (
                         <div className="text-sm text-gray-500 truncate max-w-xs overflow-hidden whitespace-nowrap text-ellipsis">
-                          <RichTextRenderer content={task.description} />
+                          {task.description.replace(/<[^>]*>/g, '').trim()}
                         </div>
                       )}
                     </div>
