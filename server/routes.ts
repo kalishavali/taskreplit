@@ -122,10 +122,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Applications routes (protected)
+  // Applications routes (protected with project permissions)
   app.get("/api/applications", requireAuth, async (req, res) => {
     try {
+      const userId = req.session.userId!;
       const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
+      
+      if (projectId) {
+        // Check if user has permission to view this project
+        const hasPermission = await storage.checkUserProjectPermission(userId, projectId, 'view');
+        if (!hasPermission) {
+          return res.status(403).json({ message: "You don't have permission to view this project's applications" });
+        }
+      }
+      
       const applications = await storage.getApplications(projectId);
       res.json(applications);
     } catch (error) {
@@ -296,17 +306,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Tasks routes (protected)
+  // Tasks routes (protected with user permissions)
   app.get("/api/tasks", requireAuth, async (req, res) => {
     try {
-      const filters: any = {};
+      const userId = req.session.userId!;
+      const filters: any = { userId };
       if (req.query.projectId) filters.projectId = parseInt(req.query.projectId as string);
       if (req.query.applicationId) filters.applicationId = parseInt(req.query.applicationId as string);
       if (req.query.status) filters.status = req.query.status as string;
       if (req.query.assignee) filters.assignee = req.query.assignee as string;
       if (req.query.priority) filters.priority = req.query.priority as string;
       
-      const tasks = await storage.getTasks(Object.keys(filters).length > 0 ? filters : undefined);
+      const tasks = await storage.getTasks(filters);
       res.json(tasks);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch tasks" });
@@ -315,11 +326,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tasks/search", requireAuth, async (req, res) => {
     try {
+      const userId = req.session.userId!;
       const query = req.query.q as string;
       if (!query) {
         return res.status(400).json({ message: "Search query is required" });
       }
-      const tasks = await storage.searchTasks(query);
+      const tasks = await storage.searchTasks(query, userId);
       res.json(tasks);
     } catch (error) {
       res.status(500).json({ message: "Failed to search tasks" });
@@ -455,14 +467,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Activities routes
-  app.get("/api/activities", async (req, res) => {
+  // Activities routes (filtered by user permissions)
+  app.get("/api/activities", requireAuth, async (req, res) => {
     try {
+      const userId = req.session.userId!;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
       const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
       const taskId = req.query.taskId ? parseInt(req.query.taskId as string) : undefined;
       
-      const filters: any = { limit };
+      const filters: any = { limit, userId };
       if (projectId) filters.projectId = projectId;
       if (taskId) filters.taskId = taskId;
       
@@ -473,24 +486,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Enhanced Stats routes
-  app.get("/api/stats", async (req, res) => {
+  // Enhanced Stats routes (filtered by user permissions)
+  app.get("/api/stats", requireAuth, async (req, res) => {
     try {
-      const stats = await storage.getStats();
+      const userId = req.session.userId!;
+      const stats = await storage.getStats(userId);
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch statistics" });
     }
   });
 
-  // Report routes
-  app.post("/api/reports/generate", async (req, res) => {
+  // Report routes (filtered by user permissions)
+  app.post("/api/reports/generate", requireAuth, async (req, res) => {
     try {
+      const userId = req.session.userId!;
       const { type, startDate, endDate, projectIds, format } = req.body;
       
-      // This is a simplified report generation
-      // In a real app, you'd generate actual reports with charts, etc.
-      let tasks = await storage.getTasks();
+      // Get tasks filtered by user permissions
+      let tasks = await storage.getTasks({ userId });
       
       // Filter by date range
       if (startDate && endDate) {
@@ -501,7 +515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
       
-      // Filter by projects
+      // Further filter by specific projects if provided
       if (projectIds && projectIds.length > 0) {
         tasks = tasks.filter(task => 
           projectIds.includes(task.projectId)
@@ -520,8 +534,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         format,
       };
       
-      // Group tasks by project
-      const projects = await storage.getProjects();
+      // Group tasks by project (only accessible projects)
+      const projects = await storage.getUserAccessibleProjects(userId);
       for (const project of projects) {
         const projectTasks = tasks.filter(t => t.projectId === project.id);
         (reportData.tasksByProject as any)[project.name] = {

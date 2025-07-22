@@ -75,6 +75,7 @@ export interface IStorage {
     status?: string;
     assignee?: string;
     priority?: string;
+    userId?: number;
   }): Promise<Task[]>;
   getTask(id: number): Promise<Task | undefined>;
   createTask(task: InsertTask): Promise<Task>;
@@ -128,7 +129,7 @@ export interface IStorage {
   verifyPassword(user: User, password: string): Promise<boolean>;
 
   // Stats
-  getStats(): Promise<{
+  getStats(userId?: number): Promise<{
     totalTasks: number;
     totalProjects: number;
     todoTasks: number;
@@ -264,6 +265,7 @@ export class DatabaseStorage implements IStorage {
     status?: string;
     assignee?: string;
     priority?: string;
+    userId?: number;
   }): Promise<Task[]> {
     let query = db.select().from(tasks);
 
@@ -275,12 +277,26 @@ export class DatabaseStorage implements IStorage {
       if (filters.assignee) conditions.push(eq(tasks.assignee, filters.assignee));
       if (filters.priority) conditions.push(eq(tasks.priority, filters.priority));
 
+      // Filter by user's accessible projects
+      if (filters.userId) {
+        const user = await this.getUser(filters.userId);
+        if (user?.role !== 'admin') {
+          const accessibleProjects = await this.getUserAccessibleProjects(filters.userId);
+          const projectIds = accessibleProjects.map(p => p.id);
+          if (projectIds.length > 0) {
+            conditions.push(inArray(tasks.projectId, projectIds));
+          } else {
+            return [];
+          }
+        }
+      }
+
       if (conditions.length > 0) {
         query = query.where(and(...conditions));
       }
     }
 
-    return await query;
+    return await query.orderBy(desc(tasks.createdAt));
   }
 
   async getTask(id: number): Promise<Task | undefined> {
@@ -307,9 +323,9 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount ?? 0) > 0;
   }
 
-  async searchTasks(query: string): Promise<Task[]> {
+  async searchTasks(query: string, userId?: number): Promise<Task[]> {
     const searchPattern = `%${query}%`;
-    return await db
+    let searchQuery = db
       .select()
       .from(tasks)
       .where(
@@ -319,6 +335,30 @@ export class DatabaseStorage implements IStorage {
           like(tasks.assignee, searchPattern)
         )
       );
+
+    // Filter by user's accessible projects if not admin
+    if (userId) {
+      const user = await this.getUser(userId);
+      if (user?.role !== 'admin') {
+        const accessibleProjects = await this.getUserAccessibleProjects(userId);
+        const projectIds = accessibleProjects.map(p => p.id);
+        if (projectIds.length === 0) {
+          return [];
+        }
+        searchQuery = searchQuery.where(
+          and(
+            or(
+              like(tasks.title, searchPattern),
+              like(tasks.description, searchPattern),
+              like(tasks.assignee, searchPattern)
+            ),
+            inArray(tasks.projectId, projectIds)
+          )
+        );
+      }
+    }
+
+    return await searchQuery.orderBy(desc(tasks.createdAt));
   }
 
   // Team Members
@@ -355,6 +395,7 @@ export class DatabaseStorage implements IStorage {
     projectId?: number;
     taskId?: number;
     limit?: number;
+    userId?: number;
   }): Promise<Activity[]> {
     let query = db.select().from(activities).orderBy(desc(activities.createdAt));
 
@@ -362,6 +403,20 @@ export class DatabaseStorage implements IStorage {
       const conditions = [];
       if (filters.projectId) conditions.push(eq(activities.projectId, filters.projectId));
       if (filters.taskId) conditions.push(eq(activities.taskId, filters.taskId));
+
+      // Filter by user's accessible projects
+      if (filters.userId) {
+        const user = await this.getUser(filters.userId);
+        if (user?.role !== 'admin') {
+          const accessibleProjects = await this.getUserAccessibleProjects(filters.userId);
+          const projectIds = accessibleProjects.map(p => p.id);
+          if (projectIds.length > 0) {
+            conditions.push(inArray(activities.projectId, projectIds));
+          } else {
+            return [];
+          }
+        }
+      }
 
       if (conditions.length > 0) {
         query = query.where(and(...conditions));
@@ -480,7 +535,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Stats
-  async getStats(): Promise<{
+  async getStats(userId?: number): Promise<{
     totalTasks: number;
     totalProjects: number;
     todoTasks: number;
@@ -491,6 +546,34 @@ export class DatabaseStorage implements IStorage {
     activeTeamMembers: number;
     unreadNotifications: number;
   }> {
+    // Get user's accessible project IDs if not admin
+    let projectIds: number[] = [];
+    if (userId) {
+      const user = await this.getUser(userId);
+      if (user?.role !== 'admin') {
+        const accessibleProjects = await this.getUserAccessibleProjects(userId);
+        projectIds = accessibleProjects.map(p => p.id);
+        if (projectIds.length === 0) {
+          // User has no accessible projects
+          return {
+            totalTasks: 0,
+            totalProjects: 0,
+            todoTasks: 0,
+            inProgressTasks: 0,
+            doneTasks: 0,
+            blockedTasks: 0,
+            totalTimeLogged: 0,
+            activeTeamMembers: 0,
+            unreadNotifications: 0,
+          };
+        }
+      }
+    }
+
+    // Build queries with project filtering for non-admin users
+    const taskFilter = projectIds.length > 0 ? inArray(tasks.projectId, projectIds) : undefined;
+    const projectFilter = projectIds.length > 0 ? inArray(projects.id, projectIds) : undefined;
+
     const [
       totalTasks,
       totalProjects,
@@ -502,15 +585,29 @@ export class DatabaseStorage implements IStorage {
       activeTeamMembers,
       unreadNotifications,
     ] = await Promise.all([
-      db.select({ count: sql<number>`count(*)` }).from(tasks),
-      db.select({ count: sql<number>`count(*)` }).from(projects),
-      db.select({ count: sql<number>`count(*)` }).from(tasks).where(eq(tasks.status, "Open")),
-      db.select({ count: sql<number>`count(*)` }).from(tasks).where(eq(tasks.status, "InProgress")),
-      db.select({ count: sql<number>`count(*)` }).from(tasks).where(eq(tasks.status, "Closed")),
-      db.select({ count: sql<number>`count(*)` }).from(tasks).where(eq(tasks.status, "Blocked")),
+      taskFilter 
+        ? db.select({ count: sql<number>`count(*)` }).from(tasks).where(taskFilter)
+        : db.select({ count: sql<number>`count(*)` }).from(tasks),
+      projectFilter
+        ? db.select({ count: sql<number>`count(*)` }).from(projects).where(projectFilter)
+        : db.select({ count: sql<number>`count(*)` }).from(projects),
+      taskFilter
+        ? db.select({ count: sql<number>`count(*)` }).from(tasks).where(and(taskFilter, eq(tasks.status, "todo")))
+        : db.select({ count: sql<number>`count(*)` }).from(tasks).where(eq(tasks.status, "todo")),
+      taskFilter
+        ? db.select({ count: sql<number>`count(*)` }).from(tasks).where(and(taskFilter, eq(tasks.status, "inprogress")))
+        : db.select({ count: sql<number>`count(*)` }).from(tasks).where(eq(tasks.status, "inprogress")),
+      taskFilter
+        ? db.select({ count: sql<number>`count(*)` }).from(tasks).where(and(taskFilter, eq(tasks.status, "done")))
+        : db.select({ count: sql<number>`count(*)` }).from(tasks).where(eq(tasks.status, "done")),
+      taskFilter
+        ? db.select({ count: sql<number>`count(*)` }).from(tasks).where(and(taskFilter, eq(tasks.status, "blocked")))
+        : db.select({ count: sql<number>`count(*)` }).from(tasks).where(eq(tasks.status, "blocked")),
       db.select({ sum: sql<number>`coalesce(sum(hours), 0)` }).from(timeEntries),
       db.select({ count: sql<number>`count(*)` }).from(teamMembers).where(eq(teamMembers.isActive, true)),
-      db.select({ count: sql<number>`count(*)` }).from(notifications).where(eq(notifications.isRead, false)),
+      userId 
+        ? db.select({ count: sql<number>`count(*)` }).from(notifications).where(and(eq(notifications.userId, userId.toString()), eq(notifications.isRead, false)))
+        : db.select({ count: sql<number>`count(*)` }).from(notifications).where(eq(notifications.isRead, false)),
     ]);
 
     return {
