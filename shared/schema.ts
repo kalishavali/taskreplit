@@ -153,9 +153,20 @@ export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
   createdAt: true,
 });
 
-// Update schemas
+// Update schemas with proper date handling
 export const updateTaskSchema = insertTaskSchema.partial();
-export const updateProjectSchema = insertProjectSchema.partial();
+export const updateProjectSchema = insertProjectSchema.partial().extend({
+  startDate: z.union([z.string(), z.date(), z.null()]).optional().transform((val) => {
+    if (!val) return null;
+    if (typeof val === 'string') return new Date(val);
+    return val;
+  }),
+  endDate: z.union([z.string(), z.date(), z.null()]).optional().transform((val) => {
+    if (!val) return null;
+    if (typeof val === 'string') return new Date(val);
+    return val;
+  }),
+});
 export const updateApplicationSchema = insertApplicationSchema.partial();
 
 // Types
