@@ -5,7 +5,7 @@ import TaskListView from "@/components/task-list-view";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Filter, Plus } from "lucide-react";
-import TaskModal from "@/components/modals/task-modal";
+import { TaskCreateModal } from "@/components/task-modal/task-create-modal";
 import type { Task, Project } from "@shared/schema";
 
 export default function Tasks() {
@@ -157,10 +157,9 @@ export default function Tasks() {
         </div>
       </main>
 
-      <TaskModal 
-        isOpen={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
-        projects={projects}
+      <TaskCreateModal 
+        open={isTaskModalOpen}
+        onOpenChange={setIsTaskModalOpen}
       />
     </>
   );
