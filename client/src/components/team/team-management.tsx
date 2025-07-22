@@ -34,8 +34,10 @@ export function TeamManagement() {
     queryKey: ['/api/team-members'],
     queryFn: async () => {
       const response = await apiRequest('/api/team-members');
-      console.log('Fetched team members:', response);
-      return response as TeamMember[];
+      const data = await response.json();
+      console.log('Fetched team members:', data);
+      // Ensure we always return an array
+      return Array.isArray(data) ? data : [];
     },
   });
 

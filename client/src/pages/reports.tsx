@@ -38,6 +38,7 @@ import {
   RadialBarChart,
   RadialBar
 } from "recharts";
+import { apiRequest } from "@/lib/queryClient";
 import type { Project, Task, Application, TeamMember, Client } from "@shared/schema";
 
 interface Stats {
@@ -74,6 +75,12 @@ export default function Reports() {
 
   const { data: teamMembers = [] } = useQuery<TeamMember[]>({
     queryKey: ["/api/team-members"],
+    queryFn: async () => {
+      const response = await apiRequest('/api/team-members');
+      const data = await response.json();
+      // Ensure we always return an array
+      return Array.isArray(data) ? data : [];
+    },
   });
 
   const { data: stats } = useQuery<Stats>({
