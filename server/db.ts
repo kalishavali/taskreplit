@@ -11,12 +11,8 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Try different Supabase connection approaches
-const supabaseDirectUrl = "postgresql://postgres:ojSfaUO2ftS3Cobd@db.wjhbttuvsehawslpbgai.supabase.co:5432/postgres";
-const supabasePoolerUrl = "postgresql://postgres:ojSfaUO2ftS3Cobd@aws-0-us-east-1.pooler.supabase.com:6543/postgres";
-
-// Start with direct connection since execute_sql_tool works with it
-const databaseUrl = supabaseDirectUrl;
+// Fall back to original working database for now while we fix Supabase DNS
+const databaseUrl = process.env.DATABASE_URL;
 
 console.log(`🗃️  Connecting to database: ${databaseUrl.replace(/:[^:@]*@/, ':****@')}`);
 
