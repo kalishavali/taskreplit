@@ -63,21 +63,27 @@ export function RichTextRenderer({ content }: RichTextRendererProps) {
   }
 
   // If content is HTML (from Quill), render it directly
-  if (content.includes('<p>') || content.includes('<div>') || content.includes('<ul>') || content.includes('<ol>')) {
+  if (content.includes('<') && content.includes('>')) {
     return (
       <div 
-        className="prose prose-sm max-w-none ql-editor"
+        className="ql-editor"
         dangerouslySetInnerHTML={{ __html: content }} 
-        style={{ border: 'none', padding: 0 }}
+        style={{ 
+          border: 'none', 
+          padding: 0, 
+          fontFamily: "'Quicksand', sans-serif",
+          fontSize: 'inherit',
+          lineHeight: 'inherit'
+        }}
       />
     );
   }
 
   // Fallback for plain text
   return (
-    <div className="prose prose-sm max-w-none">
+    <div style={{ fontFamily: "'Quicksand', sans-serif" }}>
       {content.split('\n').map((line, index) => (
-        <p key={index}>{line || '\u00A0'}</p>
+        <p key={index} style={{ margin: 0 }}>{line || '\u00A0'}</p>
       ))}
     </div>
   );
