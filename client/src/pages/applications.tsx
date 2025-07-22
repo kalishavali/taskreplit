@@ -141,10 +141,13 @@ export default function Applications() {
     }
   };
 
-  const handleDialogClose = () => {
-    setIsCreateDialogOpen(false);
-    setEditingApplication(null);
-    form.reset();
+  const handleDialogClose = (open: boolean) => {
+    console.log("Dialog onOpenChange called with:", open);
+    setIsCreateDialogOpen(open);
+    if (!open) {
+      setEditingApplication(null);
+      form.reset();
+    }
   };
 
   const filteredApplications = applications.filter((app: Application) =>
@@ -202,7 +205,11 @@ export default function Applications() {
           
           <Dialog open={isCreateDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={() => {
+                console.log("New Application button clicked");
+                console.log("Current dialog state:", isCreateDialogOpen);
+                setIsCreateDialogOpen(true);
+              }}>
                 <Plus className="w-4 h-4 mr-2" />
                 New Application
               </Button>
@@ -380,6 +387,7 @@ export default function Applications() {
             {!searchQuery && (
               <Button 
                 onClick={() => {
+                  console.log("Empty state button clicked");
                   setEditingApplication(null);
                   setIsCreateDialogOpen(true);
                 }}
