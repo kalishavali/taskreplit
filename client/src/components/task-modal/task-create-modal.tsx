@@ -88,7 +88,7 @@ export function TaskCreateModal({
         ...data,
         description: description,
         dueDate: dueDate?.toISOString(),
-        assignee: data.assignee || null,
+        assignee: data.assignee === "unassigned" ? null : data.assignee,
       };
       return await apiRequest("/api/tasks", 'POST', taskData);
     },
@@ -158,7 +158,7 @@ export function TaskCreateModal({
             <div className="space-y-2">
               <label className="text-sm font-medium">Description</label>
               <RichTextEditor
-                content={description}
+                value={description}
                 onChange={setDescription}
                 placeholder="Describe the task in detail..."
               />
@@ -326,7 +326,7 @@ export function TaskCreateModal({
                           <SelectValue placeholder="Select assignee..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Unassigned</SelectItem>
+                          <SelectItem value="unassigned">Unassigned</SelectItem>
                           {teamMembers.map((member) => (
                             <SelectItem key={member.id} value={member.name}>
                               <div className="flex items-center gap-2">
