@@ -307,6 +307,11 @@ function CommentSection({ taskId }: { taskId: number }) {
   const [newComment, setNewComment] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Get current user info
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/auth/user"]
+  });
 
   const { data: comments = [] } = useQuery<Comment[]>({
     queryKey: ["/api/comments", taskId],
@@ -322,7 +327,7 @@ function CommentSection({ taskId }: { taskId: number }) {
       const response = await apiRequest("/api/comments", 'POST', {
         taskId,
         content,
-        author: "Current User"
+
       });
       return response;
     },
@@ -353,7 +358,10 @@ function CommentSection({ taskId }: { taskId: number }) {
         <div className="flex gap-3">
           <Avatar className="h-8 w-8 flex-shrink-0">
             <AvatarFallback className="bg-gray-100 text-gray-600 text-xs">
-              CU
+              {currentUser ? (currentUser.firstName && currentUser.lastName 
+                ? `${currentUser.firstName[0]}${currentUser.lastName[0]}` 
+                : currentUser.username.substring(0, 2).toUpperCase()
+              ) : 'U'}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">

@@ -563,12 +563,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tasks/:taskId/comments", async (req, res) => {
+  app.post("/api/tasks/:taskId/comments", requireAuth, async (req, res) => {
     try {
       const taskId = parseInt(req.params.taskId);
+      const userId = req.session.userId!;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      
+      // Create author name from user info
+      const authorName = user.firstName && user.lastName 
+        ? `${user.firstName} ${user.lastName}` 
+        : user.username;
+      
       const commentData = insertCommentSchema.parse({
         ...req.body,
         taskId,
+        author: authorName
       });
       const comment = await storage.createComment(commentData);
       res.status(201).json(comment);
@@ -595,9 +608,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/comments", async (req, res) => {
+  app.post("/api/comments", requireAuth, async (req, res) => {
     try {
-      const commentData = insertCommentSchema.parse(req.body);
+      const userId = req.session.userId!;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      
+      // Create author name from user info
+      const authorName = user.firstName && user.lastName 
+        ? `${user.firstName} ${user.lastName}` 
+        : user.username;
+      
+      const commentData = insertCommentSchema.parse({
+        ...req.body,
+        author: authorName
+      });
       const comment = await storage.createComment(commentData);
       res.status(201).json(comment);
     } catch (error) {
