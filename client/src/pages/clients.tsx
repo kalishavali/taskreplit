@@ -309,7 +309,9 @@ export default function Clients() {
             <Button 
               onClick={() => {
                 console.log("Manage Projects clicked, viewingClient:", viewingClient);
+                console.log("isAddProjectModalOpen before:", isAddProjectModalOpen);
                 setIsAddProjectModalOpen(true);
+                console.log("isAddProjectModalOpen after:", true);
               }}
               className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
             >
@@ -427,6 +429,175 @@ export default function Clients() {
             </div>
           )}
         </div>
+
+        {/* Manage Projects Modal */}
+        <Dialog open={isAddProjectModalOpen} onOpenChange={setIsAddProjectModalOpen}>
+          <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Manage Projects for {viewingClient?.name}</DialogTitle>
+              <DialogDescription>
+                Assign or unassign projects from this client.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Current Projects */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Current Projects</h3>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {getClientProjects(viewingClient?.id || 0).length === 0 ? (
+                    <p className="text-gray-500 italic">No projects assigned to this client yet.</p>
+                  ) : (
+                    getClientProjects(viewingClient?.id || 0).map((project: any) => (
+                      <div key={project.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="font-medium">{project.name}</p>
+                          <p className="text-sm text-gray-600">{project.description}</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteProject(project)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Available Projects */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Available Projects to Assign</h3>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {getAvailableProjects().length === 0 ? (
+                    <p className="text-gray-500 italic">All projects are already assigned to clients.</p>
+                  ) : (
+                    getAvailableProjects().map((project: any) => (
+                      <div key={project.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <Checkbox
+                          checked={selectedProjectIds.includes(project.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedProjectIds([...selectedProjectIds, project.id]);
+                            } else {
+                              setSelectedProjectIds(selectedProjectIds.filter(id => id !== project.id));
+                            }
+                          }}
+                        />
+                        <div className="flex-1">
+                          <p className="font-medium">{project.name}</p>
+                          <p className="text-sm text-gray-600">{project.description}</p>
+                          <p className="text-xs text-blue-600">
+                            {project.clientId ? `Currently assigned to client ID: ${project.clientId}` : 'Unassigned'}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Create New Project Button */}
+              <div className="pt-4 border-t">
+                <Button
+                  onClick={() => {
+                    setIsAddProjectModalOpen(false);
+                    setIsCreateProjectModalOpen(true);
+                  }}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create New Project for this Client
+                </Button>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsAddProjectModalOpen(false);
+                  setSelectedProjectIds([]);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleAssignProjects}
+                disabled={selectedProjectIds.length === 0}
+              >
+                Assign Selected Projects
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Project Modal */}
+        <Dialog open={isCreateProjectModalOpen} onOpenChange={setIsCreateProjectModalOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Create New Project</DialogTitle>
+              <DialogDescription>
+                Create a new project for {viewingClient?.name}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="project-name">Project Name</Label>
+                <Input
+                  id="project-name"
+                  placeholder="Enter project name"
+                  value={newProject.name}
+                  onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="project-description">Description</Label>
+                <Textarea
+                  id="project-description"
+                  placeholder="Enter project description"
+                  value={newProject.description}
+                  onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor="project-color">Color</Label>
+                <Select value={newProject.color} onValueChange={(value) => setNewProject({ ...newProject, color: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a color" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="blue">Blue</SelectItem>
+                    <SelectItem value="green">Green</SelectItem>
+                    <SelectItem value="red">Red</SelectItem>
+                    <SelectItem value="yellow">Yellow</SelectItem>
+                    <SelectItem value="purple">Purple</SelectItem>
+                    <SelectItem value="orange">Orange</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsCreateProjectModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateProject}
+                disabled={!newProject.name.trim() || createProjectMutation.isPending}
+              >
+                {createProjectMutation.isPending ? "Creating..." : "Create Project"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -659,110 +830,7 @@ export default function Clients() {
           </DialogContent>
         </Dialog>
 
-        {/* Manage Projects Modal */}
-        <Dialog open={isAddProjectModalOpen} onOpenChange={setIsAddProjectModalOpen}>
-          <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Manage Projects for {viewingClient?.name}</DialogTitle>
-              <DialogDescription>
-                Assign or unassign projects from this client.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-6">
-              {/* Current Projects */}
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Current Projects</h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {getClientProjects(viewingClient?.id || 0).length === 0 ? (
-                    <p className="text-gray-500 italic">No projects assigned to this client yet.</p>
-                  ) : (
-                    getClientProjects(viewingClient?.id || 0).map((project: any) => (
-                      <div key={project.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="font-medium">{project.name}</p>
-                          <p className="text-sm text-gray-600">{project.description}</p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteProject(project)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
 
-              {/* Available Projects */}
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Available Projects to Assign</h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {getAvailableProjects().length === 0 ? (
-                    <p className="text-gray-500 italic">All projects are already assigned to clients.</p>
-                  ) : (
-                    getAvailableProjects().map((project: any) => (
-                      <div key={project.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                        <Checkbox
-                          checked={selectedProjectIds.includes(project.id)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedProjectIds([...selectedProjectIds, project.id]);
-                            } else {
-                              setSelectedProjectIds(selectedProjectIds.filter(id => id !== project.id));
-                            }
-                          }}
-                        />
-                        <div className="flex-1">
-                          <p className="font-medium">{project.name}</p>
-                          <p className="text-sm text-gray-600">{project.description}</p>
-                          <p className="text-xs text-blue-600">
-                            {project.clientId ? `Currently assigned to client ID: ${project.clientId}` : 'Unassigned'}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Create New Project Button */}
-              <div className="pt-4 border-t">
-                <Button
-                  onClick={() => {
-                    setIsAddProjectModalOpen(false);
-                    setIsCreateProjectModalOpen(true);
-                  }}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create New Project for this Client
-                </Button>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsAddProjectModalOpen(false);
-                  setSelectedProjectIds([]);
-                }}
-              >
-                Cancel
-              </Button>
-              {selectedProjectIds.length > 0 && (
-                <Button onClick={handleAssignProjects}>
-                  Assign {selectedProjectIds.length} Project{selectedProjectIds.length > 1 ? 's' : ''}
-                </Button>
-              )}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
         {/* Create New Project Modal */}
         <Dialog open={isCreateProjectModalOpen} onOpenChange={setIsCreateProjectModalOpen}>
