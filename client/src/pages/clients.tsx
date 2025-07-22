@@ -260,7 +260,10 @@ export default function Clients() {
   const [unassignProject, setUnassignProject] = useState<any>(null);
 
   const handleUnassignProject = (project: any) => {
+    console.log("handleUnassignProject called with:", project);
+    console.log("Current unassignProject state:", unassignProject);
     setUnassignProject(project);
+    console.log("After setUnassignProject, should open dialog");
   };
 
   const confirmUnassignProject = () => {
@@ -381,14 +384,7 @@ export default function Clients() {
                           >
                             {project.color}
                           </Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteProject(project)}
-                            className="opacity-0 group-hover:opacity-100 h-8 w-8 p-0 hover:bg-red-100"
-                          >
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                          </Button>
+
                         </div>
                       </div>
                       
@@ -473,7 +469,11 @@ export default function Clients() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleUnassignProject(project)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            console.log("Unassign button clicked for project:", project);
+                            handleUnassignProject(project);
+                          }}
                           className="text-orange-600 hover:text-orange-700"
                           title="Unassign project from client (project and tasks will remain)"
                         >
