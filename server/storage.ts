@@ -442,12 +442,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteTask(id: number): Promise<boolean> {
-    // First delete all comments associated with this task
-    await db.delete(comments).where(eq(comments.taskId, id));
-    
-    // Then delete the task itself
-    const result = await db.delete(tasks).where(eq(tasks.id, id));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      // Delete in proper order to respect foreign key constraints
+      // 1. Delete all activities associated with this task
+      await db.delete(activities).where(eq(activities.taskId, id));
+      
+      // 2. Delete all comments associated with this task
+      await db.delete(comments).where(eq(comments.taskId, id));
+      
+      // 3. Delete all notifications associated with this task
+      await db.delete(notifications).where(eq(notifications.taskId, id));
+      
+      // 4. Delete all time entries associated with this task
+      await db.delete(timeEntries).where(eq(timeEntries.taskId, id));
+      
+      // 5. Finally delete the task itself
+      const result = await db.delete(tasks).where(eq(tasks.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error(`Error in deleteTask for task ${id}:`, error);
+      return false;
+    }
   }
 
   async searchTasks(query: string, userId?: number): Promise<Task[]> {
