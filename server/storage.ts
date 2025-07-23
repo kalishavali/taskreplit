@@ -308,11 +308,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteApplication(id: number): Promise<boolean> {
-    // First, remove all project-application relationships
-    await db.delete(projectApplications).where(eq(projectApplications.applicationId, id));
-    // Then delete the application
-    const result = await db.delete(applications).where(eq(applications.id, id));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      console.log(`Attempting to delete application with ID: ${id}`);
+      
+      // First, remove all project-application relationships
+      const projectAppResult = await db.delete(projectApplications).where(eq(projectApplications.applicationId, id));
+      console.log(`Deleted ${projectAppResult.rowCount ?? 0} project-application relationships`);
+      
+      // Also remove any tasks that reference this application
+      const tasksResult = await db.update(tasks)
+        .set({ applicationId: null })
+        .where(eq(tasks.applicationId, id));
+      console.log(`Updated ${tasksResult.rowCount ?? 0} tasks to remove application reference`);
+      
+      // Then delete the application
+      const result = await db.delete(applications).where(eq(applications.id, id));
+      console.log(`Application deletion result: ${result.rowCount ?? 0} rows affected`);
+      
+      const success = (result.rowCount ?? 0) > 0;
+      console.log(`Application ${id} deletion ${success ? 'successful' : 'failed'}`);
+      return success;
+    } catch (error) {
+      console.error(`Error deleting application ${id}:`, error);
+      return false;
+    }
   }
 
   // Project-Application relationships

@@ -319,12 +319,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/applications/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log(`DELETE request for application ID: ${id}`);
+      
       const deleted = await storage.deleteApplication(id);
       if (!deleted) {
+        console.log(`Application ${id} not found or already deleted`);
         return res.status(404).json({ message: "Application not found" });
       }
+      
+      console.log(`Application ${id} successfully deleted`);
       res.status(204).send();
     } catch (error) {
+      console.error(`Error in DELETE /api/applications/${req.params.id}:`, error);
       res.status(500).json({ message: "Failed to delete application" });
     }
   });
@@ -343,19 +349,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid update data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to update application" });
-    }
-  });
-
-  app.delete("/api/applications/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const deleted = await storage.deleteApplication(id);
-      if (!deleted) {
-        return res.status(404).json({ message: "Application not found" });
-      }
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete application" });
     }
   });
 
