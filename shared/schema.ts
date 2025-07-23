@@ -112,6 +112,20 @@ export const timeEntries = pgTable("time_entries", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Teams table for team management
+export const teams = pgTable("teams", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  color: text("color").default("#3B82F6"), // Team color for visual identification
+  icon: text("icon").default("Users"), // Lucide icon name
+  leaderId: integer("leader_id"), // Team leader (references team_members)
+  department: text("department"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const teamMembers = pgTable("team_members", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -119,6 +133,7 @@ export const teamMembers = pgTable("team_members", {
   avatar: text("avatar"),
   role: text("role").notNull().default("member"), // admin, manager, member
   department: text("department"),
+  teamId: integer("team_id").references(() => teams.id), // Reference to teams table
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -211,6 +226,12 @@ export const insertTimeEntrySchema = createInsertSchema(timeEntries).omit({
   createdAt: true,
 });
 
+export const insertTeamSchema = createInsertSchema(teams).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
   id: true,
   createdAt: true,
@@ -248,6 +269,7 @@ export const updateProjectSchema = insertProjectSchema.partial().extend({
 });
 export const updateClientSchema = insertClientSchema.partial();
 export const updateApplicationSchema = insertApplicationSchema.partial();
+export const updateTeamSchema = insertTeamSchema.partial();
 export const updateTeamMemberSchema = insertTeamMemberSchema.partial();
 export const updateActivitySchema = insertActivitySchema.partial();
 export const updateCommentSchema = insertCommentSchema.partial();
@@ -266,6 +288,7 @@ export type Comment = typeof comments.$inferSelect;
 export type Activity = typeof activities.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type TimeEntry = typeof timeEntries.$inferSelect;
+export type Team = typeof teams.$inferSelect;
 export type TeamMember = typeof teamMembers.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
@@ -280,6 +303,7 @@ export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type InsertTimeEntry = z.infer<typeof insertTimeEntrySchema>;
+export type InsertTeam = z.infer<typeof insertTeamSchema>;
 export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
@@ -289,6 +313,7 @@ export type UpdateClient = z.infer<typeof updateClientSchema>;
 export type UpdateTask = z.infer<typeof updateTaskSchema>;
 export type UpdateProject = z.infer<typeof updateProjectSchema>;
 export type UpdateApplication = z.infer<typeof updateApplicationSchema>;
+export type UpdateTeam = z.infer<typeof updateTeamSchema>;
 export type UpdateTeamMember = z.infer<typeof updateTeamMemberSchema>;
 export type UpdateActivity = z.infer<typeof updateActivitySchema>;
 export type UpdateComment = z.infer<typeof updateCommentSchema>;

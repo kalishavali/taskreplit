@@ -14,6 +14,7 @@ import Applications from "@/pages/applications";
 import Tasks from "@/pages/tasks";
 import Reports from "@/pages/reports";
 import Team from "@/pages/team";
+import Teams from "@/pages/teams";
 import UserManagement from "@/pages/user-management";
 import Sidebar from "@/components/layout/sidebar";
 
@@ -48,6 +49,7 @@ function Router() {
           <Route path="/tasks" component={Tasks} />
           <Route path="/reports" component={Reports} />
           <Route path="/team" component={Team} />
+          <Route path="/teams" component={Teams} />
           <Route path="/user-management" component={UserManagement} />
           <Route component={NotFound} />
         </Switch>

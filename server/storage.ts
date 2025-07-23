@@ -5,6 +5,7 @@ import {
   projects,
   tasks,
   applications,
+  teams,
   teamMembers,
   activities,
   comments,
@@ -18,6 +19,7 @@ import {
   type Project,
   type Task,
   type Application,
+  type Team,
   type TeamMember,
   type Activity,
   type Comment,
@@ -31,6 +33,7 @@ import {
   type InsertProject,
   type InsertTask,
   type InsertApplication,
+  type InsertTeam,
   type InsertTeamMember,
   type InsertActivity,
   type InsertComment,
@@ -43,6 +46,7 @@ import {
   type UpdateClient,
   type UpdateProject,
   type UpdateTask,
+  type UpdateTeam,
   type UpdateApplication,
   type UpdateTeamMember,
   type UpdateActivity,
@@ -95,8 +99,15 @@ export interface IStorage {
   deleteTask(id: number): Promise<boolean>;
   searchTasks(query: string): Promise<Task[]>;
 
+  // Teams
+  getTeams(): Promise<Team[]>;
+  getTeam(id: number): Promise<Team | undefined>;
+  createTeam(team: InsertTeam): Promise<Team>;
+  updateTeam(id: number, updates: UpdateTeam): Promise<Team | undefined>;
+  deleteTeam(id: number): Promise<boolean>;
+
   // Team Members
-  getTeamMembers(): Promise<TeamMember[]>;
+  getTeamMembers(teamId?: number): Promise<TeamMember[]>;
   getTeamMember(id: number): Promise<TeamMember | undefined>;
   createTeamMember(teamMember: InsertTeamMember): Promise<TeamMember>;
   updateTeamMember(id: number, updates: UpdateTeamMember): Promise<TeamMember | undefined>;
@@ -513,9 +524,55 @@ export class DatabaseStorage implements IStorage {
     return await searchQuery.orderBy(desc(tasks.createdAt));
   }
 
+  // Teams
+  async getTeams(): Promise<Team[]> {
+    return await db.select().from(teams).where(eq(teams.isActive, true)).orderBy(teams.name);
+  }
+
+  async getTeam(id: number): Promise<Team | undefined> {
+    const [team] = await db.select().from(teams).where(eq(teams.id, id));
+    return team;
+  }
+
+  async createTeam(insertTeam: InsertTeam): Promise<Team> {
+    const [team] = await db.insert(teams).values(insertTeam).returning();
+    return team;
+  }
+
+  async updateTeam(id: number, updateTeam: UpdateTeam): Promise<Team | undefined> {
+    const [team] = await db
+      .update(teams)
+      .set({ ...updateTeam, updatedAt: new Date() })
+      .where(eq(teams.id, id))
+      .returning();
+    return team;
+  }
+
+  async deleteTeam(id: number): Promise<boolean> {
+    try {
+      // Set team members' teamId to null before deleting the team
+      await db.update(teamMembers)
+        .set({ teamId: null })
+        .where(eq(teamMembers.teamId, id));
+      
+      // Delete the team
+      const result = await db.delete(teams).where(eq(teams.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error(`Error deleting team ${id}:`, error);
+      return false;
+    }
+  }
+
   // Team Members
-  async getTeamMembers(): Promise<TeamMember[]> {
-    return await db.select().from(teamMembers).where(eq(teamMembers.isActive, true));
+  async getTeamMembers(teamId?: number): Promise<TeamMember[]> {
+    let query = db.select().from(teamMembers).where(eq(teamMembers.isActive, true));
+    
+    if (teamId) {
+      query = query.where(eq(teamMembers.teamId, teamId));
+    }
+    
+    return await query.orderBy(teamMembers.name);
   }
 
   async getTeamMember(id: number): Promise<TeamMember | undefined> {

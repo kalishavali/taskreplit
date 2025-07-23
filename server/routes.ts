@@ -11,11 +11,14 @@ import {
   insertCommentSchema,
   insertNotificationSchema,
   insertTimeEntrySchema,
+  insertTeamSchema,
   insertTeamMemberSchema,
   updateTaskSchema,
   updateProjectSchema,
   updateClientSchema,
   updateApplicationSchema,
+  updateTeamSchema,
+  updateTeamMemberSchema,
   insertUserClientPermissionSchema,
 } from "@shared/schema";
 
@@ -816,12 +819,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Teams routes
+  app.get("/api/teams", async (req, res) => {
+    try {
+      const teams = await storage.getTeams();
+      res.json(teams);
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+      res.status(500).json({ message: "Failed to fetch teams" });
+    }
+  });
+
+  app.get("/api/teams/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const team = await storage.getTeam(id);
+      if (!team) {
+        return res.status(404).json({ message: "Team not found" });
+      }
+      res.json(team);
+    } catch (error) {
+      console.error("Error fetching team:", error);
+      res.status(500).json({ message: "Failed to fetch team" });
+    }
+  });
+
+  app.post("/api/teams", requireAuth, async (req, res) => {
+    try {
+      const teamData = insertTeamSchema.parse(req.body);
+      const team = await storage.createTeam(teamData);
+      res.status(201).json(team);
+    } catch (error) {
+      console.error("Error creating team:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid team data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create team" });
+    }
+  });
+
+  app.patch("/api/teams/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = updateTeamSchema.parse(req.body);
+      const team = await storage.updateTeam(id, updates);
+      if (!team) {
+        return res.status(404).json({ message: "Team not found" });
+      }
+      res.json(team);
+    } catch (error) {
+      console.error("Error updating team:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid team data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update team" });
+    }
+  });
+
+  app.delete("/api/teams/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteTeam(id);
+      if (!success) {
+        return res.status(404).json({ message: "Team not found" });
+      }
+      res.json({ message: "Team deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting team:", error);
+      res.status(500).json({ message: "Failed to delete team" });
+    }
+  });
+
   // Team member routes
   app.get("/api/team-members", async (req, res) => {
     try {
-      const teamMembers = await storage.getTeamMembers();
+      const teamId = req.query.teamId ? parseInt(req.query.teamId as string) : undefined;
+      const teamMembers = await storage.getTeamMembers(teamId);
       res.json(teamMembers);
     } catch (error) {
+      console.error("Error fetching team members:", error);
       res.status(500).json({ message: "Failed to fetch team members" });
     }
   });
