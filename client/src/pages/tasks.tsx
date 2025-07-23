@@ -159,7 +159,7 @@ export default function Tasks() {
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="Open">Open</SelectItem>
-                <SelectItem value="InProgress">In Progress</SelectItem>
+                <SelectItem value="In Progress">In Progress</SelectItem>
                 <SelectItem value="Blocked">Blocked</SelectItem>
                 <SelectItem value="Closed">Closed</SelectItem>
               </SelectContent>
