@@ -8,7 +8,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { TeamCreateModal } from "@/components/team-modal/team-create-modal";
+import { TeamEditModal } from "@/components/team-modal/team-edit-modal";
 import { TeamMemberCreateModal } from "@/components/team-member-modal/team-member-create-modal";
+import { TeamMemberEditModal } from "@/components/team-member-modal/team-member-edit-modal";
 import { type Team, type TeamMember } from "@shared/schema";
 import { 
   Users, 
@@ -32,6 +34,8 @@ import {
 
 export default function TeamsPage() {
   const [selectedTeam, setSelectedTeam] = useState<number | null>(null);
+  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
+  const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -187,7 +191,10 @@ export default function TeamsPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingTeam(team);
+                              }}>
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit Team
                               </DropdownMenuItem>
@@ -336,7 +343,7 @@ export default function TeamsPage() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setEditingMember(member)}>
                                     <Edit className="w-4 h-4 mr-2" />
                                     Edit Member
                                   </DropdownMenuItem>
@@ -404,6 +411,23 @@ export default function TeamsPage() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Edit Modals */}
+        {editingTeam && (
+          <TeamEditModal
+            team={editingTeam}
+            open={!!editingTeam}
+            onOpenChange={(open) => !open && setEditingTeam(null)}
+          />
+        )}
+        
+        {editingMember && (
+          <TeamMemberEditModal
+            member={editingMember}
+            open={!!editingMember}
+            onOpenChange={(open) => !open && setEditingMember(null)}
+          />
+        )}
       </div>
     </div>
   );
