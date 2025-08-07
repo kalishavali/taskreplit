@@ -1,20 +1,20 @@
 -- Product Registration System Database Setup
 -- Execute these queries in your database to create all required tables
 
--- 1. Create the main products table
+-- 1. Create the main products table (matching shared/schema.ts)
 CREATE TABLE IF NOT EXISTS products (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    description TEXT,
     category VARCHAR(50) NOT NULL CHECK (category IN ('electronics', 'vehicles', 'jewellery', 'gadgets')),
-    purchase_date DATE,
-    cost DECIMAL(12,2),
-    currency VARCHAR(10) DEFAULT 'INR',
+    purchase_date TIMESTAMP NOT NULL,
+    registration_date TIMESTAMP,
     warranty_years INTEGER,
-    warranty_expiry_date DATE,
-    user_id INTEGER NOT NULL,
+    warranty_expiry_date TIMESTAMP,
+    total_cost DECIMAL(15,2),
+    notes TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at TIMESTAMP DEFAULT NOW(),
+    user_id INTEGER NOT NULL
 );
 
 -- 2. Create the electronics details table
