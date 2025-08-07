@@ -17,6 +17,11 @@ import {
   userClientPermissions,
   loans,
   loanPayments,
+  products,
+  electronics,
+  vehicles,
+  jewellery,
+  gadgets,
   type Client,
   type Project,
   type Task,
@@ -33,6 +38,11 @@ import {
   type UserClientPermission,
   type Loan,
   type LoanPayment,
+  type Product,
+  type Electronics,
+  type Vehicle,
+  type Jewellery,
+  type Gadget,
   type InsertClient,
   type InsertProject,
   type InsertTask,
@@ -49,6 +59,11 @@ import {
   type InsertUserClientPermission,
   type InsertLoan,
   type InsertLoanPayment,
+  type InsertProduct,
+  type InsertElectronics,
+  type InsertVehicle,
+  type InsertJewellery,
+  type InsertGadget,
   type UpdateClient,
   type UpdateProject,
   type UpdateTask,
@@ -62,6 +77,7 @@ import {
   type UpdateUser,
   type UpdateLoan,
   type UpdateLoanPayment,
+  type UpdateProduct,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -1186,6 +1202,212 @@ export class DatabaseStorage implements IStorage {
       status,
       updatedAt: new Date(),
     }).where(eq(loans.id, loanId));
+  }
+
+  // Product operations
+  async getProducts(userId: number): Promise<Product[]> {
+    return await db
+      .select()
+      .from(products)
+      .where(eq(products.userId, userId))
+      .orderBy(desc(products.createdAt));
+  }
+
+  async getProduct(id: number, userId: number): Promise<Product | undefined> {
+    const [product] = await db
+      .select()
+      .from(products)
+      .where(and(eq(products.id, id), eq(products.userId, userId)));
+    return product;
+  }
+
+  async createProduct(data: InsertProduct, userId: number): Promise<Product> {
+    // Calculate warranty expiry date if warrantyYears is provided
+    let warrantyExpiryDate = null;
+    if (data.warrantyYears && data.purchaseDate) {
+      const purchaseDate = new Date(data.purchaseDate);
+      warrantyExpiryDate = new Date(purchaseDate);
+      warrantyExpiryDate.setFullYear(warrantyExpiryDate.getFullYear() + data.warrantyYears);
+    }
+
+    const [product] = await db
+      .insert(products)
+      .values({
+        ...data,
+        userId,
+        warrantyExpiryDate,
+      })
+      .returning();
+    
+    return product;
+  }
+
+  async updateProduct(id: number, data: UpdateProduct, userId: number): Promise<Product> {
+    // Recalculate warranty expiry if warrantyYears or purchaseDate is updated
+    if (data.warrantyYears !== undefined || data.purchaseDate !== undefined) {
+      const currentProduct = await this.getProduct(id, userId);
+      if (currentProduct) {
+        const warrantyYears = data.warrantyYears ?? currentProduct.warrantyYears;
+        const purchaseDate = data.purchaseDate ?? currentProduct.purchaseDate;
+        
+        if (warrantyYears && purchaseDate) {
+          const expiry = new Date(purchaseDate);
+          expiry.setFullYear(expiry.getFullYear() + warrantyYears);
+          (data as any).warrantyExpiryDate = expiry;
+        }
+      }
+    }
+
+    const [product] = await db
+      .update(products)
+      .set(data)
+      .where(and(eq(products.id, id), eq(products.userId, userId)))
+      .returning();
+    
+    if (!product) {
+      throw new Error("Product not found or unauthorized");
+    }
+    
+    return product;
+  }
+
+  async deleteProduct(id: number, userId: number): Promise<void> {
+    const result = await db
+      .delete(products)
+      .where(and(eq(products.id, id), eq(products.userId, userId)))
+      .returning();
+    
+    if (result.length === 0) {
+      throw new Error("Product not found or unauthorized");
+    }
+  }
+
+  // Electronics operations
+  async createElectronics(data: InsertElectronics): Promise<Electronics> {
+    const [electronics_item] = await db
+      .insert(electronics)
+      .values(data)
+      .returning();
+    
+    return electronics_item;
+  }
+
+  async getElectronics(productId: number): Promise<Electronics | undefined> {
+    const [electronics_item] = await db
+      .select()
+      .from(electronics)
+      .where(eq(electronics.productId, productId));
+    return electronics_item;
+  }
+
+  async updateElectronics(productId: number, data: any): Promise<Electronics> {
+    const [electronics_item] = await db
+      .update(electronics)
+      .set(data)
+      .where(eq(electronics.productId, productId))
+      .returning();
+    
+    if (!electronics_item) {
+      throw new Error("Electronics not found");
+    }
+    
+    return electronics_item;
+  }
+
+  // Vehicle operations
+  async createVehicle(data: InsertVehicle): Promise<Vehicle> {
+    const [vehicle] = await db
+      .insert(vehicles)
+      .values(data)
+      .returning();
+    
+    return vehicle;
+  }
+
+  async getVehicle(productId: number): Promise<Vehicle | undefined> {
+    const [vehicle] = await db
+      .select()
+      .from(vehicles)
+      .where(eq(vehicles.productId, productId));
+    return vehicle;
+  }
+
+  async updateVehicle(productId: number, data: any): Promise<Vehicle> {
+    const [vehicle] = await db
+      .update(vehicles)
+      .set(data)
+      .where(eq(vehicles.productId, productId))
+      .returning();
+    
+    if (!vehicle) {
+      throw new Error("Vehicle not found");
+    }
+    
+    return vehicle;
+  }
+
+  // Jewellery operations
+  async createJewellery(data: InsertJewellery): Promise<Jewellery> {
+    const [jewellery_item] = await db
+      .insert(jewellery)
+      .values(data)
+      .returning();
+    
+    return jewellery_item;
+  }
+
+  async getJewellery(productId: number): Promise<Jewellery | undefined> {
+    const [jewellery_item] = await db
+      .select()
+      .from(jewellery)
+      .where(eq(jewellery.productId, productId));
+    return jewellery_item;
+  }
+
+  async updateJewellery(productId: number, data: any): Promise<Jewellery> {
+    const [jewellery_item] = await db
+      .update(jewellery)
+      .set(data)
+      .where(eq(jewellery.productId, productId))
+      .returning();
+    
+    if (!jewellery_item) {
+      throw new Error("Jewellery not found");
+    }
+    
+    return jewellery_item;
+  }
+
+  // Gadget operations
+  async createGadget(data: InsertGadget): Promise<Gadget> {
+    const [gadget] = await db
+      .insert(gadgets)
+      .values(data)
+      .returning();
+    
+    return gadget;
+  }
+
+  async getGadget(productId: number): Promise<Gadget | undefined> {
+    const [gadget] = await db
+      .select()
+      .from(gadgets)
+      .where(eq(gadgets.productId, productId));
+    return gadget;
+  }
+
+  async updateGadget(productId: number, data: any): Promise<Gadget> {
+    const [gadget] = await db
+      .update(gadgets)
+      .set(data)
+      .where(eq(gadgets.productId, productId))
+      .returning();
+    
+    if (!gadget) {
+      throw new Error("Gadget not found");
+    }
+    
+    return gadget;
   }
 }
 

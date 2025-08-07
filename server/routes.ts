@@ -1200,6 +1200,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Product routes
+  app.get("/api/products", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const products = await storage.getProducts(userId);
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
+  app.get("/api/products/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.session.userId!;
+      const product = await storage.getProduct(id, userId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      // Fetch category-specific details
+      let details = null;
+      switch (product.category) {
+        case 'electronics':
+          details = await storage.getElectronics(product.id);
+          break;
+        case 'vehicles':
+          details = await storage.getVehicle(product.id);
+          break;
+        case 'jewellery':
+          details = await storage.getJewellery(product.id);
+          break;
+        case 'gadgets':
+          details = await storage.getGadget(product.id);
+          break;
+      }
+
+      res.json({ ...product, details });
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      res.status(500).json({ message: "Failed to fetch product" });
+    }
+  });
+
+  app.post("/api/products", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const { details, ...productData } = req.body;
+      
+      // Create the main product
+      const product = await storage.createProduct(productData, userId);
+      
+      // Create category-specific details
+      if (details) {
+        const detailsData = { ...details, productId: product.id };
+        
+        switch (product.category) {
+          case 'electronics':
+            await storage.createElectronics(detailsData);
+            break;
+          case 'vehicles':
+            await storage.createVehicle(detailsData);
+            break;
+          case 'jewellery':
+            await storage.createJewellery(detailsData);
+            break;
+          case 'gadgets':
+            await storage.createGadget(detailsData);
+            break;
+        }
+      }
+
+      res.status(201).json(product);
+    } catch (error) {
+      console.error("Error creating product:", error);
+      res.status(500).json({ message: "Failed to create product" });
+    }
+  });
+
+  app.put("/api/products/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.session.userId!;
+      const { details, ...productData } = req.body;
+      
+      // Update the main product
+      const product = await storage.updateProduct(id, productData, userId);
+      
+      // Update category-specific details
+      if (details) {
+        switch (product.category) {
+          case 'electronics':
+            await storage.updateElectronics(product.id, details);
+            break;
+          case 'vehicles':
+            await storage.updateVehicle(product.id, details);
+            break;
+          case 'jewellery':
+            await storage.updateJewellery(product.id, details);
+            break;
+          case 'gadgets':
+            await storage.updateGadget(product.id, details);
+            break;
+        }
+      }
+
+      res.json(product);
+    } catch (error) {
+      console.error("Error updating product:", error);
+      res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+
+  app.delete("/api/products/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.session.userId!;
+      await storage.deleteProduct(id, userId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      res.status(500).json({ message: "Failed to delete product" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

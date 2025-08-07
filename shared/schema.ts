@@ -205,6 +205,73 @@ export const loanPayments = pgTable("loan_payments", {
   userId: integer("user_id").references(() => users.id).notNull(),
 });
 
+// Product Registration Tables
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  category: varchar("category", { length: 50 }).notNull(), // 'electronics', 'vehicles', 'jewellery', 'gadgets'
+  purchaseDate: timestamp("purchase_date").notNull(),
+  registrationDate: timestamp("registration_date"),
+  warrantyYears: integer("warranty_years"),
+  warrantyExpiryDate: timestamp("warranty_expiry_date"),
+  totalCost: decimal("total_cost", { precision: 15, scale: 2 }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  userId: integer("user_id").notNull().references(() => users.id),
+});
+
+// Electronics specific fields
+export const electronics = pgTable("electronics", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull().references(() => products.id, { onDelete: 'cascade' }),
+  type: varchar("type", { length: 100 }).notNull(), // AC, TV, Refrigerator, Washing Machine, etc.
+  brand: varchar("brand", { length: 100 }),
+  model: varchar("model", { length: 255 }),
+  serialNumber: varchar("serial_number", { length: 255 }),
+});
+
+// Vehicles (Cars/Bikes) specific fields
+export const vehicles = pgTable("vehicles", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull().references(() => products.id, { onDelete: 'cascade' }),
+  vehicleType: varchar("vehicle_type", { length: 50 }).notNull(), // car, bike, scooter
+  model: varchar("model", { length: 255 }).notNull(),
+  registrationNumber: varchar("registration_number", { length: 50 }),
+  color: varchar("color", { length: 50 }),
+  bodyType: varchar("body_type", { length: 50 }), // SUV, Sedan, Hatchback for cars; Sport, Cruiser for bikes
+  manufacturer: varchar("manufacturer", { length: 100 }),
+});
+
+// Jewellery specific fields
+export const jewellery = pgTable("jewellery", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull().references(() => products.id, { onDelete: 'cascade' }),
+  type: varchar("type", { length: 50 }).notNull(), // Gold, Silver, Platinum, Diamond
+  model: varchar("model", { length: 255 }),
+  ratePerUnit: decimal("rate_per_unit", { precision: 15, scale: 2 }), // rate on purchase day
+  cgst: decimal("cgst", { precision: 15, scale: 2 }),
+  igst: decimal("igst", { precision: 15, scale: 2 }),
+  vat: decimal("vat", { precision: 15, scale: 2 }),
+  totalWeight: decimal("total_weight", { precision: 10, scale: 3 }), // in grams
+  stoneWeight: decimal("stone_weight", { precision: 10, scale: 3 }),
+  stoneCost: decimal("stone_cost", { precision: 15, scale: 2 }),
+  diamondWeight: decimal("diamond_weight", { precision: 10, scale: 3 }),
+  diamondCost: decimal("diamond_cost", { precision: 15, scale: 2 }),
+});
+
+// Gadgets (Mobile, Laptop, Watches) specific fields  
+export const gadgets = pgTable("gadgets", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull().references(() => products.id, { onDelete: 'cascade' }),
+  gadgetType: varchar("gadget_type", { length: 50 }).notNull(), // mobile, laptop, watch
+  manufacturer: varchar("manufacturer", { length: 100 }),
+  modelName: varchar("model_name", { length: 255 }),
+  serialNumber: varchar("serial_number", { length: 255 }),
+  imei: varchar("imei", { length: 50 }), // for mobile phones
+  specifications: text("specifications"), // JSON string for flexible specs
+});
+
 // Insert schemas
 export const insertClientSchema = createInsertSchema(clients).omit({
   id: true,
@@ -309,6 +376,40 @@ export const insertLoanPaymentSchema = createInsertSchema(loanPayments).omit({
   }),
 });
 
+// Product schemas
+export const insertProductSchema = createInsertSchema(products).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  warrantyExpiryDate: true,
+}).extend({
+  purchaseDate: z.union([z.string(), z.date()]).transform((val) => {
+    if (typeof val === 'string') return new Date(val);
+    return val;
+  }),
+  registrationDate: z.union([z.string(), z.date(), z.null()]).optional().transform((val) => {
+    if (!val) return null;
+    if (typeof val === 'string') return new Date(val);
+    return val;
+  }),
+});
+
+export const insertElectronicsSchema = createInsertSchema(electronics).omit({
+  id: true,
+});
+
+export const insertVehicleSchema = createInsertSchema(vehicles).omit({
+  id: true,
+});
+
+export const insertJewellerySchema = createInsertSchema(jewellery).omit({
+  id: true,
+});
+
+export const insertGadgetSchema = createInsertSchema(gadgets).omit({
+  id: true,
+});
+
 // Update schemas with proper date handling
 export const updateTaskSchema = insertTaskSchema.partial();
 export const updateProjectSchema = insertProjectSchema.partial().extend({
@@ -337,6 +438,11 @@ export const updateUserSchema = insertUserSchema.partial();
 export const updateUserClientPermissionSchema = insertUserClientPermissionSchema.partial();
 export const updateLoanSchema = insertLoanSchema.partial();
 export const updateLoanPaymentSchema = insertLoanPaymentSchema.partial();
+export const updateProductSchema = insertProductSchema.partial();
+export const updateElectronicsSchema = insertElectronicsSchema.partial();
+export const updateVehicleSchema = insertVehicleSchema.partial();
+export const updateJewellerySchema = insertJewellerySchema.partial();
+export const updateGadgetSchema = insertGadgetSchema.partial();
 
 // Types
 export type Client = typeof clients.$inferSelect;
@@ -355,6 +461,11 @@ export type Session = typeof sessions.$inferSelect;
 export type UserClientPermission = typeof userClientPermissions.$inferSelect;
 export type Loan = typeof loans.$inferSelect;
 export type LoanPayment = typeof loanPayments.$inferSelect;
+export type Product = typeof products.$inferSelect;
+export type Electronics = typeof electronics.$inferSelect;
+export type Vehicle = typeof vehicles.$inferSelect;
+export type Jewellery = typeof jewellery.$inferSelect;
+export type Gadget = typeof gadgets.$inferSelect;
 
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
@@ -372,6 +483,11 @@ export type InsertSession = z.infer<typeof insertSessionSchema>;
 export type InsertUserClientPermission = z.infer<typeof insertUserClientPermissionSchema>;
 export type InsertLoan = z.infer<typeof insertLoanSchema>;
 export type InsertLoanPayment = z.infer<typeof insertLoanPaymentSchema>;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type InsertElectronics = z.infer<typeof insertElectronicsSchema>;
+export type InsertVehicle = z.infer<typeof insertVehicleSchema>;
+export type InsertJewellery = z.infer<typeof insertJewellerySchema>;
+export type InsertGadget = z.infer<typeof insertGadgetSchema>;
 
 export type UpdateClient = z.infer<typeof updateClientSchema>;
 export type UpdateTask = z.infer<typeof updateTaskSchema>;
