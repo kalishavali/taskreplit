@@ -480,26 +480,29 @@ export default function ProductCreateModal({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="warrantyYears"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Warranty Years</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Enter warranty years"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                        value={field.value || ""}
-                        data-testid="input-warranty-years"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Hide warranty field for jewellery */}
+              {watchedCategory !== "jewellery" && selectedCategory !== "jewellery" && (
+                <FormField
+                  control={form.control}
+                  name="warrantyYears"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Warranty Years</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Enter warranty years"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                          value={field.value || ""}
+                          data-testid="input-warranty-years"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
