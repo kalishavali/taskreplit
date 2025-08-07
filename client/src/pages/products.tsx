@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus, Search, Trash2, Edit, Package, Smartphone, Car, Gem, MonitorSpeaker, Calendar, AlertTriangle } from "lucide-react";
+import { Plus, Search, Trash2, Edit, Package, Smartphone, Car, Gem, MonitorSpeaker, Calendar, AlertTriangle, TrendingUp, DollarSign } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import ProductCreateModal from "@/components/product-modal/product-create-modal";
 import ProductEditModal from "@/components/product-modal/product-edit-modal";
@@ -174,6 +174,87 @@ export default function ProductsPage() {
           <div className="absolute top-4 right-20 w-20 h-20 bg-white/10 rounded-full blur-xl animate-pulse"></div>
           <div className="absolute bottom-8 left-20 w-32 h-32 bg-purple-300/20 rounded-full blur-2xl animate-pulse delay-1000"></div>
         </div>
+
+        {/* Precious Metal Rates */}
+        <Card className="mb-6 bg-white/80 backdrop-blur-xl border border-white/30 shadow-xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center text-xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+              <TrendingUp className="w-5 h-5 mr-2 text-yellow-600" />
+              Today's Precious Metal Rates
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Gold Rates */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-800 flex items-center">
+                  <Gem className="w-4 h-4 mr-2 text-yellow-500" />
+                  Gold Rates (per gram)
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                    <span className="font-medium text-yellow-800">24K Gold</span>
+                    <span className="font-bold text-yellow-900">₹10,233</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                    <span className="font-medium text-yellow-800">22K Gold</span>
+                    <span className="font-bold text-yellow-900">₹9,380</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                    <span className="font-medium text-yellow-800">18K Gold</span>
+                    <span className="font-bold text-yellow-900">₹7,675</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Silver Rate */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-800 flex items-center">
+                  <DollarSign className="w-4 h-4 mr-2 text-gray-500" />
+                  Silver Rate
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg border border-gray-200">
+                    <span className="font-medium text-gray-800">Silver (per gram)</span>
+                    <span className="font-bold text-gray-900">₹117</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg border border-gray-200">
+                    <span className="font-medium text-gray-800">Silver (per kg)</span>
+                    <span className="font-bold text-gray-900">₹1,17,000</span>
+                  </div>
+                  <div className="text-center p-2">
+                    <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">
+                      +₹1 from yesterday
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Diamond Information */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-800 flex items-center">
+                  <Gem className="w-4 h-4 mr-2 text-blue-500" />
+                  Diamond Rates
+                </h4>
+                <div className="space-y-2">
+                  <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                    <div className="text-center">
+                      <p className="font-medium text-blue-800 mb-2">Variable by 4Cs</p>
+                      <p className="text-sm text-blue-700">Cut, Clarity, Carat, Color</p>
+                      <p className="text-xs text-blue-600 mt-2">Quoted per carat based on stone specifications</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-4 text-center">
+              <p className="text-xs text-gray-500">
+                Rates updated as of August 7, 2025. Actual prices may vary by jeweler due to making charges and taxes.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Filters */}
         <Card className="mb-6 bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl">
