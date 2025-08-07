@@ -1065,9 +1065,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/loans", requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId!;
+      console.log("Fetching loans for user:", userId);
       const loans = await storage.getLoans(userId);
+      console.log("Found loans:", loans);
       res.json(loans);
     } catch (error) {
+      console.error("Error fetching loans:", error);
       res.status(500).json({ message: "Failed to fetch loans" });
     }
   });
@@ -1088,13 +1091,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/loans", requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId!;
+      console.log("Creating loan for user:", userId, "with data:", req.body);
       const loanData = insertLoanSchema.parse({
         ...req.body,
         userId
       });
+      console.log("Parsed loan data:", loanData);
       const loan = await storage.createLoan(loanData);
+      console.log("Created loan:", loan);
       res.status(201).json(loan);
     } catch (error) {
+      console.error("Error creating loan:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid loan data", errors: error.errors });
       }
@@ -1136,9 +1143,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/loan-payments", requireAuth, async (req, res) => {
     try {
       const loanId = req.query.loanId ? parseInt(req.query.loanId as string) : undefined;
+      console.log("Fetching loan payments for loanId:", loanId);
       const payments = await storage.getLoanPayments(loanId);
+      console.log("Found payments:", payments);
       res.json(payments);
     } catch (error) {
+      console.error("Error fetching loan payments:", error);
       res.status(500).json({ message: "Failed to fetch loan payments" });
     }
   });

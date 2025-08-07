@@ -11,10 +11,8 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Use local PostgreSQL database since Replit blocks external PostgreSQL connections
-// We'll sync data from Supabase using execute_sql_tool
-// Force use YOUR Neon database
-const databaseUrl = "postgresql://neondb_owner:npg_2aY4QCTmXiyu@ep-polished-frog-ad6yqbvq-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+// Use the environment variable DATABASE_URL to ensure consistency with drizzle-kit
+const databaseUrl = process.env.DATABASE_URL;
 
 console.log(`🗃️  Connecting to database: ${databaseUrl.replace(/:[^:@]*@/, ':****@')}`);
 
