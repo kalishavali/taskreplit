@@ -1,8 +1,12 @@
 -- Product Registration System Database Setup
 -- Execute these queries in your database to create all required tables
 
--- 1. Create the main products table (matching shared/schema.ts)
-CREATE TABLE IF NOT EXISTS products (
+-- Step 1: Drop existing tables if they exist (to ensure clean setup)
+DROP TABLE IF EXISTS electronics, vehicles, jewellery, gadgets CASCADE;
+DROP TABLE IF EXISTS products CASCADE;
+
+-- Step 2: Create the main products table (matching shared/schema.ts)
+CREATE TABLE products (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     category VARCHAR(50) NOT NULL CHECK (category IN ('electronics', 'vehicles', 'jewellery', 'gadgets')),
@@ -17,8 +21,8 @@ CREATE TABLE IF NOT EXISTS products (
     user_id INTEGER NOT NULL
 );
 
--- 2. Create the electronics details table
-CREATE TABLE IF NOT EXISTS electronics (
+-- Step 3: Create the electronics details table
+CREATE TABLE electronics (
     id SERIAL PRIMARY KEY,
     product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     type VARCHAR(100),
@@ -26,8 +30,8 @@ CREATE TABLE IF NOT EXISTS electronics (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- 3. Create the vehicles details table
-CREATE TABLE IF NOT EXISTS vehicles (
+-- Step 4: Create the vehicles details table
+CREATE TABLE vehicles (
     id SERIAL PRIMARY KEY,
     product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     model VARCHAR(100),
@@ -38,8 +42,8 @@ CREATE TABLE IF NOT EXISTS vehicles (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- 4. Create the jewellery details table
-CREATE TABLE IF NOT EXISTS jewellery (
+-- Step 5: Create the jewellery details table
+CREATE TABLE jewellery (
     id SERIAL PRIMARY KEY,
     product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     type VARCHAR(50),
@@ -56,8 +60,8 @@ CREATE TABLE IF NOT EXISTS jewellery (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- 5. Create the gadgets details table
-CREATE TABLE IF NOT EXISTS gadgets (
+-- Step 6: Create the gadgets details table
+CREATE TABLE gadgets (
     id SERIAL PRIMARY KEY,
     product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     model VARCHAR(100),
@@ -66,16 +70,16 @@ CREATE TABLE IF NOT EXISTS gadgets (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- 6. Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_products_user_id ON products(user_id);
-CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
-CREATE INDEX IF NOT EXISTS idx_products_warranty_expiry ON products(warranty_expiry_date);
-CREATE INDEX IF NOT EXISTS idx_electronics_product_id ON electronics(product_id);
-CREATE INDEX IF NOT EXISTS idx_vehicles_product_id ON vehicles(product_id);
-CREATE INDEX IF NOT EXISTS idx_jewellery_product_id ON jewellery(product_id);
-CREATE INDEX IF NOT EXISTS idx_gadgets_product_id ON gadgets(product_id);
+-- Step 7: Create indexes for better performance
+CREATE INDEX idx_products_user_id ON products(user_id);
+CREATE INDEX idx_products_category ON products(category);
+CREATE INDEX idx_products_warranty_expiry ON products(warranty_expiry_date);
+CREATE INDEX idx_electronics_product_id ON electronics(product_id);
+CREATE INDEX idx_vehicles_product_id ON vehicles(product_id);
+CREATE INDEX idx_jewellery_product_id ON jewellery(product_id);
+CREATE INDEX idx_gadgets_product_id ON gadgets(product_id);
 
--- Verify tables were created successfully
+-- Step 8: Verify tables were created successfully
 SELECT 
     schemaname,
     tablename,
