@@ -78,6 +78,10 @@ import {
   type UpdateLoan,
   type UpdateLoanPayment,
   type UpdateProduct,
+  type UpdateElectronics,
+  type UpdateVehicle,
+  type UpdateJewellery,
+  type UpdateGadget,
 } from "@shared/schema";
 
 export interface IStorage {
