@@ -210,25 +210,25 @@ export function MoneyPage() {
                 {loans.map((loan: Loan) => (
                   <div
                     key={loan.id}
-                    className="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all duration-300 cursor-pointer"
+                    className="bg-white dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all duration-300 cursor-pointer"
                     onClick={() => setSelectedLoanForHistory(loan)}
                     data-testid={`loan-card-${loan.id}`}
                   >
-                    <div className="flex justify-between items-start mb-3">
+                    <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                           {loan.personName}
                         </h3>
                         {loan.personEmail && (
                           <p className="text-xs text-gray-600 dark:text-gray-400">{loan.personEmail}</p>
                         )}
                       </div>
-                      <Badge className={`${getStatusColor(loan.status)} text-xs px-2 py-1`}>
+                      <Badge className={`${getStatusColor(loan.status)} text-xs px-1.5 py-0.5`}>
                         {getStatusLabel(loan.status)}
                       </Badge>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="grid grid-cols-3 gap-2 mb-2">
                       <div>
                         <p className="text-xs text-gray-600 dark:text-gray-400">Total</p>
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -250,18 +250,18 @@ export function MoneyPage() {
                     </div>
 
                     {loan.dueDate && (
-                      <div className="mb-4">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Due Date</p>
-                        <p className="text-sm text-gray-900 dark:text-white">
+                      <div className="mb-2">
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Due Date</p>
+                        <p className="text-xs text-gray-900 dark:text-white">
                           {new Date(loan.dueDate).toLocaleDateString()}
                         </p>
                       </div>
                     )}
 
                     {loan.notes && (
-                      <div className="mb-4">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Notes</p>
-                        <p className="text-sm text-gray-900 dark:text-white">{loan.notes}</p>
+                      <div className="mb-2">
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Notes</p>
+                        <p className="text-xs text-gray-900 dark:text-white truncate">{loan.notes}</p>
                       </div>
                     )}
 
