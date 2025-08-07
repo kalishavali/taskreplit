@@ -1230,37 +1230,54 @@ export class DatabaseStorage implements IStorage {
       warrantyExpiryDate.setFullYear(warrantyExpiryDate.getFullYear() + data.warrantyYears);
     }
 
+    // Prepare the data with proper date handling
+    const insertData: any = {
+      ...data,
+      userId,
+      purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : null,
+      warrantyExpiryDate,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
     const [product] = await db
       .insert(products)
-      .values({
-        ...data,
-        userId,
-        warrantyExpiryDate,
-      })
+      .values(insertData)
       .returning();
     
     return product;
   }
 
   async updateProduct(id: number, data: UpdateProduct, userId: number): Promise<Product> {
+    // Prepare update data with proper date handling
+    const updateData: any = {
+      ...data,
+      updatedAt: new Date(),
+    };
+
+    // Handle purchase date conversion
+    if (data.purchaseDate !== undefined) {
+      updateData.purchaseDate = data.purchaseDate ? new Date(data.purchaseDate) : null;
+    }
+
     // Recalculate warranty expiry if warrantyYears or purchaseDate is updated
     if (data.warrantyYears !== undefined || data.purchaseDate !== undefined) {
       const currentProduct = await this.getProduct(id, userId);
       if (currentProduct) {
         const warrantyYears = data.warrantyYears ?? currentProduct.warrantyYears;
-        const purchaseDate = data.purchaseDate ?? currentProduct.purchaseDate;
+        const purchaseDate = updateData.purchaseDate ?? currentProduct.purchaseDate;
         
         if (warrantyYears && purchaseDate) {
           const expiry = new Date(purchaseDate);
           expiry.setFullYear(expiry.getFullYear() + warrantyYears);
-          (data as any).warrantyExpiryDate = expiry;
+          updateData.warrantyExpiryDate = expiry;
         }
       }
     }
 
     const [product] = await db
       .update(products)
-      .set(data)
+      .set(updateData)
       .where(and(eq(products.id, id), eq(products.userId, userId)))
       .returning();
     
