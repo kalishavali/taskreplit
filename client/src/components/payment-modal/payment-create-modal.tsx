@@ -22,9 +22,10 @@ interface PaymentCreateModalProps {
   loan: Loan;
   isOpen: boolean;
   onClose: () => void;
+  paymentType: "pay" | "settle";
 }
 
-export function PaymentCreateModal({ loan, isOpen, onClose }: PaymentCreateModalProps) {
+export function PaymentCreateModal({ loan, isOpen, onClose, paymentType }: PaymentCreateModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -34,6 +35,7 @@ export function PaymentCreateModal({ loan, isOpen, onClose }: PaymentCreateModal
       loanId: loan.id,
       amount: "",
       paymentDate: new Date().toISOString().split('T')[0],
+      paymentType: paymentType,
       notes: "",
       paymentMethod: "",
     },
@@ -78,10 +80,13 @@ export function PaymentCreateModal({ loan, isOpen, onClose }: PaymentCreateModal
       <DialogContent className="sm:max-w-[500px] bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-0 shadow-2xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-            Record Payment - {loan.personName}
+            {paymentType === "pay" ? "Add Payment" : "Record Settlement"} - {loan.personName}
           </DialogTitle>
           <div className="text-sm text-gray-600 dark:text-gray-400">
-            Remaining amount: ${remainingAmount.toFixed(2)}
+            {paymentType === "pay" 
+              ? "Adding more money to this loan (increases total amount)" 
+              : `Recording borrower's payment. Remaining: ${remainingAmount.toFixed(2)}`
+            }
           </div>
         </DialogHeader>
 

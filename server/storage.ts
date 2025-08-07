@@ -1107,8 +1107,14 @@ export class DatabaseStorage implements IStorage {
   async createLoanPayment(insertPayment: InsertLoanPayment): Promise<LoanPayment> {
     const [payment] = await db.insert(loanPayments).values(insertPayment).returning();
     
-    // Update loan amounts after payment
-    await this.updateLoanAmounts(insertPayment.loanId);
+    // Update loan amounts based on payment type
+    if (insertPayment.paymentType === 'pay') {
+      // Add to total amount (you're giving more money)
+      await this.updateLoanAmountsForPay(insertPayment.loanId, parseFloat(insertPayment.amount));
+    } else {
+      // Settle payment (borrower paying back)
+      await this.updateLoanAmounts(insertPayment.loanId);
+    }
     
     return payment;
   }
@@ -1137,15 +1143,33 @@ export class DatabaseStorage implements IStorage {
     return false;
   }
 
-  // Helper method to update loan amounts
+  // Helper method to add payment to total amount
+  private async updateLoanAmountsForPay(loanId: number, additionalAmount: number): Promise<void> {
+    const loan = await this.getLoan(loanId);
+    if (!loan) return;
+
+    const newTotalAmount = parseFloat(loan.totalAmount) + additionalAmount;
+    const newRemainingAmount = parseFloat(loan.remainingAmount) + additionalAmount;
+
+    await db.update(loans)
+      .set({
+        totalAmount: newTotalAmount.toFixed(2),
+        remainingAmount: newRemainingAmount.toFixed(2),
+        updatedAt: new Date(),
+      })
+      .where(eq(loans.id, loanId));
+  }
+
+  // Helper method to update loan amounts for settlements
   private async updateLoanAmounts(loanId: number): Promise<void> {
     const loan = await this.getLoan(loanId);
     if (!loan) return;
 
     const payments = await this.getLoanPayments(loanId);
-    const totalPaid = payments.reduce((sum, payment) => 
-      sum + parseFloat(payment.amount), 0
-    );
+    // Only count settlement payments for amount paid calculation
+    const totalPaid = payments
+      .filter(payment => payment.paymentType === 'settle')
+      .reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
     
     const remaining = parseFloat(loan.totalAmount) - totalPaid;
     let status = 'active';

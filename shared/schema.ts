@@ -197,6 +197,7 @@ export const loanPayments = pgTable("loan_payments", {
   loanId: integer("loan_id").references(() => loans.id, { onDelete: "cascade" }).notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   paymentDate: timestamp("payment_date").defaultNow().notNull(),
+  paymentType: varchar("payment_type", { length: 20 }).notNull().default("settle"), // 'pay' or 'settle'
   notes: text("notes"),
   paymentMethod: varchar("payment_method", { length: 50 }), // cash, bank_transfer, check, etc.
   createdAt: timestamp("created_at").defaultNow().notNull(),

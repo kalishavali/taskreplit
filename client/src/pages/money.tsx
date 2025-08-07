@@ -18,6 +18,7 @@ export function MoneyPage() {
   const [isCreatePaymentOpen, setIsCreatePaymentOpen] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [selectedLoanForPayment, setSelectedLoanForPayment] = useState<Loan | null>(null);
+  const [selectedLoanForAddPayment, setSelectedLoanForAddPayment] = useState<Loan | null>(null);
   const [selectedLoanForHistory, setSelectedLoanForHistory] = useState<Loan | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -285,6 +286,18 @@ export function MoneyPage() {
                           setSelectedLoanForPayment(loan);
                         }}
                         className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 text-xs px-2 py-1 h-6"
+                        data-testid={`button-settle-payment-${loan.id}`}
+                      >
+                        Settle
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedLoanForAddPayment(loan);
+                        }}
+                        className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 text-xs px-2 py-1 h-6"
                         data-testid={`button-add-payment-${loan.id}`}
                       >
                         Pay
@@ -335,6 +348,16 @@ export function MoneyPage() {
           loan={selectedLoanForPayment}
           isOpen={!!selectedLoanForPayment}
           onClose={() => setSelectedLoanForPayment(null)}
+          paymentType="settle"
+        />
+      )}
+      
+      {selectedLoanForAddPayment && (
+        <PaymentCreateModal
+          loan={selectedLoanForAddPayment}
+          isOpen={!!selectedLoanForAddPayment}
+          onClose={() => setSelectedLoanForAddPayment(null)}
+          paymentType="pay"
         />
       )}
 
