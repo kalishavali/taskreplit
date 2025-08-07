@@ -135,7 +135,7 @@ export function MoneyPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-total-loaned">
-                {formatCompactCurrency(totalLoaned, loans[0]?.currency || "USD")}
+                {loans.length > 0 ? formatCompactCurrency(totalLoaned, loans[0]?.currency || "USD") : "$0"}
               </div>
             </CardContent>
           </Card>
@@ -147,7 +147,7 @@ export function MoneyPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600" data-testid="text-total-paid">
-                {formatCompactCurrency(totalPaid, loans[0]?.currency || "USD")}
+                {loans.length > 0 ? formatCompactCurrency(totalPaid, loans[0]?.currency || "USD") : "$0"}
               </div>
             </CardContent>
           </Card>
@@ -159,7 +159,7 @@ export function MoneyPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600" data-testid="text-total-remaining">
-                {formatCompactCurrency(totalRemaining, loans[0]?.currency || "USD")}
+                {loans.length > 0 ? formatCompactCurrency(totalRemaining, loans[0]?.currency || "USD") : "$0"}
               </div>
             </CardContent>
           </Card>
@@ -354,19 +354,19 @@ export function MoneyPage() {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Total Amount</p>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      ${parseFloat(selectedLoanForHistory.totalAmount).toFixed(2)}
+                      {formatCurrency(parseFloat(selectedLoanForHistory.totalAmount), selectedLoanForHistory.currency || "USD")}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Amount Paid</p>
                     <p className="text-lg font-semibold text-green-600">
-                      ${parseFloat(selectedLoanForHistory.amountPaid).toFixed(2)}
+                      {formatCurrency(parseFloat(selectedLoanForHistory.amountPaid), selectedLoanForHistory.currency || "USD")}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Remaining</p>
                     <p className="text-lg font-semibold text-red-600">
-                      ${parseFloat(selectedLoanForHistory.remainingAmount).toFixed(2)}
+                      {formatCurrency(parseFloat(selectedLoanForHistory.remainingAmount), selectedLoanForHistory.currency || "USD")}
                     </p>
                   </div>
                 </div>
@@ -390,7 +390,7 @@ export function MoneyPage() {
                       >
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">
-                            ${parseFloat(payment.amount).toFixed(2)}
+                            {formatCurrency(parseFloat(payment.amount), selectedLoanForHistory.currency || "USD")}
                           </p>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
                             {new Date(payment.paymentDate).toLocaleDateString()}

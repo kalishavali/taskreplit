@@ -7,9 +7,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { updateLoanSchema, type Loan } from "@shared/schema";
+import { CURRENCIES } from "@/lib/currency";
 
 const editLoanSchema = updateLoanSchema.extend({
   dueDate: z.string().optional(),
@@ -34,6 +36,7 @@ export function LoanEditModal({ loan, isOpen, onClose }: LoanEditModalProps) {
       personEmail: loan.personEmail || undefined,
       personPhone: loan.personPhone || undefined,
       totalAmount: loan.totalAmount,
+      currency: loan.currency || "USD",
       notes: loan.notes || undefined,
       dueDate: loan.dueDate ? new Date(loan.dueDate).toISOString().split('T')[0] : "",
     },
@@ -115,6 +118,33 @@ export function LoanEditModal({ loan, isOpen, onClose }: LoanEditModalProps) {
                         data-testid="input-total-amount"
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="currency"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-700 dark:text-gray-300">Currency *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="bg-white/50 dark:bg-gray-700/50" data-testid="select-currency">
+                          <SelectValue placeholder="Select currency" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {CURRENCIES.map((currency) => (
+                          <SelectItem key={currency.code} value={currency.code}>
+                            {currency.symbol} {currency.code} - {currency.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
