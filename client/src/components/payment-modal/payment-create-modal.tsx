@@ -169,14 +169,14 @@ export function PaymentCreateModal({ loan, isOpen, onClose, paymentType }: Payme
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700 dark:text-gray-300">Notes</FormLabel>
+                  <FormLabel className="text-gray-700 dark:text-gray-300">Description</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       value={field.value || ""}
-                      placeholder="Additional notes about this payment..."
+                      placeholder="Payment description (e.g., rent, groceries, medical, loan installment...)"
                       className="bg-white/50 dark:bg-gray-700/50 min-h-[80px]"
-                      data-testid="input-payment-notes"
+                      data-testid="input-payment-description"
                     />
                   </FormControl>
                   <FormMessage />

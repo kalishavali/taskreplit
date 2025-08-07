@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, DollarSign, TrendingUp, TrendingDown, Users } from "lucide-react";
+import { 
+  Plus, DollarSign, TrendingUp, TrendingDown, Users,
+  Home, Car, ShoppingCart, Heart, GraduationCap, 
+  Briefcase, Utensils, Gift, CreditCard, FileText 
+} from "lucide-react";
 import { formatCurrency, formatCompactCurrency } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -80,6 +84,53 @@ export function MoneyPage() {
 
   const getPaymentsForLoan = (loanId: number) => {
     return allPayments.filter((payment: LoanPayment) => payment.loanId === loanId);
+  };
+
+  // Function to get icon based on description keywords
+  const getDescriptionIcon = (description: string) => {
+    if (!description) return FileText;
+    
+    const desc = description.toLowerCase();
+    if (desc.includes('rent') || desc.includes('house') || desc.includes('home')) return Home;
+    if (desc.includes('car') || desc.includes('vehicle') || desc.includes('auto')) return Car;
+    if (desc.includes('grocery') || desc.includes('food') || desc.includes('shopping')) return ShoppingCart;
+    if (desc.includes('medical') || desc.includes('health') || desc.includes('hospital')) return Heart;
+    if (desc.includes('education') || desc.includes('school') || desc.includes('college')) return GraduationCap;
+    if (desc.includes('work') || desc.includes('business') || desc.includes('office')) return Briefcase;
+    if (desc.includes('restaurant') || desc.includes('meal') || desc.includes('dinner')) return Utensils;
+    if (desc.includes('gift') || desc.includes('present') || desc.includes('birthday')) return Gift;
+    if (desc.includes('loan') || desc.includes('installment') || desc.includes('payment')) return CreditCard;
+    
+    return FileText;
+  };
+
+  // Function to group payments by year and month
+  const getPaymentsByMonth = (payments: LoanPayment[]) => {
+    const grouped: { [key: string]: LoanPayment[] } = {};
+    
+    payments.forEach(payment => {
+      const date = new Date(payment.paymentDate);
+      const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!grouped[monthYear]) {
+        grouped[monthYear] = [];
+      }
+      grouped[monthYear].push(payment);
+    });
+
+    // Sort by month/year descending (newest first)
+    const sortedKeys = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+    
+    return sortedKeys.map(key => ({
+      monthYear: key,
+      displayDate: new Date(key + '-01').toLocaleDateString('en-US', { 
+        month: 'long', 
+        year: 'numeric' 
+      }),
+      payments: grouped[key].sort((a, b) => 
+        new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
+      )
+    }));
   };
 
   // Calculate summary stats
@@ -405,44 +456,67 @@ export function MoneyPage() {
                     No payments recorded yet
                   </p>
                 ) : (
-                  <div className="space-y-3">
-                    {getPaymentsForLoan(selectedLoanForHistory.id).map((payment: LoanPayment) => (
-                      <div
-                        key={payment.id}
-                        className="flex justify-between items-center p-3 bg-white dark:bg-gray-700 rounded-lg border"
-                      >
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className={`font-medium text-lg ${
-                              payment.paymentType === 'pay' 
-                                ? 'text-red-600 dark:text-red-400' 
-                                : 'text-green-600 dark:text-green-400'
-                            }`}>
-                              {payment.paymentType === 'pay' ? '-' : '+'}
-                              {formatCurrency(parseFloat(payment.amount), selectedLoanForHistory.currency || "USD")}
-                            </p>
-                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                              payment.paymentType === 'pay' 
-                                ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' 
-                                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                            }`}>
-                              {payment.paymentType === 'pay' ? 'Pay' : 'Settlement'}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {new Date(payment.paymentDate).toLocaleDateString()}
-                          </p>
-                          {payment.paymentMethod && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              via {payment.paymentMethod}
-                            </p>
-                          )}
+                  <div className="space-y-4">
+                    {getPaymentsByMonth(getPaymentsForLoan(selectedLoanForHistory.id)).map((monthGroup) => (
+                      <div key={monthGroup.monthYear} className="space-y-2">
+                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600 pb-1">
+                          {monthGroup.displayDate}
+                        </h4>
+                        <div className="space-y-2">
+                          {monthGroup.payments.map((payment: LoanPayment) => {
+                            const IconComponent = getDescriptionIcon(payment.notes || '');
+                            return (
+                              <div
+                                key={payment.id}
+                                className="flex items-center gap-3 p-3 bg-white dark:bg-gray-700 rounded-lg border"
+                              >
+                                <div className={`p-2 rounded-full ${
+                                  payment.paymentType === 'pay' 
+                                    ? 'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400' 
+                                    : 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400'
+                                }`}>
+                                  <IconComponent className="h-4 w-4" />
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <p className={`font-medium text-lg ${
+                                      payment.paymentType === 'pay' 
+                                        ? 'text-red-600 dark:text-red-400' 
+                                        : 'text-green-600 dark:text-green-400'
+                                    }`}>
+                                      {payment.paymentType === 'pay' ? '-' : '+'}
+                                      {formatCurrency(parseFloat(payment.amount), selectedLoanForHistory.currency || "USD")}
+                                    </p>
+                                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                      payment.paymentType === 'pay' 
+                                        ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' 
+                                        : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                    }`}>
+                                      {payment.paymentType === 'pay' ? 'Pay' : 'Settlement'}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <div>
+                                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        {new Date(payment.paymentDate).toLocaleDateString()}
+                                      </p>
+                                      {payment.paymentMethod && (
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                          via {payment.paymentMethod}
+                                        </p>
+                                      )}
+                                    </div>
+                                    {payment.notes && (
+                                      <div className="text-sm text-gray-600 dark:text-gray-400 max-w-xs">
+                                        {payment.notes}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                        {payment.notes && (
-                          <div className="text-sm text-gray-600 dark:text-gray-400 max-w-xs">
-                            {payment.notes}
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
