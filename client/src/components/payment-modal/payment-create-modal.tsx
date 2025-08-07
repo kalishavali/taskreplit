@@ -149,13 +149,12 @@ export function PaymentCreateModal({ loan, isOpen, onClose, paymentType }: Payme
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="cash">Cash</SelectItem>
                       <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                      <SelectItem value="check">Check</SelectItem>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="phone_pay">Phone Pay</SelectItem>
+                      <SelectItem value="google_pay">Google Pay</SelectItem>
+                      <SelectItem value="cheque">Cheque</SelectItem>
                       <SelectItem value="card">Card</SelectItem>
-                      <SelectItem value="paypal">PayPal</SelectItem>
-                      <SelectItem value="venmo">Venmo</SelectItem>
-                      <SelectItem value="zelle">Zelle</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
