@@ -4,6 +4,7 @@ import { Plus, DollarSign, TrendingUp, TrendingDown, Users } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { LoanCreateModal } from "@/components/loan-modal/loan-create-modal";
 import { LoanEditModal } from "@/components/loan-modal/loan-edit-modal";
@@ -16,6 +17,7 @@ export function MoneyPage() {
   const [isCreatePaymentOpen, setIsCreatePaymentOpen] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [selectedLoanForPayment, setSelectedLoanForPayment] = useState<Loan | null>(null);
+  const [selectedLoanForHistory, setSelectedLoanForHistory] = useState<Loan | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -199,47 +201,45 @@ export function MoneyPage() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {loans.map((loan: Loan) => (
                   <div
                     key={loan.id}
-                    className="bg-white dark:bg-gray-700 rounded-lg p-6 border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow"
+                    className="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all duration-300 cursor-pointer"
+                    onClick={() => setSelectedLoanForHistory(loan)}
                     data-testid={`loan-card-${loan.id}`}
                   >
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                           {loan.personName}
                         </h3>
                         {loan.personEmail && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{loan.personEmail}</p>
-                        )}
-                        {loan.personPhone && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{loan.personPhone}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">{loan.personEmail}</p>
                         )}
                       </div>
-                      <Badge className={getStatusColor(loan.status)}>
+                      <Badge className={`${getStatusColor(loan.status)} text-xs px-2 py-1`}>
                         {getStatusLabel(loan.status)}
                       </Badge>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="grid grid-cols-3 gap-2 mb-3">
                       <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Total Amount</p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          ${parseFloat(loan.totalAmount).toFixed(2)}
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Total</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          ${parseFloat(loan.totalAmount).toFixed(0)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Amount Paid</p>
-                        <p className="text-lg font-semibold text-green-600">
-                          ${parseFloat(loan.amountPaid).toFixed(2)}
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Paid</p>
+                        <p className="text-sm font-semibold text-green-600">
+                          ${parseFloat(loan.amountPaid).toFixed(0)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Remaining</p>
-                        <p className="text-lg font-semibold text-red-600">
-                          ${parseFloat(loan.remainingAmount).toFixed(2)}
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Remaining</p>
+                        <p className="text-sm font-semibold text-red-600">
+                          ${parseFloat(loan.remainingAmount).toFixed(0)}
                         </p>
                       </div>
                     </div>
@@ -260,11 +260,15 @@ export function MoneyPage() {
                       </div>
                     )}
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-1">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedLoan(loan)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedLoan(loan);
+                        }}
+                        className="text-xs px-2 py-1 h-6"
                         data-testid={`button-edit-loan-${loan.id}`}
                       >
                         Edit
@@ -272,49 +276,30 @@ export function MoneyPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          console.log("Add Payment clicked for loan:", loan.id);
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedLoanForPayment(loan);
                         }}
-                        className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                        className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 text-xs px-2 py-1 h-6"
                         data-testid={`button-add-payment-${loan.id}`}
                       >
-                        Add Payment
+                        Pay
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => deleteLoanMutation.mutate(loan.id)}
-                        className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteLoanMutation.mutate(loan.id);
+                        }}
+                        className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100 text-xs px-2 py-1 h-6"
                         data-testid={`button-delete-loan-${loan.id}`}
                       >
-                        Delete
+                        Del
                       </Button>
                     </div>
 
-                    {/* Payment History */}
-                    {getPaymentsForLoan(loan.id).length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                          Recent Payments
-                        </h4>
-                        <div className="space-y-2">
-                          {getPaymentsForLoan(loan.id).slice(0, 3).map((payment: LoanPayment) => (
-                            <div
-                              key={payment.id}
-                              className="flex justify-between items-center text-sm"
-                            >
-                              <span className="text-gray-600 dark:text-gray-400">
-                                {new Date(payment.paymentDate).toLocaleDateString()}
-                              </span>
-                              <span className="font-medium text-green-600">
-                                ${parseFloat(payment.amount).toFixed(2)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+
                   </div>
                 ))}
               </div>
@@ -341,13 +326,87 @@ export function MoneyPage() {
         <PaymentCreateModal
           loan={selectedLoanForPayment}
           isOpen={!!selectedLoanForPayment}
-          onClose={() => {
-            console.log("Closing payment modal");
-            setSelectedLoanForPayment(null);
-          }}
+          onClose={() => setSelectedLoanForPayment(null)}
         />
       )}
-      {console.log("selectedLoanForPayment:", selectedLoanForPayment)}
+
+      {/* Payment History Modal */}
+      {selectedLoanForHistory && (
+        <Dialog open={!!selectedLoanForHistory} onOpenChange={() => setSelectedLoanForHistory(null)}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold">
+                Payment History - {selectedLoanForHistory.personName}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Loan Summary */}
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Amount</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                      ${parseFloat(selectedLoanForHistory.totalAmount).toFixed(2)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Amount Paid</p>
+                    <p className="text-lg font-semibold text-green-600">
+                      ${parseFloat(selectedLoanForHistory.amountPaid).toFixed(2)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Remaining</p>
+                    <p className="text-lg font-semibold text-red-600">
+                      ${parseFloat(selectedLoanForHistory.remainingAmount).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment History */}
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+                  Payment History
+                </h3>
+                {getPaymentsForLoan(selectedLoanForHistory.id).length === 0 ? (
+                  <p className="text-gray-600 dark:text-gray-400 text-center py-8">
+                    No payments recorded yet
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {getPaymentsForLoan(selectedLoanForHistory.id).map((payment: LoanPayment) => (
+                      <div
+                        key={payment.id}
+                        className="flex justify-between items-center p-3 bg-white dark:bg-gray-700 rounded-lg border"
+                      >
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            ${parseFloat(payment.amount).toFixed(2)}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {new Date(payment.paymentDate).toLocaleDateString()}
+                          </p>
+                          {payment.paymentMethod && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              via {payment.paymentMethod}
+                            </p>
+                          )}
+                        </div>
+                        {payment.notes && (
+                          <div className="text-sm text-gray-600 dark:text-gray-400 max-w-xs">
+                            {payment.notes}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
