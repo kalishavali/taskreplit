@@ -183,6 +183,7 @@ export const loans = pgTable("loans", {
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   amountPaid: decimal("amount_paid", { precision: 10, scale: 2 }).default("0.00").notNull(),
   remainingAmount: decimal("remaining_amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("USD").notNull(), // USD, INR, EUR, GBP, etc.
   status: varchar("status", { length: 20 }).default("active").notNull(), // active, partially_paid, fully_paid
   notes: text("notes"),
   dueDate: timestamp("due_date"),

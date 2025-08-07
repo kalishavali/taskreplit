@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, DollarSign, TrendingUp, TrendingDown, Users } from "lucide-react";
+import { formatCurrency, formatCompactCurrency } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -134,7 +135,7 @@ export function MoneyPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-total-loaned">
-                ${totalLoaned.toFixed(2)}
+                {formatCompactCurrency(totalLoaned, loans[0]?.currency || "USD")}
               </div>
             </CardContent>
           </Card>
@@ -146,7 +147,7 @@ export function MoneyPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600" data-testid="text-total-paid">
-                ${totalPaid.toFixed(2)}
+                {formatCompactCurrency(totalPaid, loans[0]?.currency || "USD")}
               </div>
             </CardContent>
           </Card>
@@ -158,7 +159,7 @@ export function MoneyPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600" data-testid="text-total-remaining">
-                ${totalRemaining.toFixed(2)}
+                {formatCompactCurrency(totalRemaining, loans[0]?.currency || "USD")}
               </div>
             </CardContent>
           </Card>
@@ -230,19 +231,19 @@ export function MoneyPage() {
                       <div>
                         <p className="text-xs text-gray-600 dark:text-gray-400">Total</p>
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          ${parseFloat(loan.totalAmount).toFixed(0)}
+                          {formatCompactCurrency(parseFloat(loan.totalAmount), loan.currency || "USD")}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-600 dark:text-gray-400">Paid</p>
                         <p className="text-sm font-semibold text-green-600">
-                          ${parseFloat(loan.amountPaid).toFixed(0)}
+                          {formatCompactCurrency(parseFloat(loan.amountPaid), loan.currency || "USD")}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-600 dark:text-gray-400">Remaining</p>
                         <p className="text-sm font-semibold text-red-600">
-                          ${parseFloat(loan.remainingAmount).toFixed(0)}
+                          {formatCompactCurrency(parseFloat(loan.remainingAmount), loan.currency || "USD")}
                         </p>
                       </div>
                     </div>

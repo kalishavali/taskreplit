@@ -7,9 +7,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertLoanSchema } from "@shared/schema";
+import { CURRENCIES } from "@/lib/currency";
 
 const createLoanSchema = insertLoanSchema.omit({ userId: true }).extend({
   dueDate: z.string().optional(),
@@ -33,6 +35,7 @@ export function LoanCreateModal({ isOpen, onClose }: LoanCreateModalProps) {
       personEmail: "",
       personPhone: "",
       totalAmount: "",
+      currency: "USD",
       notes: "",
       dueDate: "",
     },
@@ -104,25 +107,50 @@ export function LoanCreateModal({ isOpen, onClose }: LoanCreateModalProps) {
 
               <FormField
                 control={form.control}
-                name="totalAmount"
+                name="currency"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 dark:text-gray-300">Amount *</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        className="bg-white/50 dark:bg-gray-700/50"
-                        data-testid="input-total-amount"
-                      />
-                    </FormControl>
+                    <FormLabel className="text-gray-700 dark:text-gray-300">Currency *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="bg-white/50 dark:bg-gray-700/50" data-testid="select-currency">
+                          <SelectValue placeholder="Select currency" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {CURRENCIES.map((currency) => (
+                          <SelectItem key={currency.code} value={currency.code}>
+                            {currency.symbol} {currency.code} - {currency.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="totalAmount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700 dark:text-gray-300">Amount *</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      className="bg-white/50 dark:bg-gray-700/50"
+                      data-testid="input-total-amount"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
