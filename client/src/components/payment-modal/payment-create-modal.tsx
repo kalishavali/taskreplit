@@ -14,7 +14,7 @@ import { insertLoanPaymentSchema, type Loan } from "@shared/schema";
 
 const createPaymentSchema = insertLoanPaymentSchema.extend({
   paymentDate: z.string().optional(),
-});
+}).omit({ userId: true, createdAt: true, updatedAt: true });
 
 type CreatePaymentForm = z.infer<typeof createPaymentSchema>;
 
@@ -86,7 +86,9 @@ export function PaymentCreateModal({ loan, isOpen, onClose }: PaymentCreateModal
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+            console.log("Form validation errors:", errors);
+          })} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
