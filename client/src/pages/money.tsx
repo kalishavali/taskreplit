@@ -113,7 +113,10 @@ export function MoneyPage() {
             </p>
           </div>
           <Button
-            onClick={() => setIsCreateLoanOpen(true)}
+            onClick={() => {
+              console.log("New Loan button clicked");
+              setIsCreateLoanOpen(true);
+            }}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
             data-testid="button-create-loan"
           >
@@ -311,8 +314,12 @@ export function MoneyPage() {
       {/* Modals */}
       <LoanCreateModal
         isOpen={isCreateLoanOpen}
-        onClose={() => setIsCreateLoanOpen(false)}
+        onClose={() => {
+          console.log("Closing loan create modal");
+          setIsCreateLoanOpen(false);
+        }}
       />
+      {console.log("isCreateLoanOpen:", isCreateLoanOpen)}
 
       {selectedLoan && (
         <LoanEditModal

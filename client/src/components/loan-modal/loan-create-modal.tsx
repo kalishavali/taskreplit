@@ -65,6 +65,7 @@ export function LoanCreateModal({ isOpen, onClose }: LoanCreateModalProps) {
   });
 
   const onSubmit = (data: CreateLoanForm) => {
+    console.log("Loan create form submitted with data:", data);
     createLoanMutation.mutate(data);
   };
 
@@ -151,6 +152,7 @@ export function LoanCreateModal({ isOpen, onClose }: LoanCreateModalProps) {
                     <FormControl>
                       <Input
                         {...field}
+                        value={field.value || ""}
                         placeholder="+1 (555) 123-4567"
                         className="bg-white/50 dark:bg-gray-700/50"
                         data-testid="input-person-phone"
