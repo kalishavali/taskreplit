@@ -32,10 +32,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus, Search, Trash2, Edit, Package, Smartphone, Car, Gem, MonitorSpeaker, Calendar, AlertTriangle, TrendingUp, DollarSign } from "lucide-react";
+import { Plus, Search, Trash2, Edit, Package, Smartphone, Car, Gem, MonitorSpeaker, Calendar, AlertTriangle, TrendingUp, DollarSign, RefreshCw } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import ProductCreateModal from "@/components/product-modal/product-create-modal";
 import ProductEditModal from "@/components/product-modal/product-edit-modal";
+import { usePreciousMetalRates } from "@/hooks/usePreciousMetalRates";
 import type { Product } from "@shared/schema";
 
 const categoryIcons = {
@@ -71,6 +72,8 @@ export default function ProductsPage() {
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
+
+  const metalRates = usePreciousMetalRates();
 
   // Helper functions defined first to avoid hoisting issues
   const getWarrantyStatus = (product: Product) => {
@@ -178,12 +181,31 @@ export default function ProductsPage() {
         {/* Precious Metal Rates */}
         <Card className="mb-6 bg-white/80 backdrop-blur-xl border border-white/30 shadow-xl">
           <CardHeader className="pb-4">
-            <CardTitle className="flex items-center text-xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
-              <TrendingUp className="w-5 h-5 mr-2 text-yellow-600" />
-              Today's Precious Metal Rates
+            <CardTitle className="flex items-center justify-between text-xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+              <div className="flex items-center">
+                <TrendingUp className="w-5 h-5 mr-2 text-yellow-600" />
+                Live Precious Metal Rates
+              </div>
+              <div className="flex items-center space-x-2">
+                {metalRates.isLoading && (
+                  <RefreshCw className="w-4 h-4 text-gray-400 animate-spin" />
+                )}
+                <span className="text-xs text-gray-500 font-normal">
+                  {metalRates.isLoading ? 'Updating...' : 'Live'}
+                </span>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
+            {metalRates.error && (
+              <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <p className="text-sm text-orange-700">
+                  <AlertTriangle className="w-4 h-4 inline mr-1" />
+                  {metalRates.error}
+                </p>
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Gold Rates */}
               <div className="space-y-3">
@@ -194,15 +216,15 @@ export default function ProductsPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
                     <span className="font-medium text-yellow-800">24K Gold</span>
-                    <span className="font-bold text-yellow-900">₹10,233</span>
+                    <span className="font-bold text-yellow-900">₹{metalRates.gold24k.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
                     <span className="font-medium text-yellow-800">22K Gold</span>
-                    <span className="font-bold text-yellow-900">₹9,380</span>
+                    <span className="font-bold text-yellow-900">₹{metalRates.gold22k.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
                     <span className="font-medium text-yellow-800">18K Gold</span>
-                    <span className="font-bold text-yellow-900">₹7,675</span>
+                    <span className="font-bold text-yellow-900">₹{metalRates.gold18k.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
               </div>
@@ -216,15 +238,17 @@ export default function ProductsPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg border border-gray-200">
                     <span className="font-medium text-gray-800">Silver (per gram)</span>
-                    <span className="font-bold text-gray-900">₹117</span>
+                    <span className="font-bold text-gray-900">₹{metalRates.silver.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg border border-gray-200">
                     <span className="font-medium text-gray-800">Silver (per kg)</span>
-                    <span className="font-bold text-gray-900">₹1,17,000</span>
+                    <span className="font-bold text-gray-900">₹{(metalRates.silver * 1000).toLocaleString('en-IN')}</span>
                   </div>
                   <div className="text-center p-2">
                     <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">
-                      +₹1 from yesterday
+                      {new Date().getHours() >= 9 && new Date().getHours() <= 17 
+                        ? '🟢 Market Active' 
+                        : '🟡 After Hours'}
                     </span>
                   </div>
                 </div>
@@ -250,7 +274,8 @@ export default function ProductsPage() {
             
             <div className="mt-4 text-center">
               <p className="text-xs text-gray-500">
-                Rates updated as of August 7, 2025. Actual prices may vary by jeweler due to making charges and taxes.
+                Last updated: {new Date(metalRates.lastUpdated).toLocaleString('en-IN')}. 
+                Actual prices may vary by jeweler due to making charges and taxes.
               </p>
             </div>
           </CardContent>
