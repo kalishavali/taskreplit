@@ -20,6 +20,10 @@ import {
   updateTeamSchema,
   updateTeamMemberSchema,
   insertUserClientPermissionSchema,
+  insertLoanSchema,
+  insertLoanPaymentSchema,
+  updateLoanSchema,
+  updateLoanPaymentSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -1054,6 +1058,135 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Permission removed successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to remove user permission" });
+    }
+  });
+
+  // Loan routes
+  app.get("/api/loans", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const loans = await storage.getLoans(userId);
+      res.json(loans);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch loans" });
+    }
+  });
+
+  app.get("/api/loans/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const loan = await storage.getLoan(id);
+      if (!loan) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+      res.json(loan);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch loan" });
+    }
+  });
+
+  app.post("/api/loans", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const loanData = insertLoanSchema.parse({
+        ...req.body,
+        userId
+      });
+      const loan = await storage.createLoan(loanData);
+      res.status(201).json(loan);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid loan data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create loan" });
+    }
+  });
+
+  app.put("/api/loans/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = updateLoanSchema.parse(req.body);
+      const loan = await storage.updateLoan(id, updates);
+      if (!loan) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+      res.json(loan);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid loan data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update loan" });
+    }
+  });
+
+  app.delete("/api/loans/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteLoan(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+      res.json({ message: "Loan deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete loan" });
+    }
+  });
+
+  // Loan payments routes
+  app.get("/api/loan-payments", requireAuth, async (req, res) => {
+    try {
+      const loanId = req.query.loanId ? parseInt(req.query.loanId as string) : undefined;
+      const payments = await storage.getLoanPayments(loanId);
+      res.json(payments);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch loan payments" });
+    }
+  });
+
+  app.post("/api/loan-payments", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const paymentData = insertLoanPaymentSchema.parse({
+        ...req.body,
+        userId
+      });
+      const payment = await storage.createLoanPayment(paymentData);
+      res.status(201).json(payment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid payment data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create payment" });
+    }
+  });
+
+  app.put("/api/loan-payments/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = updateLoanPaymentSchema.parse(req.body);
+      const payment = await storage.updateLoanPayment(id, updates);
+      if (!payment) {
+        return res.status(404).json({ message: "Payment not found" });
+      }
+      res.json(payment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid payment data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update payment" });
+    }
+  });
+
+  app.delete("/api/loan-payments/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteLoanPayment(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Payment not found" });
+      }
+      res.json({ message: "Payment deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete payment" });
     }
   });
 

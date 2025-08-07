@@ -15,6 +15,8 @@ import {
   users,
   sessions,
   userClientPermissions,
+  loans,
+  loanPayments,
   type Client,
   type Project,
   type Task,
@@ -29,6 +31,8 @@ import {
   type User,
   type Session,
   type UserClientPermission,
+  type Loan,
+  type LoanPayment,
   type InsertClient,
   type InsertProject,
   type InsertTask,
@@ -43,6 +47,8 @@ import {
   type InsertUser,
   type InsertSession,
   type InsertUserClientPermission,
+  type InsertLoan,
+  type InsertLoanPayment,
   type UpdateClient,
   type UpdateProject,
   type UpdateTask,
@@ -54,6 +60,8 @@ import {
   type UpdateNotification,
   type UpdateTimeEntry,
   type UpdateUser,
+  type UpdateLoan,
+  type UpdateLoanPayment,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -166,6 +174,20 @@ export interface IStorage {
 
   // Reports
   getReports(type: string, params?: any): Promise<any>;
+
+  // Loans
+  getLoans(userId?: number): Promise<Loan[]>;
+  getLoan(id: number): Promise<Loan | undefined>;
+  createLoan(loan: InsertLoan): Promise<Loan>;
+  updateLoan(id: number, updates: UpdateLoan): Promise<Loan | undefined>;
+  deleteLoan(id: number): Promise<boolean>;
+
+  // Loan Payments
+  getLoanPayments(loanId?: number): Promise<LoanPayment[]>;
+  getLoanPayment(id: number): Promise<LoanPayment | undefined>;
+  createLoanPayment(payment: InsertLoanPayment): Promise<LoanPayment>;
+  updateLoanPayment(id: number, updates: UpdateLoanPayment): Promise<LoanPayment | undefined>;
+  deleteLoanPayment(id: number): Promise<boolean>;
 }
 
 // Database Storage Implementation
@@ -1025,6 +1047,121 @@ export class DatabaseStorage implements IStorage {
     }
 
     return await this.checkUserClientPermission(userId, project.clientId, permission);
+  }
+
+  // Loans
+  async getLoans(userId?: number): Promise<Loan[]> {
+    if (userId) {
+      return await db.select().from(loans)
+        .where(eq(loans.userId, userId))
+        .orderBy(desc(loans.createdAt));
+    }
+    return await db.select().from(loans).orderBy(desc(loans.createdAt));
+  }
+
+  async getLoan(id: number): Promise<Loan | undefined> {
+    const [loan] = await db.select().from(loans).where(eq(loans.id, id));
+    return loan;
+  }
+
+  async createLoan(insertLoan: InsertLoan): Promise<Loan> {
+    // Calculate remaining amount as total amount initially
+    const loanData = {
+      ...insertLoan,
+      remainingAmount: insertLoan.totalAmount,
+      amountPaid: "0.00",
+    };
+    
+    const [loan] = await db.insert(loans).values(loanData).returning();
+    return loan;
+  }
+
+  async updateLoan(id: number, updates: UpdateLoan): Promise<Loan | undefined> {
+    const [loan] = await db.update(loans).set({
+      ...updates,
+      updatedAt: new Date(),
+    }).where(eq(loans.id, id)).returning();
+    return loan;
+  }
+
+  async deleteLoan(id: number): Promise<boolean> {
+    const deleted = await db.delete(loans).where(eq(loans.id, id));
+    return (deleted.rowCount ?? 0) > 0;
+  }
+
+  // Loan Payments
+  async getLoanPayments(loanId?: number): Promise<LoanPayment[]> {
+    if (loanId) {
+      return await db.select().from(loanPayments)
+        .where(eq(loanPayments.loanId, loanId))
+        .orderBy(desc(loanPayments.paymentDate));
+    }
+    return await db.select().from(loanPayments).orderBy(desc(loanPayments.paymentDate));
+  }
+
+  async getLoanPayment(id: number): Promise<LoanPayment | undefined> {
+    const [payment] = await db.select().from(loanPayments).where(eq(loanPayments.id, id));
+    return payment;
+  }
+
+  async createLoanPayment(insertPayment: InsertLoanPayment): Promise<LoanPayment> {
+    const [payment] = await db.insert(loanPayments).values(insertPayment).returning();
+    
+    // Update loan amounts after payment
+    await this.updateLoanAmounts(insertPayment.loanId);
+    
+    return payment;
+  }
+
+  async updateLoanPayment(id: number, updates: UpdateLoanPayment): Promise<LoanPayment | undefined> {
+    const [payment] = await db.update(loanPayments).set(updates).where(eq(loanPayments.id, id)).returning();
+    
+    if (payment) {
+      // Update loan amounts after payment update
+      await this.updateLoanAmounts(payment.loanId);
+    }
+    
+    return payment;
+  }
+
+  async deleteLoanPayment(id: number): Promise<boolean> {
+    const payment = await this.getLoanPayment(id);
+    const deleted = await db.delete(loanPayments).where(eq(loanPayments.id, id));
+    
+    if (payment && (deleted.rowCount ?? 0) > 0) {
+      // Update loan amounts after payment deletion
+      await this.updateLoanAmounts(payment.loanId);
+      return true;
+    }
+    
+    return false;
+  }
+
+  // Helper method to update loan amounts
+  private async updateLoanAmounts(loanId: number): Promise<void> {
+    const loan = await this.getLoan(loanId);
+    if (!loan) return;
+
+    const payments = await this.getLoanPayments(loanId);
+    const totalPaid = payments.reduce((sum, payment) => 
+      sum + parseFloat(payment.amount), 0
+    );
+    
+    const remaining = parseFloat(loan.totalAmount) - totalPaid;
+    let status = 'active';
+    
+    if (totalPaid >= parseFloat(loan.totalAmount)) {
+      status = 'fully_paid';
+    } else if (totalPaid > 0) {
+      status = 'partially_paid';
+    }
+
+    await db.update(loans).set({
+      amountPaid: totalPaid.toFixed(2),
+      remainingAmount: Math.max(0, remaining).toFixed(2),
+      status,
+      updatedAt: new Date(),
+    }).where(eq(loans.id, loanId));
   }
 }
 

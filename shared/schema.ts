@@ -1,6 +1,7 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, primaryKey, decimal, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // New Clients table - top level entity
 export const clients = pgTable("clients", {
@@ -173,6 +174,34 @@ export const userClientPermissions = pgTable("user_client_permissions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Money Tracking Tables
+export const loans = pgTable("loans", {
+  id: serial("id").primaryKey(),
+  personName: varchar("person_name", { length: 255 }).notNull(),
+  personEmail: varchar("person_email", { length: 255 }),
+  personPhone: varchar("person_phone", { length: 20 }),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  amountPaid: decimal("amount_paid", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  remainingAmount: decimal("remaining_amount", { precision: 10, scale: 2 }).notNull(),
+  status: varchar("status", { length: 20 }).default("active").notNull(), // active, partially_paid, fully_paid
+  notes: text("notes"),
+  dueDate: timestamp("due_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+});
+
+export const loanPayments = pgTable("loan_payments", {
+  id: serial("id").primaryKey(),
+  loanId: integer("loan_id").references(() => loans.id, { onDelete: "cascade" }).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  paymentDate: timestamp("payment_date").defaultNow().notNull(),
+  notes: text("notes"),
+  paymentMethod: varchar("payment_method", { length: 50 }), // cash, bank_transfer, check, etc.
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+});
+
 // Insert schemas
 export const insertClientSchema = createInsertSchema(clients).omit({
   id: true,
@@ -252,6 +281,31 @@ export const insertUserClientPermissionSchema = createInsertSchema(userClientPer
   updatedAt: true,
 });
 
+export const insertLoanSchema = createInsertSchema(loans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  remainingAmount: true,
+  amountPaid: true,
+}).extend({
+  dueDate: z.union([z.string(), z.date(), z.null()]).optional().transform((val) => {
+    if (!val) return null;
+    if (typeof val === 'string') return new Date(val);
+    return val;
+  }),
+});
+
+export const insertLoanPaymentSchema = createInsertSchema(loanPayments).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  paymentDate: z.union([z.string(), z.date()]).optional().transform((val) => {
+    if (!val) return new Date();
+    if (typeof val === 'string') return new Date(val);
+    return val;
+  }),
+});
+
 // Update schemas with proper date handling
 export const updateTaskSchema = insertTaskSchema.partial();
 export const updateProjectSchema = insertProjectSchema.partial().extend({
@@ -277,6 +331,8 @@ export const updateNotificationSchema = insertNotificationSchema.partial();
 export const updateTimeEntrySchema = insertTimeEntrySchema.partial();
 export const updateUserSchema = insertUserSchema.partial();
 export const updateUserClientPermissionSchema = insertUserClientPermissionSchema.partial();
+export const updateLoanSchema = insertLoanSchema.partial();
+export const updateLoanPaymentSchema = insertLoanPaymentSchema.partial();
 
 // Types
 export type Client = typeof clients.$inferSelect;
@@ -293,6 +349,8 @@ export type TeamMember = typeof teamMembers.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type UserClientPermission = typeof userClientPermissions.$inferSelect;
+export type Loan = typeof loans.$inferSelect;
+export type LoanPayment = typeof loanPayments.$inferSelect;
 
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
@@ -308,6 +366,8 @@ export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
 export type InsertUserClientPermission = z.infer<typeof insertUserClientPermissionSchema>;
+export type InsertLoan = z.infer<typeof insertLoanSchema>;
+export type InsertLoanPayment = z.infer<typeof insertLoanPaymentSchema>;
 
 export type UpdateClient = z.infer<typeof updateClientSchema>;
 export type UpdateTask = z.infer<typeof updateTaskSchema>;
@@ -321,3 +381,5 @@ export type UpdateNotification = z.infer<typeof updateNotificationSchema>;
 export type UpdateTimeEntry = z.infer<typeof updateTimeEntrySchema>;
 export type UpdateUser = z.infer<typeof updateUserSchema>;
 export type UpdateUserClientPermission = z.infer<typeof updateUserClientPermissionSchema>;
+export type UpdateLoan = z.infer<typeof updateLoanSchema>;
+export type UpdateLoanPayment = z.infer<typeof updateLoanPaymentSchema>;

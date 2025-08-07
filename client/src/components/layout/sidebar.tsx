@@ -14,6 +14,7 @@ import {
   LogOut,
   Shield,
   User,
+  DollarSign,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -24,6 +25,7 @@ const navigation = [
   { name: "Applications", href: "/applications", icon: Grid3X3 },
   { name: "My Tasks", href: "/tasks", icon: CheckSquare },
   { name: "Reports", href: "/reports", icon: BarChart3 },
+  { name: "Money Tracking", href: "/money", icon: DollarSign },
   { name: "Team", href: "/team", icon: Users },
 ];
 

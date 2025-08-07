@@ -16,6 +16,7 @@ import Reports from "@/pages/reports";
 import Team from "@/pages/team";
 import Teams from "@/pages/teams";
 import UserManagement from "@/pages/user-management";
+import { MoneyPage } from "@/pages/money";
 import Sidebar from "@/components/layout/sidebar";
 
 function Router() {
@@ -50,6 +51,7 @@ function Router() {
           <Route path="/reports" component={Reports} />
           <Route path="/team" component={Team} />
           <Route path="/teams" component={Teams} />
+          <Route path="/money" component={MoneyPage} />
           <Route path="/user-management" component={UserManagement} />
           <Route component={NotFound} />
         </Switch>
