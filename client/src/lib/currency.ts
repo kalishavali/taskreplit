@@ -43,25 +43,18 @@ export function formatCurrency(amount: number | string, currencyCode: string = "
   }
 }
 
-// Special formatting for Indian Rupee (INR) with lakhs/crores
+// Special formatting for Indian Rupee (INR) with Indian comma system
 function formatINR(amount: number): string {
   const absAmount = Math.abs(amount);
   const isNegative = amount < 0;
   
-  let formatted = "";
-  
-  if (absAmount >= 10000000) { // 1 crore and above
-    const crores = absAmount / 10000000;
-    formatted = `₹${crores.toFixed(2)} Cr`;
-  } else if (absAmount >= 100000) { // 1 lakh and above
-    const lakhs = absAmount / 100000;
-    formatted = `₹${lakhs.toFixed(2)} L`;
-  } else if (absAmount >= 1000) { // 1 thousand and above
-    const thousands = absAmount / 1000;
-    formatted = `₹${thousands.toFixed(2)} K`;
-  } else {
-    formatted = `₹${absAmount.toFixed(2)}`;
-  }
+  // Use Indian locale formatting for proper comma placement
+  const formatted = new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(absAmount);
   
   return isNegative ? `-${formatted}` : formatted;
 }
