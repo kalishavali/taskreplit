@@ -79,7 +79,9 @@ export function LoanCreateModal({ isOpen, onClose }: LoanCreateModalProps) {
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+            console.log("Loan form validation errors:", errors);
+          })} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -132,6 +134,7 @@ export function LoanCreateModal({ isOpen, onClose }: LoanCreateModalProps) {
                     <FormControl>
                       <Input
                         {...field}
+                        value={field.value || ""}
                         type="email"
                         placeholder="person@example.com"
                         className="bg-white/50 dark:bg-gray-700/50"
@@ -192,6 +195,7 @@ export function LoanCreateModal({ isOpen, onClose }: LoanCreateModalProps) {
                   <FormControl>
                     <Textarea
                       {...field}
+                      value={field.value || ""}
                       placeholder="Additional notes about this loan..."
                       className="bg-white/50 dark:bg-gray-700/50 min-h-[100px]"
                       data-testid="input-notes"
@@ -214,6 +218,7 @@ export function LoanCreateModal({ isOpen, onClose }: LoanCreateModalProps) {
               <Button
                 type="submit"
                 disabled={createLoanMutation.isPending}
+                onClick={() => console.log("Create Loan submit button clicked")}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 data-testid="button-submit"
               >
