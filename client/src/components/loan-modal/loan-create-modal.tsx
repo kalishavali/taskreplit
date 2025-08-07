@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertLoanSchema } from "@shared/schema";
 
-const createLoanSchema = insertLoanSchema.extend({
+const createLoanSchema = insertLoanSchema.omit({ userId: true }).extend({
   dueDate: z.string().optional(),
 });
 
