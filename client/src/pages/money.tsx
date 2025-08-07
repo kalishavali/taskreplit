@@ -111,10 +111,7 @@ export function MoneyPage() {
             </p>
           </div>
           <Button
-            onClick={() => {
-              console.log("New Loan button clicked");
-              setIsCreateLoanOpen(true);
-            }}
+            onClick={() => setIsCreateLoanOpen(true)}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
             data-testid="button-create-loan"
           >
@@ -193,10 +190,7 @@ export function MoneyPage() {
                   Create your first loan to start tracking money given to people
                 </p>
                 <Button
-                  onClick={() => {
-                    console.log("Create First Loan button clicked");
-                    setIsCreateLoanOpen(true);
-                  }}
+                  onClick={() => setIsCreateLoanOpen(true)}
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                   data-testid="button-create-first-loan"
                 >
@@ -327,13 +321,9 @@ export function MoneyPage() {
       </div>
 
       {/* Modals */}
-      {console.log("Rendering modals, isCreateLoanOpen:", isCreateLoanOpen)}
       <LoanCreateModal
         isOpen={isCreateLoanOpen}
-        onClose={() => {
-          console.log("Closing create loan modal");
-          setIsCreateLoanOpen(false);
-        }}
+        onClose={() => setIsCreateLoanOpen(false)}
       />
 
       {selectedLoan && (

@@ -30,10 +30,10 @@ export function LoanCreateModal({ isOpen, onClose }: LoanCreateModalProps) {
     resolver: zodResolver(createLoanSchema),
     defaultValues: {
       personName: "",
-      personEmail: undefined,
-      personPhone: undefined,
+      personEmail: "",
+      personPhone: "",
       totalAmount: "",
-      notes: undefined,
+      notes: "",
       dueDate: "",
     },
   });
