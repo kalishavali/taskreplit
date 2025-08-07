@@ -11,8 +11,8 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Use the environment DATABASE_URL
-const databaseUrl = process.env.DATABASE_URL;
+// Use your specific Neon database connection
+const databaseUrl = "postgresql://neondb_owner:npg_2aY4QCTmXiyu@ep-polished-frog-ad6yqbvq-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
 
 console.log(`🗃️  Connecting to database: ${databaseUrl.replace(/:[^:@]*@/, ':****@')}`);
 
