@@ -72,34 +72,7 @@ export default function ProductsPage() {
     queryKey: ["/api/products"],
   });
 
-  const deleteProductMutation = useMutation({
-    mutationFn: async (productId: number) => {
-      await apiRequest(`/api/products/${productId}`, "DELETE");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      toast({
-        title: "Product deleted",
-        description: "Product has been successfully deleted.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete product. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
-    const matchesStatus = selectedStatus === "all" || getWarrantyStatus(product) === selectedStatus;
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
-
+  // Helper functions defined first to avoid hoisting issues
   const getWarrantyStatus = (product: Product) => {
     if (!product.warrantyExpiryDate) return "no_warranty";
     const now = new Date();
@@ -131,6 +104,34 @@ export default function ProductsPage() {
       day: 'numeric'
     });
   };
+
+  const deleteProductMutation = useMutation({
+    mutationFn: async (productId: number) => {
+      await apiRequest(`/api/products/${productId}`, "DELETE");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({
+        title: "Product deleted",
+        description: "Product has been successfully deleted.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete product. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
+    const matchesStatus = selectedStatus === "all" || getWarrantyStatus(product) === selectedStatus;
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
 
   if (isLoading) {
     return (
