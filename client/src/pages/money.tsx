@@ -412,9 +412,23 @@ export function MoneyPage() {
                         className="flex justify-between items-center p-3 bg-white dark:bg-gray-700 rounded-lg border"
                       >
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {formatCurrency(parseFloat(payment.amount), selectedLoanForHistory.currency || "USD")}
-                          </p>
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className={`font-medium text-lg ${
+                              payment.paymentType === 'pay' 
+                                ? 'text-red-600 dark:text-red-400' 
+                                : 'text-green-600 dark:text-green-400'
+                            }`}>
+                              {payment.paymentType === 'pay' ? '-' : '+'}
+                              {formatCurrency(parseFloat(payment.amount), selectedLoanForHistory.currency || "USD")}
+                            </p>
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                              payment.paymentType === 'pay' 
+                                ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' 
+                                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                            }`}>
+                              {payment.paymentType === 'pay' ? 'Pay' : 'Settlement'}
+                            </span>
+                          </div>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
                             {new Date(payment.paymentDate).toLocaleDateString()}
                           </p>
