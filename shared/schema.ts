@@ -186,6 +186,7 @@ export const loans = pgTable("loans", {
   currency: varchar("currency", { length: 3 }).default("USD").notNull(), // USD, INR, EUR, GBP, etc.
   status: varchar("status", { length: 20 }).default("active").notNull(), // active, partially_paid, fully_paid
   notes: text("notes"),
+  icon: varchar("icon", { length: 30 }).default("user").notNull(), // user, male, female, business, family, etc.
   dueDate: timestamp("due_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -323,6 +324,7 @@ export const updateProjectSchema = insertProjectSchema.partial().extend({
     return val;
   }),
 });
+
 export const updateClientSchema = insertClientSchema.partial();
 export const updateApplicationSchema = insertApplicationSchema.partial();
 export const updateTeamSchema = insertTeamSchema.partial();

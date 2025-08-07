@@ -104,6 +104,22 @@ export function MoneyPage() {
     return FileText;
   };
 
+  // Function to get loan icon component
+  const getLoanIcon = (iconType: string) => {
+    switch (iconType) {
+      case 'male': return Users;
+      case 'female': return Users;
+      case 'business': return Briefcase;
+      case 'family': return Users;
+      case 'couple': return Heart;
+      case 'child': return Users;
+      case 'employee': return Briefcase;
+      case 'student': return GraduationCap;
+      case 'tenant': return Home;
+      default: return Users;
+    }
+  };
+
   // Function to group payments by year and month
   const getPaymentsByMonth = (payments: LoanPayment[]) => {
     const grouped: { [key: string]: LoanPayment[] } = {};
@@ -258,7 +274,9 @@ export function MoneyPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {loans.map((loan: Loan) => (
+                {loans.map((loan: Loan) => {
+                  const LoanIconComponent = getLoanIcon((loan as any).icon || 'user');
+                  return (
                   <div
                     key={loan.id}
                     className="bg-white dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all duration-300 cursor-pointer"
@@ -266,13 +284,13 @@ export function MoneyPage() {
                     data-testid={`loan-card-${loan.id}`}
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                          <LoanIconComponent className="h-3 w-3 text-white" />
+                        </div>
                         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                           {loan.personName}
                         </h3>
-                        {loan.personEmail && (
-                          <p className="text-xs text-gray-600 dark:text-gray-400">{loan.personEmail}</p>
-                        )}
                       </div>
                       <Badge className={`${getStatusColor(loan.status)} text-xs px-1.5 py-0.5`}>
                         {getStatusLabel(loan.status)}
@@ -369,7 +387,8 @@ export function MoneyPage() {
 
 
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>

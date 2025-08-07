@@ -12,6 +12,10 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { updateLoanSchema, type Loan } from "@shared/schema";
 import { CURRENCIES } from "@/lib/currency";
+import { 
+  User, UserCheck, Users, Building2, Heart, 
+  Baby, Briefcase, GraduationCap, Home 
+} from "lucide-react";
 
 const editLoanSchema = updateLoanSchema.extend({
   dueDate: z.string().optional(),
@@ -29,6 +33,19 @@ export function LoanEditModal({ loan, isOpen, onClose }: LoanEditModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const loanIcons = [
+    { value: "user", label: "Person", icon: User },
+    { value: "male", label: "Male", icon: UserCheck },
+    { value: "female", label: "Female", icon: User },
+    { value: "business", label: "Business", icon: Building2 },
+    { value: "family", label: "Family", icon: Users },
+    { value: "couple", label: "Couple", icon: Heart },
+    { value: "child", label: "Child", icon: Baby },
+    { value: "employee", label: "Employee", icon: Briefcase },
+    { value: "student", label: "Student", icon: GraduationCap },
+    { value: "tenant", label: "Tenant", icon: Home },
+  ];
+
   const form = useForm<EditLoanForm>({
     resolver: zodResolver(editLoanSchema),
     defaultValues: {
@@ -38,6 +55,7 @@ export function LoanEditModal({ loan, isOpen, onClose }: LoanEditModalProps) {
       totalAmount: loan.totalAmount,
       currency: loan.currency || "USD",
       notes: loan.notes || undefined,
+      icon: (loan as any).icon || "user",
       dueDate: loan.dueDate ? new Date(loan.dueDate).toISOString().split('T')[0] : "",
     },
   });
@@ -191,6 +209,37 @@ export function LoanEditModal({ loan, isOpen, onClose }: LoanEditModalProps) {
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="icon"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700 dark:text-gray-300">Icon</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="bg-white/50 dark:bg-gray-700/50" data-testid="select-loan-icon">
+                        <SelectValue placeholder="Select icon" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {loanIcons.map((iconOption) => {
+                        const IconComponent = iconOption.icon;
+                        return (
+                          <SelectItem key={iconOption.value} value={iconOption.value}>
+                            <div className="flex items-center gap-2">
+                              <IconComponent className="h-4 w-4" />
+                              <span>{iconOption.label}</span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
