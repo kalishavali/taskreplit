@@ -272,7 +272,10 @@ export function MoneyPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedLoanForPayment(loan)}
+                        onClick={() => {
+                          console.log("Add Payment clicked for loan:", loan.id);
+                          setSelectedLoanForPayment(loan);
+                        }}
                         className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
                         data-testid={`button-add-payment-${loan.id}`}
                       >
@@ -338,9 +341,13 @@ export function MoneyPage() {
         <PaymentCreateModal
           loan={selectedLoanForPayment}
           isOpen={!!selectedLoanForPayment}
-          onClose={() => setSelectedLoanForPayment(null)}
+          onClose={() => {
+            console.log("Closing payment modal");
+            setSelectedLoanForPayment(null);
+          }}
         />
       )}
+      {console.log("selectedLoanForPayment:", selectedLoanForPayment)}
     </div>
   );
 }

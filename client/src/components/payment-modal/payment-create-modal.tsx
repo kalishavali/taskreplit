@@ -34,8 +34,8 @@ export function PaymentCreateModal({ loan, isOpen, onClose }: PaymentCreateModal
       loanId: loan.id,
       amount: "",
       paymentDate: new Date().toISOString().split('T')[0],
-      notes: undefined,
-      paymentMethod: undefined,
+      notes: "",
+      paymentMethod: "",
     },
   });
 
