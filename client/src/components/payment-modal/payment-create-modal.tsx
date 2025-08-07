@@ -67,6 +67,7 @@ export function PaymentCreateModal({ loan, isOpen, onClose }: PaymentCreateModal
   });
 
   const onSubmit = (data: CreatePaymentForm) => {
+    console.log("Payment form submitted with data:", data);
     createPaymentMutation.mutate(data);
   };
 
@@ -134,7 +135,7 @@ export function PaymentCreateModal({ loan, isOpen, onClose }: PaymentCreateModal
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-gray-700 dark:text-gray-300">Payment Method</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                     <FormControl>
                       <SelectTrigger className="bg-white/50 dark:bg-gray-700/50" data-testid="select-payment-method">
                         <SelectValue placeholder="Select payment method" />
@@ -165,6 +166,7 @@ export function PaymentCreateModal({ loan, isOpen, onClose }: PaymentCreateModal
                   <FormControl>
                     <Textarea
                       {...field}
+                      value={field.value || ""}
                       placeholder="Additional notes about this payment..."
                       className="bg-white/50 dark:bg-gray-700/50 min-h-[80px]"
                       data-testid="input-payment-notes"
@@ -187,6 +189,7 @@ export function PaymentCreateModal({ loan, isOpen, onClose }: PaymentCreateModal
               <Button
                 type="submit"
                 disabled={createPaymentMutation.isPending}
+                onClick={() => console.log("Record Payment button clicked")}
                 className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
                 data-testid="button-submit"
               >
