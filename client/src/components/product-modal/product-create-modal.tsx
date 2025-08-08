@@ -35,10 +35,10 @@ import { MonitorSpeaker, Car, Gem, Smartphone } from "lucide-react";
 
 const productFormSchema = z.object({
   name: z.string().min(1, "Product name is required"),
-  description: z.string().optional(),
+  notes: z.string().optional(),
   category: z.enum(["electronics", "vehicles", "jewellery"]),
   purchaseDate: z.string().optional(),
-  cost: z.string().optional(),
+  totalCost: z.string().optional(),
   currency: z.string().default("INR"),
   warrantyYears: z.number().optional(),
 });
@@ -59,15 +59,16 @@ const vehicleSchema = z.object({
 
 const jewellerySchema = z.object({
   type: z.string().optional(),
-  goldRate: z.string().optional(),
-  goldCost: z.string().optional(),
-  makingCost: z.string().optional(),
+  model: z.string().optional(),
+  ratePerUnit: z.string().optional(),
   cgst: z.string().optional(),
   igst: z.string().optional(),
   vat: z.string().optional(),
   totalWeight: z.string().optional(),
   stoneWeight: z.string().optional(),
+  stoneCost: z.string().optional(),
   diamondWeight: z.string().optional(),
+  diamondCost: z.string().optional(),
 });
 
 
@@ -343,27 +344,18 @@ export default function ProductCreateModal({
                   <label className="text-sm font-medium">Gold Rate (₹/gram)</label>
                   <Input
                     placeholder="5500"
-                    value={categoryDetails.goldRate || ""}
-                    onChange={(e) => setCategoryDetails(prev => ({ ...prev, goldRate: e.target.value }))}
+                    value={categoryDetails.ratePerUnit || ""}
+                    onChange={(e) => setCategoryDetails(prev => ({ ...prev, ratePerUnit: e.target.value }))}
                     data-testid="input-gold-rate"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Gold Cost (₹)</label>
+                  <label className="text-sm font-medium">Model/Design</label>
                   <Input
-                    placeholder="50000"
-                    value={categoryDetails.goldCost || ""}
-                    onChange={(e) => setCategoryDetails(prev => ({ ...prev, goldCost: e.target.value }))}
-                    data-testid="input-gold-cost"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Making Cost (₹)</label>
-                  <Input
-                    placeholder="5000"
-                    value={categoryDetails.makingCost || ""}
-                    onChange={(e) => setCategoryDetails(prev => ({ ...prev, makingCost: e.target.value }))}
-                    data-testid="input-making-cost"
+                    placeholder="e.g., Traditional Necklace"
+                    value={categoryDetails.model || ""}
+                    onChange={(e) => setCategoryDetails(prev => ({ ...prev, model: e.target.value }))}
+                    data-testid="input-jewellery-model"
                   />
                 </div>
                 <div>
@@ -491,7 +483,7 @@ export default function ProductCreateModal({
 
             <FormField
               control={form.control}
-              name="description"
+              name="notes"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Description</FormLabel>
@@ -551,7 +543,7 @@ export default function ProductCreateModal({
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="cost"
+                name="totalCost"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Cost</FormLabel>
