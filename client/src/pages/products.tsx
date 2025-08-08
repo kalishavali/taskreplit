@@ -132,7 +132,10 @@ export default function ProductsPage() {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
-    const matchesStatus = selectedStatus === "all" || getWarrantyStatus(product) === selectedStatus;
+    // Only apply warranty status filtering for electronics products
+    const matchesStatus = selectedStatus === "all" || 
+                         (product.category === "electronics" && getWarrantyStatus(product) === selectedStatus) ||
+                         (product.category !== "electronics");
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
@@ -353,7 +356,9 @@ export default function ProductsPage() {
               const CategoryIcon = categoryIcons[product.category as keyof typeof categoryIcons] || Package;
               const warrantyStatus = getWarrantyStatus(product);
               const daysUntilExpiry = getDaysUntilExpiry(product);
-              const isWarrantyExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+              // Only calculate warranty expiry warning for electronics
+              const isWarrantyExpiringSoon = product.category === 'electronics' && 
+                                          daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0;
 
               return (
                 <Card
@@ -375,9 +380,12 @@ export default function ProductsPage() {
                             <Badge variant="outline" className="text-xs">
                               {categoryLabels[product.category as keyof typeof categoryLabels]}
                             </Badge>
-                            <Badge className={`text-xs ${statusColors[warrantyStatus as keyof typeof statusColors]}`}>
-                              {getWarrantyStatusLabel(warrantyStatus)}
-                            </Badge>
+                            {/* Only show warranty status for electronics */}
+                            {product.category === 'electronics' && (
+                              <Badge className={`text-xs ${statusColors[warrantyStatus as keyof typeof statusColors]}`}>
+                                {getWarrantyStatusLabel(warrantyStatus)}
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       </div>
