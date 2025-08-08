@@ -424,13 +424,14 @@ export default function ProductsPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    {product.description && (
+                    {product.notes && (
                       <p className="text-gray-600 text-sm mb-3" data-testid={`text-description-${product.id}`}>
-                        {product.description}
+                        {product.notes}
                       </p>
                     )}
                     
                     <div className="space-y-2 text-sm">
+                      {/* Common fields - Purchase Date and Cost */}
                       {product.purchaseDate && (
                         <div className="flex items-center justify-between">
                           <span className="text-gray-500">Purchase Date:</span>
@@ -440,39 +441,83 @@ export default function ProductsPage() {
                         </div>
                       )}
                       
-                      {product.cost && (
+                      {product.totalCost && (
                         <div className="flex items-center justify-between">
                           <span className="text-gray-500">Cost:</span>
                           <span className="font-medium text-green-600" data-testid={`text-cost-${product.id}`}>
-                            {formatCurrency(parseFloat(product.cost), product.currency)}
+                            {formatCurrency(parseFloat(product.totalCost), product.currency)}
                           </span>
                         </div>
                       )}
                       
-                      {/* Only show warranty info for electronics */}
-                      {product.category === "electronics" && product.warrantyExpiryDate && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-500">Warranty Until:</span>
-                          <div className="flex items-center space-x-2">
-                            {isWarrantyExpiringSoon && (
-                              <AlertTriangle className="w-3 h-3 text-orange-500" />
-                            )}
-                            <span className={`font-medium ${isWarrantyExpiringSoon ? 'text-orange-600' : 'text-gray-900'}`} 
-                                  data-testid={`text-warranty-expiry-${product.id}`}>
-                              {formatDate(product.warrantyExpiryDate)}
-                            </span>
-                          </div>
-                        </div>
+                      {/* Category-specific fields */}
+                      {product.category === "electronics" && (
+                        <>
+                          {product.warrantyExpiryDate && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-500">Warranty Until:</span>
+                              <div className="flex items-center space-x-2">
+                                {isWarrantyExpiringSoon && (
+                                  <AlertTriangle className="w-3 h-3 text-orange-500" />
+                                )}
+                                <span className={`font-medium ${isWarrantyExpiringSoon ? 'text-orange-600' : 'text-gray-900'}`} 
+                                      data-testid={`text-warranty-expiry-${product.id}`}>
+                                  {formatDate(product.warrantyExpiryDate)}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                          {product.details?.registrationCode && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-500">Registration Code:</span>
+                              <span className="font-medium font-mono text-xs bg-gray-100 px-2 py-1 rounded" data-testid={`text-registration-code-${product.id}`}>
+                                {product.details.registrationCode}
+                              </span>
+                            </div>
+                          )}
+                        </>
                       )}
                       
-                      {product.category === "electronics" && daysUntilExpiry !== null && daysUntilExpiry > 0 && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-500">Days Left:</span>
-                          <span className={`font-medium ${isWarrantyExpiringSoon ? 'text-orange-600' : 'text-gray-900'}`}
-                                data-testid={`text-warranty-days-${product.id}`}>
-                            {daysUntilExpiry} days
-                          </span>
-                        </div>
+                      {product.category === "vehicles" && (
+                        <>
+                          {product.details?.model && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-500">Model:</span>
+                              <span className="font-medium" data-testid={`text-model-${product.id}`}>
+                                {product.details.model}
+                              </span>
+                            </div>
+                          )}
+                          {product.details?.registrationNumber && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-500">Registration No:</span>
+                              <span className="font-medium font-mono text-xs bg-gray-100 px-2 py-1 rounded" data-testid={`text-registration-number-${product.id}`}>
+                                {product.details.registrationNumber}
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      
+                      {product.category === "jewellery" && (
+                        <>
+                          {product.details?.ratePerUnit && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-500">Gold Rate:</span>
+                              <span className="font-medium text-yellow-600" data-testid={`text-gold-rate-${product.id}`}>
+                                ₹{parseFloat(product.details.ratePerUnit).toLocaleString('en-IN')}/gram
+                              </span>
+                            </div>
+                          )}
+                          {product.details?.totalWeight && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-500">Total Weight:</span>
+                              <span className="font-medium" data-testid={`text-total-weight-${product.id}`}>
+                                {parseFloat(product.details.totalWeight).toFixed(3)} grams
+                              </span>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
 
