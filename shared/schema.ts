@@ -288,9 +288,11 @@ export const subscriptions = pgTable("subscriptions", {
   name: varchar("name", { length: 255 }).notNull(),
   cost: decimal("cost", { precision: 10, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 3 }).default("USD").notNull(),
-  frequency: varchar("frequency", { length: 20 }).notNull(), // monthly, yearly, daily, data-based
+  frequency: varchar("frequency", { length: 20 }).notNull(), // monthly, yearly, daily, data-based, next-date
   startDate: timestamp("start_date").notNull(),
   nextRenewalDate: timestamp("next_renewal_date"),
+  nextPaymentAmount: decimal("next_payment_amount", { precision: 10, scale: 2 }),
+  useCustomAmount: boolean("use_custom_amount").default(false).notNull(),
   description: text("description"),
   category: varchar("category", { length: 50 }).default("general"), // streaming, cloud, software, database, etc.
   isActive: boolean("is_active").default(true).notNull(),
@@ -450,6 +452,11 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
     if (typeof val === 'string') return new Date(val);
     return val;
   }),
+  nextPaymentAmount: z.union([z.string(), z.number(), z.null()]).optional().transform((val) => {
+    if (!val) return null;
+    return typeof val === 'string' ? parseFloat(val) : val;
+  }),
+  useCustomAmount: z.boolean().optional().default(false),
 });
 
 // Update schemas with proper date handling

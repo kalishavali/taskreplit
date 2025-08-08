@@ -1500,7 +1500,12 @@ export class DatabaseStorage implements IStorage {
 
   async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
     // Calculate next renewal date based on frequency and start date
-    const nextRenewalDate = this.calculateNextRenewalDate(subscription.startDate as Date, subscription.frequency);
+    const customNextDate = subscription.nextRenewalDate ? new Date(subscription.nextRenewalDate) : undefined;
+    const nextRenewalDate = this.calculateNextRenewalDate(
+      subscription.startDate as Date, 
+      subscription.frequency,
+      customNextDate
+    );
     
     const [newSubscription] = await db.insert(subscriptions).values({
       ...subscription,
@@ -1511,13 +1516,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateSubscription(id: number, updates: Partial<InsertSubscription>): Promise<Subscription | undefined> {
-    // Recalculate renewal date if start date or frequency changed
-    if (updates.startDate || updates.frequency) {
+    // Recalculate renewal date if start date, frequency, or next renewal date changed
+    if (updates.startDate || updates.frequency || updates.nextRenewalDate !== undefined) {
       const current = await this.getSubscription(id);
       if (current) {
         const startDate = updates.startDate as Date || current.startDate;
         const frequency = updates.frequency || current.frequency;
-        updates.nextRenewalDate = this.calculateNextRenewalDate(new Date(startDate), frequency);
+        const customNextDate = updates.nextRenewalDate ? new Date(updates.nextRenewalDate) : undefined;
+        
+        updates.nextRenewalDate = this.calculateNextRenewalDate(
+          new Date(startDate), 
+          frequency, 
+          customNextDate
+        );
       }
     }
 
@@ -1536,7 +1547,12 @@ export class DatabaseStorage implements IStorage {
     await db.delete(subscriptions).where(eq(subscriptions.id, id));
   }
 
-  private calculateNextRenewalDate(startDate: Date, frequency: string): Date {
+  private calculateNextRenewalDate(startDate: Date, frequency: string, customNextDate?: Date): Date {
+    // If next-date frequency and custom date provided, use that
+    if (frequency === 'next-date' && customNextDate) {
+      return customNextDate;
+    }
+    
     const nextDate = new Date(startDate);
     
     switch (frequency) {
@@ -1552,6 +1568,10 @@ export class DatabaseStorage implements IStorage {
       case 'data-based':
         // For data-based subscriptions, set renewal to 30 days from start
         nextDate.setDate(nextDate.getDate() + 30);
+        break;
+      case 'next-date':
+        // For next-date without custom date, default to 1 month
+        nextDate.setMonth(nextDate.getMonth() + 1);
         break;
       default:
         // Default to monthly

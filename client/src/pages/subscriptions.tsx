@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Plus, Search, Trash2, Edit, Calendar, AlertTriangle, TrendingUp, DollarSign, RefreshCw, Smartphone, Monitor, Cloud, Music, Film, Database, Code, CreditCard } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
-import SubscriptionCreateModal from "@/components/subscription-modal/subscription-create-modal";
+import SubscriptionCreateModal from "@/components/subscription-modal/subscription-create-modal-simple";
 import SubscriptionEditModal from "@/components/subscription-modal/subscription-edit-modal";
 import type { Subscription } from "@shared/schema";
 
