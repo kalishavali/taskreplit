@@ -120,6 +120,24 @@
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
+/* Force glassmorphism styling on all product cards */
+[data-testid*="card-product"] {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Override any shadcn card component default styles */
+.group.bg-white\/70 {
+  background: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Ensure all cards have consistent glassmorphism background */
+[data-testid="card-product-1"] {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
 /* Custom utility classes */
 .animate-slide-up {
   animation: slideInUp 0.5s ease-out forwards;
