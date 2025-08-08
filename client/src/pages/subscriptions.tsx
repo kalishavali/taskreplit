@@ -146,8 +146,8 @@ export default function Subscriptions() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6 overflow-auto">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Section */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600/95 via-purple-600/95 to-indigo-600/95 backdrop-blur-xl border border-white/20 p-8 mb-8">
           <div className="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
@@ -366,7 +366,7 @@ export default function Subscriptions() {
                               <Trash2 className="w-4 h-4 text-red-600" />
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent>
+                          <AlertDialogContent className="bg-white/95 backdrop-blur-xl border border-white/20">
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Subscription</AlertDialogTitle>
                               <AlertDialogDescription>
@@ -374,7 +374,7 @@ export default function Subscriptions() {
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogCancel className="bg-white/50 border-white/20 hover:bg-white/70">Cancel</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => deleteSubscriptionMutation.mutate(subscription.id)}
                                 className="bg-red-600 hover:bg-red-700"

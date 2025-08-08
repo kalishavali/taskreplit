@@ -410,7 +410,7 @@ export default function ProductsPage() {
                               <Trash2 className="w-4 h-4 text-red-600" />
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent>
+                          <AlertDialogContent className="bg-white/95 backdrop-blur-xl border border-white/20">
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Product</AlertDialogTitle>
                               <AlertDialogDescription>
@@ -418,7 +418,7 @@ export default function ProductsPage() {
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogCancel className="bg-white/50 border-white/20 hover:bg-white/70">Cancel</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => deleteProductMutation.mutate(product.id)}
                                 className="bg-red-600 hover:bg-red-700"
