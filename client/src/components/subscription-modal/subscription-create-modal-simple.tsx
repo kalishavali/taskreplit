@@ -113,7 +113,7 @@ export default function SubscriptionCreateModal({ open, onOpenChange }: Subscrip
             Add New Subscription
           </DialogTitle>
           <DialogDescription>
-            Add a new subscription to track its cost and renewal dates. Use "Next Date" frequency for custom payment scheduling.
+            Add a new subscription to track costs and payment schedules. Use "Next Date" for services that give you specific amounts and dates for future payments.
           </DialogDescription>
         </DialogHeader>
 
@@ -171,12 +171,12 @@ export default function SubscriptionCreateModal({ open, onOpenChange }: Subscrip
                 name="cost"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cost *</FormLabel>
+                    <FormLabel>Initial Payment Amount *</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.01"
-                        placeholder="9.99"
+                        placeholder="25.00"
                         {...field}
                         className="bg-white/50 border-white/20 focus:border-blue-300"
                         data-testid="input-cost"
@@ -289,83 +289,72 @@ export default function SubscriptionCreateModal({ open, onOpenChange }: Subscrip
               )}
             </div>
 
-            {/* Custom Amount Options - only shown for "next-date" frequency */}
+            {/* Next Payment Details - only shown for "next-date" frequency */}
             {watchedFrequency === "next-date" && (
               <div className="space-y-4 p-4 bg-blue-50/30 rounded-lg border border-blue-200/50">
-                <h4 className="font-medium text-gray-800">Payment Amount Options</h4>
+                <h4 className="font-medium text-gray-800">Next Payment Details</h4>
+                <p className="text-sm text-gray-600">
+                  Use this for services that tell you a specific amount to pay on a specific future date 
+                  (e.g., "Pay $50 on August 25th")
+                </p>
                 
-                <FormField
-                  control={form.control}
-                  name="useCustomAmount"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <input
-                          type="radio"
-                          checked={!field.value}
-                          onChange={() => {
-                            field.onChange(false);
-                            setShowCustomAmount(false);
-                            form.setValue("nextPaymentAmount", "");
-                          }}
-                          className="w-4 h-4"
-                          data-testid="radio-same-amount"
-                        />
-                      </FormControl>
-                      <FormLabel className="font-normal">
-                        Use same subscription amount (${watchedCost || "0.00"})
-                      </FormLabel>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="useCustomAmount"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <input
-                          type="radio"
-                          checked={field.value}
-                          onChange={() => {
-                            field.onChange(true);
-                            setShowCustomAmount(true);
-                          }}
-                          className="w-4 h-4"
-                          data-testid="radio-custom-amount"
-                        />
-                      </FormControl>
-                      <FormLabel className="font-normal">
-                        Use custom amount for next payment
-                      </FormLabel>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Custom Amount Input - shown when custom amount is selected */}
-                {form.watch("useCustomAmount") && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="nextPaymentAmount"
                     render={({ field }) => (
-                      <FormItem className="ml-7">
-                        <FormLabel>Custom Amount *</FormLabel>
+                      <FormItem>
+                        <FormLabel>Next Payment Amount *</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             step="0.01"
-                            placeholder="Enter custom amount"
+                            placeholder="50.00"
                             {...field}
                             className="bg-white/50 border-white/20 focus:border-blue-300"
-                            data-testid="input-custom-amount"
+                            data-testid="input-next-payment-amount"
                           />
                         </FormControl>
                         <FormMessage />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Amount they told you to pay on the next date
+                        </p>
                       </FormItem>
                     )}
                   />
-                )}
+
+                  <div className="flex flex-col justify-center">
+                    <p className="text-sm font-medium text-gray-700">Payment Timeline:</p>
+                    <p className="text-xs text-gray-600">
+                      Initial: ${watchedCost || "0.00"} (already paid)
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      Next: ${form.watch("nextPaymentAmount") || "0.00"} (upcoming)
+                    </p>
+                  </div>
+                </div>
+
+                {/* Option to mark as custom schedule */}
+                <FormField
+                  control={form.control}
+                  name="useCustomAmount"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                          className="w-4 h-4"
+                          data-testid="checkbox-custom-schedule"
+                        />
+                      </FormControl>
+                      <FormLabel className="font-normal">
+                        This service has irregular payment amounts/schedules
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
               </div>
             )}
 
