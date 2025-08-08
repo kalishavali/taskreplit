@@ -22,6 +22,7 @@ import {
   vehicles,
   jewellery,
   gadgets,
+  subscriptions,
   type Client,
   type Project,
   type Task,
@@ -43,6 +44,7 @@ import {
   type Vehicle,
   type Jewellery,
   type Gadget,
+  type Subscription,
   type InsertClient,
   type InsertProject,
   type InsertTask,
@@ -64,6 +66,7 @@ import {
   type InsertVehicle,
   type InsertJewellery,
   type InsertGadget,
+  type InsertSubscription,
   type UpdateClient,
   type UpdateProject,
   type UpdateTask,
@@ -1477,6 +1480,124 @@ export class DatabaseStorage implements IStorage {
     }
     
     return gadget;
+  }
+
+  // Subscriptions
+  async getSubscriptions(userId?: number): Promise<Subscription[]> {
+    let query = db.select().from(subscriptions);
+    
+    if (userId) {
+      query = query.where(eq(subscriptions.userId, userId));
+    }
+    
+    return await query.orderBy(desc(subscriptions.createdAt));
+  }
+
+  async getSubscription(id: number): Promise<Subscription | undefined> {
+    const [subscription] = await db.select().from(subscriptions).where(eq(subscriptions.id, id));
+    return subscription;
+  }
+
+  async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    // Calculate next renewal date based on frequency and start date
+    const nextRenewalDate = this.calculateNextRenewalDate(subscription.startDate as Date, subscription.frequency);
+    
+    const [newSubscription] = await db.insert(subscriptions).values({
+      ...subscription,
+      nextRenewalDate,
+    }).returning();
+    
+    return newSubscription;
+  }
+
+  async updateSubscription(id: number, updates: Partial<InsertSubscription>): Promise<Subscription | undefined> {
+    // Recalculate renewal date if start date or frequency changed
+    if (updates.startDate || updates.frequency) {
+      const current = await this.getSubscription(id);
+      if (current) {
+        const startDate = updates.startDate as Date || current.startDate;
+        const frequency = updates.frequency || current.frequency;
+        updates.nextRenewalDate = this.calculateNextRenewalDate(new Date(startDate), frequency);
+      }
+    }
+
+    const [updatedSubscription] = await db.update(subscriptions)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(subscriptions.id, id))
+      .returning();
+    
+    return updatedSubscription;
+  }
+
+  async deleteSubscription(id: number): Promise<void> {
+    await db.delete(subscriptions).where(eq(subscriptions.id, id));
+  }
+
+  private calculateNextRenewalDate(startDate: Date, frequency: string): Date {
+    const nextDate = new Date(startDate);
+    
+    switch (frequency) {
+      case 'daily':
+        nextDate.setDate(nextDate.getDate() + 1);
+        break;
+      case 'monthly':
+        nextDate.setMonth(nextDate.getMonth() + 1);
+        break;
+      case 'yearly':
+        nextDate.setFullYear(nextDate.getFullYear() + 1);
+        break;
+      case 'data-based':
+        // For data-based subscriptions, set renewal to 30 days from start
+        nextDate.setDate(nextDate.getDate() + 30);
+        break;
+      default:
+        // Default to monthly
+        nextDate.setMonth(nextDate.getMonth() + 1);
+    }
+    
+    return nextDate;
+  }
+
+  async getSubscriptionStats(userId?: number): Promise<{
+    totalActive: number;
+    totalCost: number;
+    expiringSoon: number; // within 7 days
+    categories: { [key: string]: number };
+  }> {
+    let baseQuery = db.select().from(subscriptions);
+    
+    if (userId) {
+      baseQuery = baseQuery.where(eq(subscriptions.userId, userId));
+    }
+    
+    const allSubscriptions = await baseQuery;
+    const activeSubscriptions = allSubscriptions.filter(s => s.isActive);
+    
+    const now = new Date();
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    const expiringSoon = activeSubscriptions.filter(s => 
+      s.nextRenewalDate && new Date(s.nextRenewalDate) <= sevenDaysFromNow
+    ).length;
+    
+    const totalCost = activeSubscriptions.reduce((sum, s) => 
+      sum + parseFloat(s.cost.toString()), 0
+    );
+    
+    const categories = activeSubscriptions.reduce((acc, s) => {
+      acc[s.category || 'general'] = (acc[s.category || 'general'] || 0) + 1;
+      return acc;
+    }, {} as { [key: string]: number });
+    
+    return {
+      totalActive: activeSubscriptions.length,
+      totalCost,
+      expiringSoon,
+      categories,
+    };
   }
 }
 

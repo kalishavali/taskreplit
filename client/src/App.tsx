@@ -18,6 +18,7 @@ import Teams from "@/pages/teams";
 import UserManagement from "@/pages/user-management";
 import { MoneyPage } from "@/pages/money";
 import ProductsPage from "@/pages/products";
+import Subscriptions from "@/pages/subscriptions";
 import Sidebar from "@/components/layout/sidebar";
 
 function Router() {
@@ -54,6 +55,7 @@ function Router() {
           <Route path="/teams" component={Teams} />
           <Route path="/money" component={MoneyPage} />
           <Route path="/products" component={ProductsPage} />
+          <Route path="/subscriptions" component={Subscriptions} />
           <Route path="/user-management" component={UserManagement} />
           <Route component={NotFound} />
         </Switch>

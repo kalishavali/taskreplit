@@ -281,6 +281,23 @@ export const gadgets = pgTable("gadgets", {
   specifications: text("specifications"), // JSON string for flexible specs
 });
 
+// Subscriptions table
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  cost: decimal("cost", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("USD").notNull(),
+  frequency: varchar("frequency", { length: 20 }).notNull(), // monthly, yearly, daily, data-based
+  startDate: timestamp("start_date").notNull(),
+  nextRenewalDate: timestamp("next_renewal_date"),
+  description: text("description"),
+  category: varchar("category", { length: 50 }).default("general"), // streaming, cloud, software, database, etc.
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertClientSchema = createInsertSchema(clients).omit({
   id: true,
@@ -419,6 +436,22 @@ export const insertGadgetSchema = createInsertSchema(gadgets).omit({
   id: true,
 });
 
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  startDate: z.union([z.string(), z.date()]).transform((val) => {
+    if (typeof val === 'string') return new Date(val);
+    return val;
+  }),
+  nextRenewalDate: z.union([z.string(), z.date(), z.null()]).optional().transform((val) => {
+    if (!val) return null;
+    if (typeof val === 'string') return new Date(val);
+    return val;
+  }),
+});
+
 // Update schemas with proper date handling
 export const updateTaskSchema = insertTaskSchema.partial();
 export const updateProjectSchema = insertProjectSchema.partial().extend({
@@ -452,6 +485,7 @@ export const updateElectronicsSchema = insertElectronicsSchema.partial();
 export const updateVehicleSchema = insertVehicleSchema.partial();
 export const updateJewellerySchema = insertJewellerySchema.partial();
 export const updateGadgetSchema = insertGadgetSchema.partial();
+export const updateSubscriptionSchema = insertSubscriptionSchema.partial();
 
 // Types
 export type Client = typeof clients.$inferSelect;
@@ -475,6 +509,7 @@ export type Electronics = typeof electronics.$inferSelect;
 export type Vehicle = typeof vehicles.$inferSelect;
 export type Jewellery = typeof jewellery.$inferSelect;
 export type Gadget = typeof gadgets.$inferSelect;
+export type Subscription = typeof subscriptions.$inferSelect;
 
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
@@ -497,6 +532,7 @@ export type InsertElectronics = z.infer<typeof insertElectronicsSchema>;
 export type InsertVehicle = z.infer<typeof insertVehicleSchema>;
 export type InsertJewellery = z.infer<typeof insertJewellerySchema>;
 export type InsertGadget = z.infer<typeof insertGadgetSchema>;
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 
 export type UpdateClient = z.infer<typeof updateClientSchema>;
 export type UpdateTask = z.infer<typeof updateTaskSchema>;

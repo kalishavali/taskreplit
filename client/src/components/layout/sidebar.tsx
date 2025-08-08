@@ -16,6 +16,7 @@ import {
   User,
   DollarSign,
   Package,
+  RefreshCw,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -28,6 +29,7 @@ const navigation = [
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Money Tracking", href: "/money", icon: DollarSign },
   { name: "Product Registry", href: "/products", icon: Package },
+  { name: "Subscriptions", href: "/subscriptions", icon: RefreshCw },
   { name: "Team", href: "/team", icon: Users },
 ];
 

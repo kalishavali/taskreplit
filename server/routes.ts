@@ -24,6 +24,7 @@ import {
   insertLoanPaymentSchema,
   updateLoanSchema,
   updateLoanPaymentSchema,
+  insertSubscriptionSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -1323,6 +1324,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting product:", error);
       res.status(500).json({ message: "Failed to delete product" });
+    }
+  });
+
+  // Subscription routes
+  app.get("/api/subscriptions", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const subscriptions = await storage.getSubscriptions(userId);
+      res.json(subscriptions);
+    } catch (error) {
+      console.error("Error fetching subscriptions:", error);
+      res.status(500).json({ message: "Failed to fetch subscriptions" });
+    }
+  });
+
+  app.get("/api/subscriptions/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const subscription = await storage.getSubscription(id);
+      if (!subscription) {
+        return res.status(404).json({ message: "Subscription not found" });
+      }
+      res.json(subscription);
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
+      res.status(500).json({ message: "Failed to fetch subscription" });
+    }
+  });
+
+  app.post("/api/subscriptions", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const subscriptionData = insertSubscriptionSchema.parse({
+        ...req.body,
+        userId
+      });
+      const subscription = await storage.createSubscription(subscriptionData);
+      res.status(201).json(subscription);
+    } catch (error) {
+      console.error("Error creating subscription:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid subscription data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create subscription" });
+    }
+  });
+
+  app.put("/api/subscriptions/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = insertSubscriptionSchema.partial().parse(req.body);
+      const subscription = await storage.updateSubscription(id, updates);
+      if (!subscription) {
+        return res.status(404).json({ message: "Subscription not found" });
+      }
+      res.json(subscription);
+    } catch (error) {
+      console.error("Error updating subscription:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid subscription data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update subscription" });
+    }
+  });
+
+  app.delete("/api/subscriptions/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteSubscription(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting subscription:", error);
+      res.status(500).json({ message: "Failed to delete subscription" });
+    }
+  });
+
+  app.get("/api/subscriptions-stats", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const stats = await storage.getSubscriptionStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching subscription stats:", error);
+      res.status(500).json({ message: "Failed to fetch subscription stats" });
     }
   });
 
