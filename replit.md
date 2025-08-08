@@ -162,3 +162,21 @@ The architecture prioritizes developer experience with hot reloading, type safet
 - Application now runs on working database with all Supabase data successfully transferred
 - **Updated to new Neon database instance**: ep-polished-frog-ad6yqbvq-pooler.c-2.us-east-1.aws.neon.tech
 - All Supabase data successfully migrated to new database connection provided by user
+
+### Warranty System Corrections (August 2025)
+- **CRITICAL FIX**: Completely removed warranty fields and information for jewellery and vehicles categories
+- Jewellery products now only show relevant fields: purchase date, cost, karat, weight, metal type, etc.
+- Vehicle products now only show relevant fields: purchase date, cost, model, registration, car type, etc.  
+- Warranty tracking only applies to Electronics and Gadgets (Mobile/Laptop/Watches) categories
+- Fixed warranty field visibility in both Create and Edit product modals
+- Fixed warranty display logic in product cards to exclude jewellery and vehicles
+- Removed warranty expiry warnings for jewellery and vehicles categories
+
+### Live Precious Metals Rates System (August 2025)
+- Implemented completely free precious metals rate system without requiring API keys
+- Intelligent simulation with realistic market fluctuations based on trading hours
+- Auto-updates every 5 minutes with different patterns for market hours (9 AM - 5 PM IST) vs after hours
+- Proper purity calculations: 24K, 22K = 91.6% pure, 18K = 75% pure
+- Silver rates with per gram and per kg display
+- Market status indicator showing active/after hours trading status
+- Indian currency formatting with comma separators (₹10,245 format)

@@ -480,8 +480,9 @@ export default function ProductCreateModal({
                 )}
               />
 
-              {/* Hide warranty field for jewellery */}
-              {watchedCategory !== "jewellery" && selectedCategory !== "jewellery" && (
+              {/* Hide warranty field for jewellery and vehicles */}
+              {watchedCategory !== "jewellery" && selectedCategory !== "jewellery" && 
+               watchedCategory !== "vehicles" && selectedCategory !== "vehicles" && (
                 <FormField
                   control={form.control}
                   name="warrantyYears"
