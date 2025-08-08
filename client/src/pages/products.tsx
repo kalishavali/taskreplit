@@ -445,7 +445,7 @@ export default function ProductsPage() {
                         <div className="flex items-center justify-between">
                           <span className="text-gray-500">Cost:</span>
                           <span className="font-medium text-green-600" data-testid={`text-cost-${product.id}`}>
-                            {formatCurrency(parseFloat(product.totalCost), product.currency)}
+                            {formatCurrency(parseFloat(product.totalCost), product.currency || "INR")}
                           </span>
                         </div>
                       )}

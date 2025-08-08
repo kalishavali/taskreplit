@@ -215,6 +215,7 @@ export const products = pgTable("products", {
   warrantyYears: integer("warranty_years"),
   warrantyExpiryDate: timestamp("warranty_expiry_date"),
   totalCost: decimal("total_cost", { precision: 15, scale: 2 }),
+  currency: varchar("currency", { length: 3 }).default("INR"), // USD, INR, EUR, etc.
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
