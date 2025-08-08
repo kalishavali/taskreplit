@@ -1204,35 +1204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/products", requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId!;
-      const products = await storage.getProducts(userId);
-      
-      // Fetch category-specific details for each product
-      const productsWithDetails = await Promise.all(
-        products.map(async (product) => {
-          let details = null;
-          try {
-            switch (product.category) {
-              case 'electronics':
-                details = await storage.getElectronics(product.id);
-                break;
-              case 'vehicles':
-                details = await storage.getVehicle(product.id);
-                break;
-              case 'jewellery':
-                details = await storage.getJewellery(product.id);
-                break;
-              case 'gadgets':
-                details = await storage.getGadget(product.id);
-                break;
-            }
-          } catch (detailError) {
-            // Continue without details if there's an error fetching them
-            console.warn(`Could not fetch details for product ${product.id}:`, detailError);
-          }
-          return { ...product, details };
-        })
-      );
-      
+      const productsWithDetails = await storage.getProductsWithDetails(userId);
       res.json(productsWithDetails);
     } catch (error) {
       console.error("Error fetching products:", error);

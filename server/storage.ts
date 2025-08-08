@@ -1217,6 +1217,54 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(products.createdAt));
   }
 
+  // Optimized method to fetch products with category details in one query
+  async getProductsWithDetails(userId: number): Promise<(Product & { details?: any })[]> {
+    const productsList = await db
+      .select()
+      .from(products)
+      .where(eq(products.userId, userId))
+      .orderBy(desc(products.createdAt));
+
+    if (productsList.length === 0) return [];
+
+    // Get all product IDs
+    const productIds = productsList.map(p => p.id);
+
+    // Fetch all category details in parallel using Promise.all
+    const [electronicsData, vehiclesData, jewelleryData, gadgetsData] = await Promise.all([
+      db.select().from(electronics).where(inArray(electronics.productId, productIds)),
+      db.select().from(vehicles).where(inArray(vehicles.productId, productIds)),
+      db.select().from(jewellery).where(inArray(jewellery.productId, productIds)),
+      db.select().from(gadgets).where(inArray(gadgets.productId, productIds))
+    ]);
+
+    // Create lookup maps for quick access
+    const electronicsMap = new Map(electronicsData.map(e => [e.productId, e]));
+    const vehiclesMap = new Map(vehiclesData.map(v => [v.productId, v]));
+    const jewelleryMap = new Map(jewelleryData.map(j => [j.productId, j]));
+    const gadgetsMap = new Map(gadgetsData.map(g => [g.productId, g]));
+
+    // Combine products with their details
+    return productsList.map(product => {
+      let details = null;
+      switch (product.category) {
+        case 'electronics':
+          details = electronicsMap.get(product.id) || null;
+          break;
+        case 'vehicles':
+          details = vehiclesMap.get(product.id) || null;
+          break;
+        case 'jewellery':
+          details = jewelleryMap.get(product.id) || null;
+          break;
+        case 'gadgets':
+          details = gadgetsMap.get(product.id) || null;
+          break;
+      }
+      return { ...product, details };
+    });
+  }
+
   async getProduct(id: number, userId: number): Promise<Product | undefined> {
     const [product] = await db
       .select()
