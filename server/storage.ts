@@ -559,7 +559,7 @@ export class DatabaseStorage implements IStorage {
         if (projectIds.length === 0) {
           return [];
         }
-        searchQuery = searchQuery.where(inArray(tasks.projectId, projectIds));
+        searchQuery = searchQuery.where(inArray(tasks.projectId, projectIds)) as any;
       }
     }
 
@@ -1066,7 +1066,7 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
 
-    return await this.checkUserClientPermission(userId, project.clientId, permission);
+    return await this.checkUserClientPermission(userId, project.clientId ?? 0, permission);
   }
 
   // Loans
