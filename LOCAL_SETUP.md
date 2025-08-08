@@ -14,6 +14,8 @@ NODE_ENV=development
 PORT=5000
 ```
 
+**Important**: The `NODE_ENV=development` is crucial for local development as it tells the server to bind to `localhost` instead of `0.0.0.0`.
+
 **Important**: Make sure to create this `.env` file in your local WebStorm project folder (`/Users/kalishavalis/WebstormProjects/taskreplit/`), not just on Replit.
 
 ### Option 2: Use Local PostgreSQL

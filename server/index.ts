@@ -66,15 +66,13 @@ app.use((req, res, next) => {
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
   
-  // Use localhost for local development, 0.0.0.0 for production/Replit
-  const isLocal = process.env.DATABASE_URL?.includes('localhost') || process.env.DATABASE_URL?.includes('127.0.0.1');
+  // Use localhost for local development (detect by NODE_ENV or platform), 0.0.0.0 for production/Replit
+  const isLocal = process.env.NODE_ENV === 'development' && !process.env.REPLIT_DB_URL;
   const host = isLocal ? 'localhost' : '0.0.0.0';
   
-  server.listen({
-    port,
-    host,
-    reusePort: !isLocal, // Don't use reusePort for local development
-  }, () => {
+  console.log(`🌐 Detected ${isLocal ? 'local' : 'production/cloud'} environment, binding to ${host}:${port}`);
+  
+  server.listen(port, host, () => {
     log(`serving on port ${port}`);
   });
 })();
