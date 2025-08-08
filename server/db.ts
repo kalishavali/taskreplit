@@ -5,14 +5,14 @@ import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import ws from "ws";
 import * as schema from "@shared/schema";
 
-if (!process.env.DATABASE_URL) {
+// Use environment variable if available, otherwise fallback to hardcoded Neon database
+const databaseUrl = process.env.DATABASE_URL || "postgresql://neondb_owner:npg_2aY4QCTmXiyu@ep-polished-frog-ad6yqbvq-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+
+if (!databaseUrl) {
   throw new Error(
-    "DATABASE_URL must be set. Please set your Supabase database connection string.",
+    "DATABASE_URL must be set. Please set your database connection string.",
   );
 }
-
-// Use your specific Neon database connection
-const databaseUrl = "postgresql://neondb_owner:npg_2aY4QCTmXiyu@ep-polished-frog-ad6yqbvq-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
 
 console.log(`🗃️  Connecting to database: ${databaseUrl.replace(/:[^:@]*@/, ':****@')}`);
 
