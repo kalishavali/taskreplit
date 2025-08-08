@@ -37,7 +37,7 @@ import type { Product } from "@shared/schema";
 const productFormSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   description: z.string().optional(),
-  category: z.enum(["electronics", "vehicles", "jewellery", "gadgets"]),
+  category: z.enum(["electronics", "vehicles", "jewellery"]),
   purchaseDate: z.string().optional(),
   cost: z.string().optional(),
   currency: z.string().default("INR"),
@@ -56,7 +56,6 @@ const categoryLabels = {
   electronics: "Electronics",
   vehicles: "Cars/Bikes",
   jewellery: "Gold Jewellery",
-  gadgets: "Mobile/Laptop/Watches",
 };
 
 export default function ProductEditModal({
@@ -137,14 +136,63 @@ export default function ProductEditModal({
                 Electronics Details
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium">Type</label>
                 <Input
-                  placeholder="e.g., Laptop, TV, Refrigerator"
+                  placeholder="e.g., Mobile, Laptop, TV, Refrigerator"
                   value={categoryDetails.type || ""}
                   onChange={(e) => setCategoryDetails(prev => ({ ...prev, type: e.target.value }))}
                   data-testid="input-electronics-type"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Product Registration Code</label>
+                <Input
+                  placeholder="e.g., ABC123DEF456"
+                  value={categoryDetails.registrationCode || ""}
+                  onChange={(e) => setCategoryDetails(prev => ({ ...prev, registrationCode: e.target.value }))}
+                  data-testid="input-registration-code"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Purchased at</label>
+                <Select
+                  value={categoryDetails.purchasedAt || ""}
+                  onValueChange={(value) => setCategoryDetails(prev => ({ ...prev, purchasedAt: value }))}
+                >
+                  <SelectTrigger data-testid="select-purchased-at">
+                    <SelectValue placeholder="Select store" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="online">Online</SelectItem>
+                    <SelectItem value="reliance">Reliance</SelectItem>
+                    <SelectItem value="bajaj">Bajaj</SelectItem>
+                    <SelectItem value="chroma">Chroma</SelectItem>
+                    <SelectItem value="sonovision">Sonovision</SelectItem>
+                    <SelectItem value="vijay_digital">Vijay Digital</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {categoryDetails.purchasedAt === "other" && (
+                <div>
+                  <label className="text-sm font-medium">Store Name</label>
+                  <Input
+                    placeholder="Enter store name"
+                    value={categoryDetails.storeName || ""}
+                    onChange={(e) => setCategoryDetails(prev => ({ ...prev, storeName: e.target.value }))}
+                    data-testid="input-store-name"
+                  />
+                </div>
+              )}
+              <div>
+                <label className="text-sm font-medium">Purchased Place</label>
+                <Input
+                  placeholder="e.g., Mumbai, Delhi"
+                  value={categoryDetails.purchasedPlace || ""}
+                  onChange={(e) => setCategoryDetails(prev => ({ ...prev, purchasedPlace: e.target.value }))}
+                  data-testid="input-purchased-place"
                 />
               </div>
             </CardContent>
@@ -324,37 +372,7 @@ export default function ProductEditModal({
           </Card>
         );
       
-      case "gadgets":
-        return (
-          <Card className="bg-purple-50/50 border-purple-200">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center">
-                <Smartphone className="w-4 h-4 mr-2 text-purple-600" />
-                Gadget Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Model</label>
-                <Input
-                  placeholder="e.g., iPhone 15 Pro"
-                  value={categoryDetails.model || ""}
-                  onChange={(e) => setCategoryDetails(prev => ({ ...prev, model: e.target.value }))}
-                  data-testid="input-gadget-model"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Manufacturer</label>
-                <Input
-                  placeholder="e.g., Apple"
-                  value={categoryDetails.manufacturer || ""}
-                  onChange={(e) => setCategoryDetails(prev => ({ ...prev, manufacturer: e.target.value }))}
-                  data-testid="input-manufacturer"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        );
+
       
       default:
         return null;
@@ -406,7 +424,6 @@ export default function ProductEditModal({
                         <SelectItem value="electronics">Electronics</SelectItem>
                         <SelectItem value="vehicles">Cars/Bikes</SelectItem>
                         <SelectItem value="jewellery">Gold Jewellery</SelectItem>
-                        <SelectItem value="gadgets">Mobile/Laptop/Watches</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -449,8 +466,8 @@ export default function ProductEditModal({
                 )}
               />
 
-              {/* Hide warranty field for jewellery and vehicles */}
-              {product.category !== "jewellery" && product.category !== "vehicles" && (
+              {/* Only show warranty field for electronics */}
+              {product.category === "electronics" && (
                 <FormField
                   control={form.control}
                   name="warrantyYears"

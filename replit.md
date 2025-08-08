@@ -167,10 +167,19 @@ The architecture prioritizes developer experience with hot reloading, type safet
 - **CRITICAL FIX**: Completely removed warranty fields and information for jewellery and vehicles categories
 - Jewellery products now only show relevant fields: purchase date, cost, karat, weight, metal type, etc.
 - Vehicle products now only show relevant fields: purchase date, cost, model, registration, car type, etc.  
-- Warranty tracking only applies to Electronics and Gadgets (Mobile/Laptop/Watches) categories
+- Consolidated Mobile/Laptop/Watches into Electronics category for streamlined management
+- Warranty tracking only applies to Electronics category (includes mobile devices, laptops, TVs, appliances, etc.)
 - Fixed warranty field visibility in both Create and Edit product modals
-- Fixed warranty display logic in product cards to exclude jewellery and vehicles
+- Fixed warranty display logic in product cards to only show for electronics
 - Removed warranty expiry warnings for jewellery and vehicles categories
+
+### Electronics Product Registration Enhancement (August 2025)
+- Added Product Registration Code field for electronics products
+- Added "Purchased at" dropdown with store options: Online, Reliance, Bajaj, Chroma, Sonovision, Vijay Digital, Other
+- Added conditional Store Name input field when "Other" store option is selected
+- Added "Purchased Place" manual input field for location tracking
+- Enhanced electronics category to include mobile devices, laptops, watches, TVs, appliances, etc.
+- Streamlined product categories to three main types: Electronics, Cars/Bikes, Gold Jewellery
 
 ### Live Precious Metals Rates System (August 2025)
 - Implemented completely free precious metals rate system without requiring API keys

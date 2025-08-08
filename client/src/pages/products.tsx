@@ -449,8 +449,8 @@ export default function ProductsPage() {
                         </div>
                       )}
                       
-                      {/* Hide warranty info for jewellery and vehicles */}
-                      {product.category !== "jewellery" && product.category !== "vehicles" && product.warrantyExpiryDate && (
+                      {/* Only show warranty info for electronics */}
+                      {product.category === "electronics" && product.warrantyExpiryDate && (
                         <div className="flex items-center justify-between">
                           <span className="text-gray-500">Warranty Until:</span>
                           <div className="flex items-center space-x-2">
@@ -465,7 +465,7 @@ export default function ProductsPage() {
                         </div>
                       )}
                       
-                      {product.category !== "jewellery" && product.category !== "vehicles" && daysUntilExpiry !== null && daysUntilExpiry > 0 && (
+                      {product.category === "electronics" && daysUntilExpiry !== null && daysUntilExpiry > 0 && (
                         <div className="flex items-center justify-between">
                           <span className="text-gray-500">Days Left:</span>
                           <span className={`font-medium ${isWarrantyExpiringSoon ? 'text-orange-600' : 'text-gray-900'}`}
@@ -476,7 +476,7 @@ export default function ProductsPage() {
                       )}
                     </div>
 
-                    {product.category !== "jewellery" && product.category !== "vehicles" && isWarrantyExpiringSoon && (
+                    {product.category === "electronics" && isWarrantyExpiringSoon && (
                       <div className="mt-3 p-2 bg-orange-50 border border-orange-200 rounded-lg">
                         <div className="flex items-center space-x-2">
                           <AlertTriangle className="w-4 h-4 text-orange-500" />
