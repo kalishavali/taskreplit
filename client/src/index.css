@@ -132,10 +132,29 @@
   background: rgba(255, 255, 255, 0.7) !important;
 }
 
-/* Ensure all cards have consistent glassmorphism background */
-[data-testid="card-product-1"] {
+/* Ultra-specific card styling override */
+div[data-testid^="card-product"] {
   background: rgba(255, 255, 255, 0.7) !important;
   backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Target the specific Card component class */
+.bg-white\/70.backdrop-blur-xl.border.border-white\/20.shadow-xl {
+  background: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Override the default shadcn bg-card background */
+.bg-card {
+  background: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Force glassmorphism on all card components */
+div.rounded-lg.border.bg-card.text-card-foreground.shadow-sm {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
 /* Custom utility classes */

@@ -363,7 +363,12 @@ export default function ProductsPage() {
               return (
                 <Card
                   key={product.id}
-                  className="group bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] overflow-hidden"
+                  className="group !bg-white/70 !backdrop-blur-xl !border !border-white/20 !shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] overflow-hidden"
+                  style={{ 
+                    background: 'rgba(255, 255, 255, 0.7)',
+                    backdropFilter: 'blur(16px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)'
+                  }}
                   data-testid={`card-product-${product.id}`}
                 >
                   <CardHeader className="pb-3">
