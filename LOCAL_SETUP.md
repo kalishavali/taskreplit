@@ -5,7 +5,7 @@
 For local development, you have several options:
 
 ### Option 1: Use the existing Neon database (Recommended)
-Create a `.env` file in the root directory with:
+Create a `.env` file in the root directory of your local project with:
 
 ```bash
 DATABASE_URL=postgresql://neondb_owner:npg_2aY4QCTmXiyu@ep-polished-frog-ad6yqbvq-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
@@ -13,6 +13,8 @@ SESSION_SECRET=your-local-session-secret-key
 NODE_ENV=development
 PORT=5000
 ```
+
+**Important**: Make sure to create this `.env` file in your local WebStorm project folder (`/Users/kalishavalis/WebstormProjects/taskreplit/`), not just on Replit.
 
 ### Option 2: Use Local PostgreSQL
 If you prefer a local database:
