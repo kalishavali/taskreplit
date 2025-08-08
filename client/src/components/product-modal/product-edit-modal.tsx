@@ -71,10 +71,10 @@ export default function ProductEditModal({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
       name: product.name,
-      description: product.description || "",
+      description: product.notes || "",
       category: product.category,
-      purchaseDate: product.purchaseDate || "",
-      cost: product.cost || "",
+      purchaseDate: product.purchaseDate ? new Date(product.purchaseDate).toISOString().split('T')[0] : "",
+      cost: product.totalCost || "",
       currency: product.currency || "INR",
       warrantyYears: product.warrantyYears || undefined,
     },
@@ -116,10 +116,13 @@ export default function ProductEditModal({
 
   const onSubmit = (data: ProductFormData) => {
     const submitData = {
-      ...data,
-      cost: data.cost ? data.cost : undefined,
+      name: data.name,
+      category: data.category,
+      notes: data.description || undefined,
+      totalCost: data.cost ? data.cost : undefined,
       purchaseDate: data.purchaseDate ? data.purchaseDate : undefined,
       warrantyYears: data.warrantyYears || undefined,
+      currency: data.currency,
       details: Object.keys(categoryDetails).length > 0 ? categoryDetails : undefined,
     };
     updateProductMutation.mutate(submitData);
@@ -228,22 +231,47 @@ export default function ProductEditModal({
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Car Type</label>
+                <label className="text-sm font-medium">Vehicle Type</label>
                 <Select
-                  value={categoryDetails.carType || ""}
-                  onValueChange={(value) => setCategoryDetails(prev => ({ ...prev, carType: value }))}
+                  value={categoryDetails.vehicleType || ""}
+                  onValueChange={(value) => setCategoryDetails(prev => ({ ...prev, vehicleType: value }))}
                 >
-                  <SelectTrigger data-testid="select-car-type">
+                  <SelectTrigger data-testid="select-vehicle-type">
                     <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="car">Car</SelectItem>
+                    <SelectItem value="bike">Bike</SelectItem>
+                    <SelectItem value="scooter">Scooter</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Body Type</label>
+                <Select
+                  value={categoryDetails.bodyType || ""}
+                  onValueChange={(value) => setCategoryDetails(prev => ({ ...prev, bodyType: value }))}
+                >
+                  <SelectTrigger data-testid="select-body-type">
+                    <SelectValue placeholder="Select body type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="hatchback">Hatchback</SelectItem>
                     <SelectItem value="sedan">Sedan</SelectItem>
                     <SelectItem value="suv">SUV</SelectItem>
-                    <SelectItem value="bike">Bike</SelectItem>
-                    <SelectItem value="scooter">Scooter</SelectItem>
+                    <SelectItem value="sport">Sport</SelectItem>
+                    <SelectItem value="cruiser">Cruiser</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Manufacturer</label>
+                <Input
+                  placeholder="e.g., Honda, Toyota"
+                  value={categoryDetails.manufacturer || ""}
+                  onChange={(e) => setCategoryDetails(prev => ({ ...prev, manufacturer: e.target.value }))}
+                  data-testid="input-vehicle-manufacturer"
+                />
               </div>
               <div>
                 <label className="text-sm font-medium">Color</label>
