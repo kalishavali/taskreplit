@@ -140,8 +140,8 @@ export default function ProductCreateModal({
     const submitData = {
       name: data.name,
       category: data.category,
-      notes: data.description || undefined,
-      totalCost: data.cost ? data.cost : undefined,
+      notes: data.notes || undefined,
+      totalCost: data.totalCost ? data.totalCost : undefined,
       purchaseDate: data.purchaseDate ? data.purchaseDate : undefined,
       warrantyYears: data.warrantyYears || undefined,
       currency: data.currency,

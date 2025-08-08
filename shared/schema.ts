@@ -229,6 +229,10 @@ export const electronics = pgTable("electronics", {
   brand: varchar("brand", { length: 100 }),
   model: varchar("model", { length: 255 }),
   serialNumber: varchar("serial_number", { length: 255 }),
+  registrationCode: varchar("registration_code", { length: 255 }),
+  purchasedAt: varchar("purchased_at", { length: 100 }),
+  storeName: varchar("store_name", { length: 100 }),
+  purchasedPlace: varchar("purchased_place", { length: 255 }),
 });
 
 // Vehicles (Cars/Bikes) specific fields
