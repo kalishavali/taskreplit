@@ -400,7 +400,7 @@ export default function ProductEditModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-xl border border-white/20">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto !bg-white/95 !backdrop-blur-xl !border !border-white/20 shadow-2xl">
         <DialogHeader>
           <DialogTitle style={{ fontFamily: "'Quicksand', sans-serif" }}>
             Edit Product
