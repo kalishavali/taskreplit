@@ -148,8 +148,11 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen h-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6 overflow-auto"
+         style={{
+           background: 'linear-gradient(135deg, rgb(248 250 252) 0%, rgb(239 246 255) 50%, rgb(238 242 255) 100%)'
+         }}>
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Section */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600/95 via-purple-600/95 to-indigo-600/95 backdrop-blur-xl border border-white/20 p-8 mb-8">
           <div className="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>

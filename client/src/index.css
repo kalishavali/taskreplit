@@ -253,6 +253,7 @@ html {
   overflow-x: hidden;
   scroll-behavior: smooth;
   height: 100%;
+  background: linear-gradient(135deg, rgb(248 250 252) 0%, rgb(239 246 255) 50%, rgb(238 242 255) 100%);
 }
 
 body {
@@ -260,11 +261,13 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
+  background: linear-gradient(135deg, rgb(248 250 252) 0%, rgb(239 246 255) 50%, rgb(238 242 255) 100%);
 }
 
 #root {
-  height: 100vh;
-  overflow-y: auto;
+  min-height: 100vh;
+  height: 100%;
+  background: linear-gradient(135deg, rgb(248 250 252) 0%, rgb(239 246 255) 50%, rgb(238 242 255) 100%);
 }
 
 /* Beautiful slider styling for task modal */
