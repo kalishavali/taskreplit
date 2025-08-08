@@ -234,6 +234,8 @@ export const electronics = pgTable("electronics", {
   purchasedAt: varchar("purchased_at", { length: 100 }),
   storeName: varchar("store_name", { length: 100 }),
   purchasedPlace: varchar("purchased_place", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Vehicles (Cars/Bikes) specific fields
@@ -263,6 +265,8 @@ export const jewellery = pgTable("jewellery", {
   stoneCost: decimal("stone_cost", { precision: 15, scale: 2 }),
   diamondWeight: decimal("diamond_weight", { precision: 10, scale: 3 }),
   diamondCost: decimal("diamond_cost", { precision: 15, scale: 2 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Gadgets (Mobile, Laptop, Watches) specific fields  
